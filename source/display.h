@@ -14,21 +14,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef __DW_DISPLAY_H__
+#define __DW_DISPLAY_H__
 
-#include <display.h>
+int display_start(void);
+void display_end(void);
 
-int main(int argc, char *argv[])
-{
-  /* XXX: We need to do a pre-flight check and make sure all the files
-   * that we are going to use are in place. */
-
-  if (display_start() != 0) {
-    goto done;
-  }
-
-done:
-  display_end();
-  return 0;
-}
+#endif /* __DW_DISPLAY_H__ */

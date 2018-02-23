@@ -2,7 +2,7 @@
 
 .PHONY: all clean
 
-SRCS = main.c
+SRCS = display.c main.c
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)
 
