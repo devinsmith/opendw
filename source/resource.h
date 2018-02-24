@@ -14,39 +14,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef __DW_RESOURCE_H__
+#define __DW_RESOURCE_H__
 
-#include <display.h>
-#include <resource.h>
+/* Resource file maps to "data1" and "data2" files. */
+enum resource_section {
+  RESOURCE_TITLE = 0x1D
+};
 
-static void
-run_title(void)
-{
-  unsigned char *tbytes;
+int rm_init(void);
+void rm_exit(void);
 
-  tbytes = resource_load(RESOURCE_TITLE);
-  free(tbytes);
-}
+unsigned char *resource_load(enum resource_section sec);
 
-int
-main(int argc, char *argv[])
-{
-  /* XXX: We need to do a pre-flight check and make sure all the files
-   * that we are going to use are in place. Maybe RM can do it. */
-
-  if (rm_init() != 0) {
-    goto done;
-  }
-
-  if (display_start() != 0) {
-    goto done;
-  }
-
-  run_title();
-
-done:
-  rm_exit();
-  display_end();
-  return 0;
-}
+#endif /* __DW_RESOURCE_H__ */

@@ -32,7 +32,8 @@ static SDL_Window *main_window = NULL;
 static SDL_Renderer *renderer = NULL;
 static SDL_Texture *texture = NULL;
 
-int display_start(void)
+int
+display_start(void)
 {
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
     fprintf(stderr, "SDL could not initialize. SDL Error: %s\n",
@@ -65,7 +66,8 @@ int display_start(void)
   return 0;
 }
 
-void display_end(void)
+void
+display_end(void)
 {
   if (texture != NULL) {
     SDL_DestroyTexture(texture);

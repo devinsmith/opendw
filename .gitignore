@@ -51,5 +51,7 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-# Results
+# Dragon Wars specific files.
 dragon
+data1
+data2

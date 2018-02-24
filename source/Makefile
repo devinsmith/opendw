@@ -2,7 +2,7 @@
 
 .PHONY: all clean
 
-SRCS = bufio.c display.c main.c
+SRCS = bufio.c display.c main.c resource.c
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)
 
