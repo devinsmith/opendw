@@ -18,8 +18,35 @@
 #include <stdlib.h>
 
 #include <bufio.h>
+#include <compress.h>
 #include <display.h>
 #include <resource.h>
+#include <utils.h>
+
+static void
+title_adjust(struct buf_wri *title)
+{
+  unsigned char *src, *dst;
+  int i, counter = 0x3E30;
+  uint16_t ax, si;
+
+  src = title->base;
+  dst = title->base + 0xA0;
+
+  for (i = 0; i < counter; i++) {
+    ax = *src++;
+    ax += *(src++) << 8;
+
+    si = *(src + 0x9E);
+    si += *(src + 0x9F) << 8;
+
+    ax = ax ^ si;
+
+    /* write output_idx (16 bits) to output in little endian format. */
+    *(dst++) = (ax & 0xff);
+    *(dst++) = (ax & 0xff00) >> 8;
+  }
+}
 
 static void
 run_title(void)
@@ -37,6 +64,12 @@ run_title(void)
   uncompressed_sz = buf_get16le(title_rdr);
   printf("Unc: 0x%04x\n", uncompressed_sz);
   title_wri = buf_wri_init(uncompressed_sz);
+
+  /* decompress title data from title reader into title writer */
+  decompress_data1(title_rdr, title_wri, uncompressed_sz);
+  title_adjust(title_wri);
+
+  dump_hex(title_wri->base, 32);
 
   buf_wri_free(title_wri);
   buf_rdr_free(title_rdr);
