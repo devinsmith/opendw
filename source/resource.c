@@ -70,15 +70,16 @@ rm_exit(void)
   }
 }
 
-unsigned char *
-resource_load(enum resource_section sec)
+int
+resource_load(enum resource_section sec, struct resource *res)
 {
   int i;
   unsigned int offset = sizeof(data1_hdr);
-  uint16_t res_size;
   FILE *fp;
-  unsigned char *res_bytes;
   size_t n;
+
+  if (res == NULL)
+    return -1;
 
   buf_reset(header_rdr);
   for (i = 0; i < sec; i++) {
@@ -87,31 +88,31 @@ resource_load(enum resource_section sec)
       offset += header_val;
     }
   }
-  res_size = buf_get16le(header_rdr);
+  res->len = buf_get16le(header_rdr);
   printf("Section (0x%02x), Offset: 0x%04x Size: 0x%04x\n", sec, offset,
-    res_size);
+    (unsigned int)res->len);
 
   fp = fopen("data1", "rb");
   if (fp == NULL) {
     fprintf(stderr, "Failed to open data1 file.\n");
-    return NULL;
+    return -1;
   }
 
   fseek(fp, offset, SEEK_SET);
-  res_bytes = malloc(res_size);
-  if (res_bytes == NULL) {
+  res->bytes = malloc(res->len);
+  if (res->bytes == NULL) {
     fclose(fp);
-    return NULL;
+    return -1;
   }
 
-  n = fread(res_bytes, 1, res_size, fp);
-  if (n != res_size) {
-    free(res_bytes);
+  n = fread(res->bytes, 1, res->len, fp);
+  if (n != res->len) {
+    free(res->bytes);
     fclose(fp);
-    return NULL;
+    return -1;
   }
   fclose(fp);
 
-  return res_bytes;
+  return 0;
 }
 

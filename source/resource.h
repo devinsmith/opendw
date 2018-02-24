@@ -22,9 +22,14 @@ enum resource_section {
   RESOURCE_TITLE = 0x1D
 };
 
+struct resource {
+  unsigned char *bytes;
+  size_t len;
+};
+
 int rm_init(void);
 void rm_exit(void);
 
-unsigned char *resource_load(enum resource_section sec);
+int resource_load(enum resource_section sec, struct resource *out);
 
 #endif /* __DW_RESOURCE_H__ */

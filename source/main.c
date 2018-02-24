@@ -17,16 +17,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <bufio.h>
 #include <display.h>
 #include <resource.h>
 
 static void
 run_title(void)
 {
-  unsigned char *tbytes;
+  struct resource title_res;
+  struct buf_rdr *title_rdr;
+  struct buf_wri *title_wri;
+  unsigned int uncompressed_sz;
 
-  tbytes = resource_load(RESOURCE_TITLE);
-  free(tbytes);
+  if (resource_load(RESOURCE_TITLE, &title_res) != 0)
+    return;
+
+  title_rdr = buf_rdr_init(title_res.bytes, title_res.len);
+
+  uncompressed_sz = buf_get16le(title_rdr);
+  printf("Unc: 0x%04x\n", uncompressed_sz);
+  title_wri = buf_wri_init(uncompressed_sz);
+
+  buf_wri_free(title_wri);
+  buf_rdr_free(title_rdr);
+  free(title_res.bytes);
 }
 
 int
