@@ -17,7 +17,13 @@
 #ifndef __DW_DISPLAY_H__
 #define __DW_DISPLAY_H__
 
-int display_start(void);
+#include <stdint.h>
+
+extern const uint32_t vga_palette[];
+
+int display_start(int game_width, int game_height);
 void display_end(void);
+
+void display_draw_pixels(uint32_t *pixels, size_t pitch);
 
 #endif /* __DW_DISPLAY_H__ */

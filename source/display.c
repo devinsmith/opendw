@@ -24,16 +24,33 @@
 #define WIN_WIDTH 640
 #define WIN_HEIGHT 400
 
-/* Original Dragon Wars resoluation */
-#define GAME_WIDTH 320
-#define GAME_HEIGHT 200
 
 static SDL_Window *main_window = NULL;
 static SDL_Renderer *renderer = NULL;
 static SDL_Texture *texture = NULL;
 
+/* http://www.brackeen.com/vga/basics.html */
+const uint32_t vga_palette[] = {
+  0x000000, /* BLACK */
+  0x000080, /* BLUE */
+  0x008000, /* GREEN */
+  0x008080, /* CYAN */
+  0x800000, /* RED */
+  0x800080, /* MAGENTA */
+  0x808000, /* BROWN */
+  0xC0C0C0, /* LIGHT GRAY */
+  0x808080, /* DARK GRAY */
+  0x0000FF, /* LIGHT BLUE */
+  0x00FF00, /* LIGHT GREEN */
+  0x00FFFF, /* LIGHT CYAN */
+  0xFF0000, /* LIGHT RED */
+  0xFF00FF, /* LIGHT MAGENTA */
+  0xFFFF00, /* YELLOW */
+  0xFFFFFF, /* WHITE */
+};
+
 int
-display_start(void)
+display_start(int game_width, int game_height)
 {
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
     fprintf(stderr, "SDL could not initialize. SDL Error: %s\n",
@@ -57,7 +74,7 @@ display_start(void)
   }
 
   if ((texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
-    SDL_TEXTUREACCESS_STREAMING, GAME_WIDTH, GAME_HEIGHT)) == NULL) {
+    SDL_TEXTUREACCESS_STREAMING, game_width, game_height)) == NULL) {
     fprintf(stderr, "Main texture could not be created. SDL Error: %s\n",
       SDL_GetError());
     return -1;
@@ -81,4 +98,13 @@ display_end(void)
     SDL_DestroyWindow(main_window);
   }
   SDL_Quit();
+}
+
+void
+display_draw_pixels(uint32_t *pixels, size_t pitch)
+{
+  SDL_UpdateTexture(texture, NULL, pixels, pitch);
+  SDL_RenderClear(renderer);
+  SDL_RenderCopy(renderer, texture, NULL, NULL);
+  SDL_RenderPresent(renderer);
 }

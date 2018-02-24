@@ -17,11 +17,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <SDL.h>
+
 #include <bufio.h>
 #include <compress.h>
 #include <display.h>
 #include <resource.h>
 #include <utils.h>
+
+/* Original Dragon Wars resoluation */
+#define GAME_WIDTH 320
+#define GAME_HEIGHT 200
 
 static void
 title_adjust(struct buf_wri *title)
@@ -48,6 +54,31 @@ title_adjust(struct buf_wri *title)
   }
 }
 
+static uint32_t *
+title_build(struct buf_wri *output)
+{
+  uint8_t al;
+  unsigned char *src = output->base;
+  int i, counter = 64000;
+  int hi, lo;
+  uint32_t *pixels;
+
+  pixels = malloc((GAME_WIDTH * GAME_HEIGHT) * sizeof(uint32_t));
+  for (i = 0; i < counter; i += 2) {
+
+    al = *src++;
+
+    /* Each nibble represents a color */
+    /* for example 0x82 represents color 8 then color 2. */
+    hi = (al >> 4) & 0xf;
+    lo = al & 0xf;
+
+    pixels[i] = vga_palette[hi];
+    pixels[i + 1] = vga_palette[lo];
+  }
+  return pixels;
+}
+
 static void
 run_title(void)
 {
@@ -55,6 +86,9 @@ run_title(void)
   struct buf_rdr *title_rdr;
   struct buf_wri *title_wri;
   unsigned int uncompressed_sz;
+  uint32_t *pixels;
+  int done = 0;
+  SDL_Event event;
 
   if (resource_load(RESOURCE_TITLE, &title_res) != 0)
     return;
@@ -70,7 +104,26 @@ run_title(void)
   title_adjust(title_wri);
 
   dump_hex(title_wri->base, 32);
+  pixels = title_build(title_wri);
 
+  display_draw_pixels(pixels, GAME_WIDTH * sizeof(uint32_t));
+
+  SDL_Delay(1000);
+
+  while (!done) {
+
+    SDL_WaitEvent(&event);
+    switch (event.type) {
+    case SDL_QUIT:
+      done = 1;
+      break;
+    case SDL_KEYDOWN:
+      done = 1;
+      break;
+    }
+  }
+
+  free(pixels);
   buf_wri_free(title_wri);
   buf_rdr_free(title_rdr);
   free(title_res.bytes);
@@ -86,7 +139,7 @@ main(int argc, char *argv[])
     goto done;
   }
 
-  if (display_start() != 0) {
+  if (display_start(GAME_WIDTH, GAME_HEIGHT) != 0) {
     goto done;
   }
 
