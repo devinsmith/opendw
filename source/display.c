@@ -58,7 +58,7 @@ display_start(int game_width, int game_height)
     return -1;
   }
 
-  if ((main_window = SDL_CreateWindow("DragonWars",
+  if ((main_window = SDL_CreateWindow("OpenDW",
     SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
     WIN_WIDTH, WIN_HEIGHT,
     SDL_WINDOW_RESIZABLE)) == NULL) {
