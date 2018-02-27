@@ -19,7 +19,10 @@
 
 /* Resource file maps to "data1" and "data2" files. */
 enum resource_section {
-  RESOURCE_TITLE = 0x1D
+  RESOURCE_TITLE0 = 0x18,
+  RESOURCE_TITLE1 = 0x19,
+  RESOURCE_TITLE2 = 0x1A,
+  RESOURCE_TITLE3 = 0x1D
 };
 
 struct resource {

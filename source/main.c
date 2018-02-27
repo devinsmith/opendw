@@ -90,7 +90,7 @@ run_title(void)
   int done = 0;
   SDL_Event event;
 
-  if (resource_load(RESOURCE_TITLE, &title_res) != 0)
+  if (resource_load(RESOURCE_TITLE3, &title_res) != 0)
     return;
 
   title_rdr = buf_rdr_init(title_res.bytes, title_res.len);
