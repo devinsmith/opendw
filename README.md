@@ -10,4 +10,7 @@ This game can be purchased at [GOG](https://www.gog.com/game/dragon_wars).
 - Original data files (DATA1 and DATA2).
 - SDL2.
 
+# Screenshot
+
+![Title screen](img/dw.png)
 
