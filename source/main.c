@@ -19,11 +19,12 @@
 
 #include <SDL.h>
 
-#include <bufio.h>
-#include <compress.h>
-#include <display.h>
-#include <resource.h>
-#include <utils.h>
+#include "bufio.h"
+#include "compress.h"
+#include "display.h"
+#include "offsets.h"
+#include "resource.h"
+#include "utils.h"
 
 /* Original Dragon Wars resoluation */
 #define GAME_WIDTH 320
