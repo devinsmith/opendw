@@ -140,6 +140,8 @@ main(int argc, char *argv[])
     goto done;
   }
 
+  init_offsets();
+
   if (display_start(GAME_WIDTH, GAME_HEIGHT) != 0) {
     goto done;
   }
