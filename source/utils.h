@@ -17,6 +17,8 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
+#include <stddef.h> /* size_t */
+
 void dump_hex(void *vp, size_t len);
 
 #endif /* __UTILS_H__ */
