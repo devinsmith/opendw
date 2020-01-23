@@ -25,6 +25,7 @@
 #include "offsets.h"
 #include "resource.h"
 #include "utils.h"
+#include "viewport.h"
 
 /* Original Dragon Wars resoluation */
 #define GAME_WIDTH 320
@@ -147,6 +148,7 @@ main(int argc, char *argv[])
   }
 
   run_title();
+  draw_viewport();
 
 done:
   rm_exit();
