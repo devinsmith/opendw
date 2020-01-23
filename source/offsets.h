@@ -17,6 +17,9 @@
 #ifndef DW_OFFSETS_H
 #define DW_OFFSETS_H
 
+#include <stdint.h>
+
 void init_offsets();
+uint16_t get_offset(int pos);
 
 #endif /* DW_OFFSETS_H */

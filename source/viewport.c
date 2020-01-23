@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 
+#include "offsets.h"
 #include "viewport.h"
 
 struct viewport_data {
@@ -105,13 +106,27 @@ struct viewport_data viewports[] = {
   }
 };
 
+/* D88 */
+static void process_quadrant(const struct viewport_data *d)
+{
+  int newx, newy;
+  uint16_t offset;
+
+  newx = d->xpos >> 1;
+  newy = d->ypos << 1;
+  printf("%02x %02x, %02x, %02x\n", d->xpos, d->ypos, newx, newy);
+  offset = get_offset(d->ypos);
+  offset += newx;
+  printf("Offset: %04x\n", offset);
+}
+
 void draw_viewport()
 {
   /* Iterate backwards like DW does */
   int vidx = 3;
   while (vidx >= 0) {
     const struct viewport_data *p = &viewports[vidx];
-    printf("%02x %02x\n", p->xpos, p->ypos);
+    process_quadrant(p);
     vidx--;
   }
 }

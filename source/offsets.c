@@ -35,3 +35,7 @@ void init_offsets()
 //  dump_hex(offsets, 2 * 0x88);
 }
 
+uint16_t get_offset(int pos)
+{
+  return offsets[pos];
+}
