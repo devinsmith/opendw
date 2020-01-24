@@ -20,10 +20,10 @@
 #include <stdint.h>
 
 extern const uint32_t vga_palette[];
+extern uint32_t *framebuffer;
 
 int display_start(int game_width, int game_height);
 void display_end(void);
-
-void display_draw_pixels(uint32_t *pixels, size_t pitch);
+void display_update(void);
 
 #endif /* __DW_DISPLAY_H__ */

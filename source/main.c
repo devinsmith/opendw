@@ -56,16 +56,14 @@ title_adjust(struct buf_wri *title)
   }
 }
 
-static uint32_t *
+static void
 title_build(struct buf_wri *output)
 {
   uint8_t al;
   unsigned char *src = output->base;
   int i, counter = 64000;
   int hi, lo;
-  uint32_t *pixels;
 
-  pixels = malloc((GAME_WIDTH * GAME_HEIGHT) * sizeof(uint32_t));
   for (i = 0; i < counter; i += 2) {
 
     al = *src++;
@@ -75,10 +73,9 @@ title_build(struct buf_wri *output)
     hi = (al >> 4) & 0xf;
     lo = al & 0xf;
 
-    pixels[i] = vga_palette[hi];
-    pixels[i + 1] = vga_palette[lo];
+    framebuffer[i] = vga_palette[hi];
+    framebuffer[i + 1] = vga_palette[lo];
   }
-  return pixels;
 }
 
 static void
@@ -88,7 +85,6 @@ run_title(void)
   struct buf_rdr *title_rdr;
   struct buf_wri *title_wri;
   unsigned int uncompressed_sz;
-  uint32_t *pixels;
   int done = 0;
   SDL_Event event;
 
@@ -106,11 +102,9 @@ run_title(void)
   title_adjust(title_wri);
 
   dump_hex(title_wri->base, 32);
-  pixels = title_build(title_wri);
+  title_build(title_wri);
 
-  display_draw_pixels(pixels, GAME_WIDTH * sizeof(uint32_t));
-
-  SDL_Delay(1000);
+  display_update();
 
   while (!done) {
 
@@ -125,7 +119,6 @@ run_title(void)
     }
   }
 
-  free(pixels);
   buf_wri_free(title_wri);
   buf_rdr_free(title_rdr);
   free(title_res.bytes);

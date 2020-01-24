@@ -23,7 +23,8 @@
 
 #define WIN_WIDTH 640
 #define WIN_HEIGHT 400
-
+#define VGA_WIDTH 320
+#define VGA_HEIGHT 200
 
 static SDL_Window *main_window = NULL;
 static SDL_Renderer *renderer = NULL;
@@ -48,6 +49,9 @@ const uint32_t vga_palette[] = {
   0xFFFF00, /* YELLOW */
   0xFFFFFF, /* WHITE */
 };
+
+/* Represents 0xA0000 (0xA000:0000) memory, but in 32 bit for SDL */
+uint32_t *framebuffer;
 
 int
 display_start(int game_width, int game_height)
@@ -80,12 +84,20 @@ display_start(int game_width, int game_height)
     return -1;
   }
 
+  if ((framebuffer = calloc(VGA_WIDTH * VGA_HEIGHT,
+    sizeof(uint32_t))) == NULL) {
+    fprintf(stderr, "Framebuffer could not be allocated.\n");
+    return -1;
+  }
+
   return 0;
 }
 
 void
 display_end(void)
 {
+  free(framebuffer);
+
   if (texture != NULL) {
     SDL_DestroyTexture(texture);
   }
@@ -101,9 +113,9 @@ display_end(void)
 }
 
 void
-display_draw_pixels(uint32_t *pixels, size_t pitch)
+display_update(void)
 {
-  SDL_UpdateTexture(texture, NULL, pixels, pitch);
+  SDL_UpdateTexture(texture, NULL, framebuffer, VGA_WIDTH * sizeof(uint32_t));
   SDL_RenderClear(renderer);
   SDL_RenderCopy(renderer, texture, NULL, NULL);
   SDL_RenderPresent(renderer);
