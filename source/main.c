@@ -143,6 +143,22 @@ main(int argc, char *argv[])
   run_title();
   draw_viewport();
 
+  // Game loop
+  int loop_end = 0;
+  while (!loop_end) {
+
+    SDL_Event event;
+    SDL_WaitEvent(&event);
+    switch (event.type) {
+    case SDL_QUIT:
+      loop_end = 1;
+      break;
+    case SDL_KEYDOWN:
+      loop_end = 1;
+      break;
+    }
+  }
+
 done:
   rm_exit();
   display_end();

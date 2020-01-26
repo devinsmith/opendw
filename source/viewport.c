@@ -15,9 +15,13 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 
+#include "display.h"
 #include "offsets.h"
+#include "tables.h"
 #include "viewport.h"
+#include "utils.h"
 
 struct viewport_data {
   int xpos;
@@ -107,7 +111,7 @@ struct viewport_data viewports[] = {
 };
 
 /* D88 */
-static void process_quadrant(const struct viewport_data *d)
+static void process_quadrant(const struct viewport_data *d, unsigned char *data)
 {
   int newx, newy;
   uint16_t offset;
@@ -118,15 +122,62 @@ static void process_quadrant(const struct viewport_data *d)
   offset = get_offset(d->ypos);
   offset += newx;
   printf("Offset: %04x\n", offset);
+  unsigned char *p = data + offset;
+  unsigned char *q = d->data;
+  for (int i = 0; i < d->numruns; i++) {
+    for (int j = 0; j < d->runlength; j++) {
+      unsigned char val = *q;
+      unsigned char dval = *p;
+
+      dval = dval & get_and_table(val);
+      dval = dval | get_or_table(val);
+
+      printf("(%02x %02x) ", dval, val);
+      *p = dval;
+      p++;
+      q++;
+    }
+    offset += 0x50;
+    p = data + offset;
+    printf("\n");
+  }
 }
 
 void draw_viewport()
 {
+  unsigned char *data = calloc(sizeof(unsigned char), 0x50 * 0x88);
+
   /* Iterate backwards like DW does */
   int vidx = 3;
   while (vidx >= 0) {
     const struct viewport_data *p = &viewports[vidx];
-    process_quadrant(p);
+    process_quadrant(p, data);
     vidx--;
   }
+
+#if 0
+  // 0x88 x 0x50
+  dump_hex(data, 0x2a80);
+  uint8_t al;
+  unsigned char *src = data;
+  int i, counter = 0x2a80 + 0xA10;
+  int hi, lo;
+
+  for (i = 0xA10; i < counter; i += 2) {
+
+    al = *src++;
+
+    /* Each nibble represents a color */
+    /* for example 0x82 represents color 8 then color 2. */
+    hi = (al >> 4) & 0xf;
+    lo = al & 0xf;
+
+    framebuffer[i] = vga_palette[hi];
+    framebuffer[i + 1] = vga_palette[lo];
+  }
+
+  display_update();
+#endif
+
+  free(data);
 }
