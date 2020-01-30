@@ -145,7 +145,11 @@ static void process_quadrant(const struct viewport_data *d, unsigned char *data)
 
 void draw_viewport()
 {
-  unsigned char *data = calloc(sizeof(unsigned char), 0x50 * 0x88);
+  int rows = 0x88;
+  int cols = 0x50;
+  int dest = 0x10;
+
+  unsigned char *data = calloc(sizeof(unsigned char), rows * cols);
 
   /* Iterate backwards like DW does */
   int vidx = 3;
@@ -155,29 +159,25 @@ void draw_viewport()
     vidx--;
   }
 
-#if 0
   // 0x88 x 0x50
-  dump_hex(data, 0x2a80);
-  uint8_t al;
   unsigned char *src = data;
-  int i, counter = 0x2a80 + 0xA10;
-  int hi, lo;
+  for (int y = 0; y < rows; y++) {
+    uint16_t fb_off = get_drawing_offset(dest) + 0x10;
+    for (int x = 0; x < cols; x++) {
+      uint8_t al = *src++;
+      int hi, lo;
 
-  for (i = 0xA10; i < counter; i += 2) {
+      /* Each nibble represents a color */
+      /* for example 0x82 represents color 8 then color 2. */
+      hi = (al >> 4) & 0xf;
+      lo = al & 0xf;
 
-    al = *src++;
-
-    /* Each nibble represents a color */
-    /* for example 0x82 represents color 8 then color 2. */
-    hi = (al >> 4) & 0xf;
-    lo = al & 0xf;
-
-    framebuffer[i] = vga_palette[hi];
-    framebuffer[i + 1] = vga_palette[lo];
+      framebuffer[fb_off++] = vga_palette[hi];
+      framebuffer[fb_off++] = vga_palette[lo];
+    }
+    dest++;
   }
-
   display_update();
-#endif
 
   free(data);
 }
