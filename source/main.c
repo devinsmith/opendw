@@ -124,11 +124,36 @@ run_title(void)
   free(title_res.bytes);
 }
 
+int check_file(const char *fname)
+{
+  FILE *fp = fopen(fname, "rb");
+  if (fp == NULL) {
+    fprintf(stderr, "Failed to open %s. Can't proceed.\n", fname);
+    return 0;
+  }
+  fclose(fp);
+  return 1;
+}
+
+int
+check_files(void)
+{
+  /* We only check for the existance of data1, data2, and dragon.com.
+   * We can't do signature checks on these files yet because they are actually
+   * modified by the game (yes even dragon.com writes data back into itself).
+   */
+
+  return check_file("dragon.com") &&
+    check_file("data1") &&
+    check_file("data2");
+}
+
 int
 main(int argc, char *argv[])
 {
-  /* XXX: We need to do a pre-flight check and make sure all the files
-   * that we are going to use are in place. Maybe RM can do it. */
+  if (check_files() == 0) {
+    return -1;
+  }
 
   if (rm_init() != 0) {
     goto done;
