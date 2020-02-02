@@ -9,8 +9,12 @@ Original game engine by [Rebecca Ann Heineman](http://www.burgerbecky.com/).
 This game can be purchased at [GOG](https://www.gog.com/game/dragon_wars).
 
 # Prerequisites
+- Executable (DRAGON.COM).
 - Original data files (DATA1 and DATA2).
 - SDL2.
+
+Under Linux/Unix operating systems, this engine expects that the original game
+files should be all lowercase (e.g. DRAGON.COM -> dragon.com).
 
 # Screenshot
 
