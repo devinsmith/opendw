@@ -116,3 +116,25 @@ resource_load(enum resource_section sec, struct resource *res)
   return 0;
 }
 
+unsigned char *com_extract(size_t off, size_t sz)
+{
+  unsigned char *ptr;
+  FILE *fp;
+
+  fp = fopen("dragon.com", "rb");
+  if (fp == NULL)
+    return NULL;
+
+  ptr = malloc(sz);
+  if (ptr == NULL)
+    return NULL;
+
+  fseek(fp, off, SEEK_SET);
+  if (fread(ptr, 1, sz, fp) != sz) {
+    free(ptr);
+    return NULL;
+  }
+
+  fclose(fp);
+  return ptr;
+}

@@ -17,6 +17,8 @@
 #ifndef DW_VIEWPORT_H
 #define DW_VIEWPORT_H
 
+void viewport_load();
 void draw_viewport();
+void viewport_clean();
 
 #endif /* DW_VIEWPORT_H */

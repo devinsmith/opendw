@@ -35,4 +35,6 @@ void rm_exit(void);
 
 int resource_load(enum resource_section sec, struct resource *out);
 
+unsigned char *com_extract(size_t off, size_t sz);
+
 #endif /* __DW_RESOURCE_H__ */
