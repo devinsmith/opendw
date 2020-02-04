@@ -14,11 +14,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef DW_VIEWPORT_H
-#define DW_VIEWPORT_H
+#ifndef DW_UI_H
+#define DW_UI_H
 
 void viewport_load();
 void draw_viewport();
 void viewport_clean();
 
-#endif /* DW_VIEWPORT_H */
+#endif /* DW_UI_H */

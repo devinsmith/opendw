@@ -25,7 +25,7 @@
 #include "offsets.h"
 #include "resource.h"
 #include "utils.h"
-#include "viewport.h"
+#include "ui.h"
 
 /* Original Dragon Wars resoluation */
 #define GAME_WIDTH 320

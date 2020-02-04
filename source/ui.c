@@ -21,7 +21,7 @@
 #include "offsets.h"
 #include "resource.h"
 #include "tables.h"
-#include "viewport.h"
+#include "ui.h"
 #include "utils.h"
 
 struct viewport_data {

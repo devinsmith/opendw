@@ -3,7 +3,7 @@
 .PHONY: all clean
 
 SRCS = bufio.c compress.c display.c main.c offsets.c resource.c tables.c \
-			 utils.c viewport.c
+			 ui.c utils.c
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)
 
