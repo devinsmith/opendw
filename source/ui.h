@@ -17,8 +17,9 @@
 #ifndef DW_UI_H
 #define DW_UI_H
 
-void viewport_load();
+void ui_load();
 void draw_viewport();
-void viewport_clean();
+void draw_something();
+void ui_clean();
 
 #endif /* DW_UI_H */

@@ -166,7 +166,9 @@ main(int argc, char *argv[])
   }
 
   run_title();
+  ui_load();
   draw_viewport();
+  draw_something();
 
   // Game loop
   int loop_end = 0;
@@ -183,6 +185,8 @@ main(int argc, char *argv[])
       break;
     }
   }
+
+  ui_clean();
 
 done:
   rm_exit();

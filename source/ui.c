@@ -34,6 +34,14 @@ struct viewport_data {
   unsigned char *data;
 };
 
+struct pic_data {
+  int runlenth;
+  int numruns;
+  int unknown1;
+  int unknown2;
+  unsigned char *data;
+};
+
 static int loaded = 0;
 
 struct viewport_data viewports[] = {
@@ -53,6 +61,10 @@ struct viewport_data viewports[] = {
     0x98, 0x7B, 0x04, 0x0D, 0x00, 0x00,
     NULL
   }
+};
+
+struct pic_data bottom_bricks = {
+  0xA0, 0x10, 0x00, 0xB8, NULL
 };
 
 /* D88 */
@@ -96,10 +108,6 @@ void draw_viewport()
 
   unsigned char *data = calloc(sizeof(unsigned char), rows * cols);
 
-  if (!loaded) {
-    viewport_load();
-  }
-
   /* Iterate backwards like DW does */
   int vidx = 3;
   while (vidx >= 0) {
@@ -131,7 +139,34 @@ void draw_viewport()
   free(data);
 }
 
-void viewport_load()
+void draw_something()
+{
+  uint16_t offset = bottom_bricks.unknown2;
+  printf("%04x\n", offset);
+  uint16_t starting_off = get_drawing_offset(offset);
+  uint16_t fb_off = starting_off;
+  printf("%04x\n", fb_off);
+  unsigned char *src = bottom_bricks.data;
+  for (int y = 0; y < 0x10; y++) {
+    for (int x = 0; x < 0xa0; x++) {
+      uint8_t al = *src++;
+      int hi, lo;
+
+      /* Each nibble represents a color */
+      /* for example 0x82 represents color 8 then color 2. */
+      hi = (al >> 4) & 0xf;
+      lo = al & 0xf;
+
+      framebuffer[fb_off++] = vga_palette[hi];
+      framebuffer[fb_off++] = vga_palette[lo];
+    }
+    starting_off += 0x140;
+    fb_off = starting_off;
+  }
+  display_update();
+}
+
+void ui_load()
 {
   /* Viewport data is stored in the dragon.com file */
   viewports[0].data = com_extract(0x665c, 4 * 0xA);
@@ -139,13 +174,16 @@ void viewport_load()
   viewports[2].data = com_extract(0x66B4, 4 * 0xD);
   viewports[3].data = com_extract(0x66EC, 4 * 0xD);
 
+  bottom_bricks.data = com_extract(0x6A3A, 0xA00);
   loaded = 1;
 }
 
-void viewport_clean()
+void ui_clean()
 {
   free(viewports[0].data);
   free(viewports[1].data);
   free(viewports[2].data);
   free(viewports[3].data);
+
+  free(bottom_bricks.data);
 }
