@@ -26,6 +26,8 @@
 static unsigned char data1_hdr[768];
 static struct buf_rdr *header_rdr = NULL;
 
+#define COM_ORG_START 0x100
+
 static int
 load_data1_header(void)
 {
@@ -116,10 +118,21 @@ resource_load(enum resource_section sec, struct resource *res)
   return 0;
 }
 
+/* The DOS COM executable format sets the origin by default at 0x100. So when
+ * extracting from COM files we subtract this from the offset.
+ *
+ * Quite a few assets/resources are actually embedded within the DRAGON.COM
+ * file, so we extract them with this function. */
 unsigned char *com_extract(size_t off, size_t sz)
 {
   unsigned char *ptr;
   FILE *fp;
+
+  if (off < COM_ORG_START) {
+    fprintf(stderr, "Invalid offset specified, too low!\n");
+    return NULL;
+  }
+  off -= COM_ORG_START;
 
   fp = fopen("dragon.com", "rb");
   if (fp == NULL)

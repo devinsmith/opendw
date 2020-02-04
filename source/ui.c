@@ -35,8 +35,8 @@ struct viewport_data {
 };
 
 struct pic_data {
-  int runlenth;
-  int numruns;
+  int width;
+  int height;
   int unknown1;
   int unknown2;
   unsigned char *data;
@@ -169,12 +169,12 @@ void draw_something()
 void ui_load()
 {
   /* Viewport data is stored in the dragon.com file */
-  viewports[0].data = com_extract(0x665c, 4 * 0xA);
-  viewports[1].data = com_extract(0x6688, 4 * 0xA);
-  viewports[2].data = com_extract(0x66B4, 4 * 0xD);
-  viewports[3].data = com_extract(0x66EC, 4 * 0xD);
+  viewports[0].data = com_extract(0x6758 + 4, 4 * 0xA);
+  viewports[1].data = com_extract(0x6784 + 4, 4 * 0xA);
+  viewports[2].data = com_extract(0x67B0 + 4, 4 * 0xD);
+  viewports[3].data = com_extract(0x67E8 + 4, 4 * 0xD);
 
-  bottom_bricks.data = com_extract(0x6A3A, 0xA00);
+  bottom_bricks.data = com_extract(0x6B36 + 4, 0xA00);
   loaded = 1;
 }
 
