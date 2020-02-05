@@ -103,7 +103,7 @@ void draw_viewport()
 {
   int rows = 0x88;
   int cols = 0x50;
-  int dest = 0x10;
+  int dest = 0x8;
 
   unsigned char *data = calloc(sizeof(unsigned char), rows * cols);
 
