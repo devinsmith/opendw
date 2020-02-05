@@ -168,7 +168,7 @@ main(int argc, char *argv[])
   run_title();
   ui_load();
   draw_viewport();
-  draw_something();
+  ui_draw();
 
   // Game loop
   int loop_end = 0;

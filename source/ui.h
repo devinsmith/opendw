@@ -19,7 +19,7 @@
 
 void ui_load();
 void draw_viewport();
-void draw_something();
+void ui_draw();
 void ui_clean();
 
 #endif /* DW_UI_H */

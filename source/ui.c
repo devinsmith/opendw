@@ -37,8 +37,8 @@ struct viewport_data {
 struct pic_data {
   int width;
   int height;
-  int unknown1;
-  int unknown2;
+  int offset_delta;
+  int offset_idx;
   unsigned char *data;
 };
 
@@ -63,9 +63,8 @@ struct viewport_data viewports[] = {
   }
 };
 
-struct pic_data bottom_bricks = {
-  0xA0, 0x10, 0x00, 0xB8, NULL
-};
+#define UI_PIECE_COUNT 10
+struct pic_data ui_pieces[UI_PIECE_COUNT];
 
 /* D88 */
 static void process_quadrant(const struct viewport_data *d, unsigned char *data)
@@ -139,16 +138,16 @@ void draw_viewport()
   free(data);
 }
 
-void draw_something()
+void draw_ui_piece(const struct pic_data *pic)
 {
-  uint16_t offset = bottom_bricks.unknown2;
-  printf("%04x\n", offset);
-  uint16_t starting_off = get_drawing_offset(offset);
+  printf("Offset (idx): %04x\n", pic->offset_idx);
+  uint16_t starting_off = get_drawing_offset(pic->offset_idx);
+  starting_off += (pic->offset_delta * 4);
   uint16_t fb_off = starting_off;
   printf("%04x\n", fb_off);
-  unsigned char *src = bottom_bricks.data;
-  for (int y = 0; y < 0x10; y++) {
-    for (int x = 0; x < 0xa0; x++) {
+  unsigned char *src = pic->data;
+  for (int y = 0; y < pic->height; y++) {
+    for (int x = 0; x < pic->width; x++) {
       uint8_t al = *src++;
       int hi, lo;
 
@@ -166,6 +165,13 @@ void draw_something()
   display_update();
 }
 
+void ui_draw()
+{
+  for (size_t ui_idx = 0; ui_idx < UI_PIECE_COUNT; ui_idx++) {
+    draw_ui_piece(&ui_pieces[ui_idx]);
+  }
+}
+
 void ui_load()
 {
   /* Viewport data is stored in the dragon.com file */
@@ -174,7 +180,25 @@ void ui_load()
   viewports[2].data = com_extract(0x67B0 + 4, 4 * 0xD);
   viewports[3].data = com_extract(0x67E8 + 4, 4 * 0xD);
 
-  bottom_bricks.data = com_extract(0x6B36 + 4, 0xA00);
+  unsigned char *ui_piece_offsets = com_extract(0x6AE0, UI_PIECE_COUNT * 2);
+  printf("UI Pieces:\n");
+  dump_hex(ui_piece_offsets, UI_PIECE_COUNT * 2);
+  for (size_t ui_idx = 0; ui_idx < UI_PIECE_COUNT; ui_idx++) {
+    uint16_t ui_off = *ui_piece_offsets++;
+    ui_off += *ui_piece_offsets++ << 8;
+    printf("Offset: %04x\n", ui_off);
+    /* Next 4 bytes are encoded into pic data */
+    unsigned char *piece_struct = com_extract(ui_off, 4);
+    unsigned char *org = piece_struct;
+    ui_pieces[ui_idx].width = *piece_struct++;
+    ui_pieces[ui_idx].height = *piece_struct++;
+    ui_pieces[ui_idx].offset_delta = *piece_struct++;
+    ui_pieces[ui_idx].offset_idx = *piece_struct;
+    free(org);
+    ui_pieces[ui_idx].data = com_extract(ui_off + 4,
+        ui_pieces[ui_idx].width * ui_pieces[ui_idx].height);
+  }
+
   loaded = 1;
 }
 
@@ -185,5 +209,7 @@ void ui_clean()
   free(viewports[2].data);
   free(viewports[3].data);
 
-  free(bottom_bricks.data);
+  for (size_t ui_idx = 0; ui_idx < UI_PIECE_COUNT; ui_idx++) {
+    free(ui_pieces[ui_idx].data);
+  }
 }
