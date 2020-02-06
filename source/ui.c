@@ -138,6 +138,7 @@ void draw_viewport()
   free(data);
 }
 
+/* 0x3679 */
 void draw_ui_piece(const struct pic_data *pic)
 {
   printf("Offset (idx): %04x\n", pic->offset_idx);
