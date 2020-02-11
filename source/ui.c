@@ -38,7 +38,7 @@ struct pic_data {
   int width;
   int height;
   int offset_delta;
-  int offset_idx;
+  int offset_idx; // Starting line.
   unsigned char *data;
 };
 
@@ -181,6 +181,7 @@ static void draw_solid_color(uint8_t color, uint16_t offset,
   //display_update();
 }
 
+/* 0x26E9 */
 void ui_draw()
 {
   for (size_t ui_idx = 0; ui_idx < 10; ui_idx++) {

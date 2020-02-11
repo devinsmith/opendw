@@ -16,8 +16,16 @@
 
 #include "tables.h"
 
+/* These are framebuffer offsets by line with each line being increased
+ * by 320 (Width = 320 pixels).
+ * So line 0 = 0x0000, line 1 = 0x140 (320), line 2 = 0x280 (640) and so
+ * forth.
+ *
+ * The original dragon.com has these embedded into the COM file at 0xAEB2
+ * maybe because it didn't want to deal with multiplication (?). We copy them
+ * here in order to authentically match the original executable. */
 /* 0xAEB2 - 0xB041 (400 bytes) */
-uint16_t drawing_insets[200] = {
+uint16_t framebuffer_line_offsets[200] = {
   0x0000, 0x0140, 0x0280, 0x03C0, 0x0500, 0x0640, // 0xAEB2-0xAEBD
   0x0780, 0x08C0, 0x0A00, 0x0B40, 0x0C80, 0x0DC0, // 0xAEBE-0xAEC9
   0x0F00, 0x1040, 0x1180, 0x12C0, 0x1400, 0x1540, // 0xAECA-0xAED5
@@ -136,7 +144,7 @@ uint8_t get_or_table(uint8_t offset)
   return or_table[offset];
 }
 
-uint16_t get_drawing_offset(uint8_t offset)
+uint16_t get_drawing_offset(uint8_t index)
 {
-  return drawing_insets[offset];
+  return framebuffer_line_offsets[index];
 }
