@@ -63,7 +63,7 @@ struct viewport_data viewports[] = {
   }
 };
 
-#define UI_PIECE_COUNT 10
+#define UI_PIECE_COUNT 0x1E
 struct pic_data ui_pieces[UI_PIECE_COUNT];
 
 /* D88 */
@@ -116,6 +116,7 @@ void draw_viewport()
   }
 
   // 0x88 x 0x50
+  /* see 0x1060 */
   unsigned char *src = data;
   for (int y = 0; y < rows; y++) {
     uint16_t fb_off = get_drawing_offset(dest) + 0x10;
@@ -166,11 +167,38 @@ void draw_ui_piece(const struct pic_data *pic)
   display_update();
 }
 
+/* 0x36C8 */
+static void draw_solid_color(uint8_t color, uint16_t offset,
+    uint16_t inset, uint16_t count)
+{
+  uint16_t fb_off = get_drawing_offset(offset);
+  inset = inset << 2;
+  fb_off += inset;
+  for (uint16_t i = 0; i < count; i++) {
+    framebuffer[fb_off++] = vga_palette[color];
+    framebuffer[fb_off++] = vga_palette[color];
+  }
+  //display_update();
+}
+
 void ui_draw()
 {
-  for (size_t ui_idx = 0; ui_idx < UI_PIECE_COUNT; ui_idx++) {
+  for (size_t ui_idx = 0; ui_idx < 10; ui_idx++) {
     draw_ui_piece(&ui_pieces[ui_idx]);
   }
+  /* Draw solid colors */
+  /* Not the most ideal piece of code, but this is what dragon.com does. */
+  /* clear out for character list */
+  for (uint16_t i = 0x20; i < 0x90; i++) {
+    draw_solid_color(0, i, 0x36, 0x30);
+  }
+  display_update();
+
+  /* Working on upper header */
+  draw_ui_piece(&ui_pieces[0x1B]);
+  draw_ui_piece(&ui_pieces[0x1C]);
+  draw_ui_piece(&ui_pieces[0x1D]);
+
 }
 
 void ui_load()
@@ -187,7 +215,7 @@ void ui_load()
   for (size_t ui_idx = 0; ui_idx < UI_PIECE_COUNT; ui_idx++) {
     uint16_t ui_off = *ui_piece_offsets++;
     ui_off += *ui_piece_offsets++ << 8;
-    printf("Offset: %04x\n", ui_off);
+    printf("Piece: %zu Offset: %04x\n", ui_idx, ui_off);
     /* Next 4 bytes are encoded into pic data */
     unsigned char *piece_struct = com_extract(ui_off, 4);
     unsigned char *org = piece_struct;
