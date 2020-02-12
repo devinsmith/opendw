@@ -144,7 +144,7 @@ uint8_t get_or_table(uint8_t offset)
   return or_table[offset];
 }
 
-uint16_t get_drawing_offset(uint8_t index)
+uint16_t get_line_offset(uint8_t index)
 {
   return framebuffer_line_offsets[index];
 }

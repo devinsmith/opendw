@@ -38,7 +38,7 @@ struct pic_data {
   int width;
   int height;
   int offset_delta;
-  int offset_idx; // Starting line.
+  uint8_t y_pos; // Starting line.
   unsigned char *data;
 };
 
@@ -103,7 +103,7 @@ void draw_viewport()
 {
   int rows = 0x88;
   int cols = 0x50;
-  int dest = 0x8;
+  int line_num = 8;
 
   unsigned char *data = calloc(sizeof(unsigned char), rows * cols);
 
@@ -119,7 +119,7 @@ void draw_viewport()
   /* see 0x1060 */
   unsigned char *src = data;
   for (int y = 0; y < rows; y++) {
-    uint16_t fb_off = get_drawing_offset(dest) + 0x10;
+    uint16_t fb_off = get_line_offset(line_num) + 0x10;
     for (int x = 0; x < cols; x++) {
       uint8_t al = *src++;
       int hi, lo;
@@ -132,7 +132,7 @@ void draw_viewport()
       framebuffer[fb_off++] = vga_palette[hi];
       framebuffer[fb_off++] = vga_palette[lo];
     }
-    dest++;
+    line_num++;
   }
   display_update();
 
@@ -142,11 +142,10 @@ void draw_viewport()
 /* 0x3679 */
 void draw_ui_piece(const struct pic_data *pic)
 {
-  printf("Offset (idx): %04x\n", pic->offset_idx);
-  uint16_t starting_off = get_drawing_offset(pic->offset_idx);
+  uint16_t starting_off = get_line_offset(pic->y_pos);
   starting_off += (pic->offset_delta * 4);
   uint16_t fb_off = starting_off;
-  printf("%04x\n", fb_off);
+  printf("Line number: %d - FB offset: 0x%04x\n", pic->y_pos, fb_off);
   unsigned char *src = pic->data;
   for (int y = 0; y < pic->height; y++) {
     for (int x = 0; x < pic->width; x++) {
@@ -168,10 +167,10 @@ void draw_ui_piece(const struct pic_data *pic)
 }
 
 /* 0x36C8 */
-static void draw_solid_color(uint8_t color, uint16_t offset,
+static void draw_solid_color(uint8_t color, uint8_t line_num,
     uint16_t inset, uint16_t count)
 {
-  uint16_t fb_off = get_drawing_offset(offset);
+  uint16_t fb_off = get_line_offset(line_num);
   inset = inset << 2;
   fb_off += inset;
   for (uint16_t i = 0; i < count; i++) {
@@ -190,7 +189,7 @@ void ui_draw()
   /* Draw solid colors */
   /* Not the most ideal piece of code, but this is what dragon.com does. */
   /* clear out for character list */
-  for (uint16_t i = 0x20; i < 0x90; i++) {
+  for (uint8_t i = 0x20; i < 0x90; i++) {
     draw_solid_color(0, i, 0x36, 0x30);
   }
   display_update();
@@ -223,7 +222,7 @@ void ui_load()
     ui_pieces[ui_idx].width = *piece_struct++;
     ui_pieces[ui_idx].height = *piece_struct++;
     ui_pieces[ui_idx].offset_delta = *piece_struct++;
-    ui_pieces[ui_idx].offset_idx = *piece_struct;
+    ui_pieces[ui_idx].y_pos = *piece_struct;
     free(org);
     ui_pieces[ui_idx].data = com_extract(ui_off + 4,
         ui_pieces[ui_idx].width * ui_pieces[ui_idx].height);
