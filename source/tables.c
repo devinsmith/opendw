@@ -153,7 +153,7 @@ void unload_chr_table()
 
 const unsigned char *get_chr(int chr_num)
 {
-  chr_num = chr_num & 0x7F;
+  chr_num = chr_num & 0x7F; // Max number of characters.
   chr_num = chr_num << 3; // each character is 8 bytes.
 
   return chr_table + chr_num;
