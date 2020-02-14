@@ -14,7 +14,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdlib.h>
+
 #include "tables.h"
+#include "resource.h"
 
 /* These are framebuffer offsets by line with each line being increased
  * by 320 (Width = 320 pixels).
@@ -133,6 +136,28 @@ unsigned char or_table[256] = {
   0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF0, 0xF7, // 0xB442-0xB449
   0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF  // 0xB44A-0xB451
 };
+
+/* Stored in dragon.com at 0xBF52-0xC352
+ * See ui.c for how this is interpreted. */
+static unsigned char *chr_table;
+
+void load_chr_table()
+{
+  chr_table = com_extract(0xBF52, 0x400);
+}
+
+void unload_chr_table()
+{
+  free(chr_table);
+}
+
+const unsigned char *get_chr(int chr_num)
+{
+  chr_num = chr_num & 0x7F;
+  chr_num = chr_num << 3;
+
+  return chr_table + chr_num;
+}
 
 uint8_t get_and_table(uint8_t offset)
 {
