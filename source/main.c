@@ -24,6 +24,7 @@
 #include "display.h"
 #include "offsets.h"
 #include "resource.h"
+#include "tables.h"
 #include "utils.h"
 #include "ui.h"
 
@@ -160,6 +161,7 @@ main(int argc, char *argv[])
   }
 
   init_offsets();
+  load_chr_table();
 
   if (display_start(GAME_WIDTH, GAME_HEIGHT) != 0) {
     goto done;
@@ -189,6 +191,7 @@ main(int argc, char *argv[])
   ui_clean();
 
 done:
+  unload_chr_table();
   rm_exit();
   display_end();
   return 0;
