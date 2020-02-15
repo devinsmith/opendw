@@ -63,7 +63,7 @@ struct viewport_data viewports[] = {
   }
 };
 
-#define UI_PIECE_COUNT 0x1E
+#define UI_PIECE_COUNT 0x2B
 struct pic_data ui_pieces[UI_PIECE_COUNT];
 
 /* D88 */
@@ -217,7 +217,9 @@ void ui_draw()
   }
   display_update();
 
-  /* Working on upper header */
+  /* Draw upper header.
+   * Need to understand why we draw 1B, 1C, 1D then
+   * 28, 29, 2A */
   draw_ui_piece(&ui_pieces[0x1B]);
   draw_ui_piece(&ui_pieces[0x1C]);
   draw_ui_piece(&ui_pieces[0x1D]);
@@ -230,6 +232,9 @@ void ui_draw()
   for (int i = 0; i < 10; i++) {
     draw_character(i + 7, 0, get_chr(loading[i]));
   }
+  draw_ui_piece(&ui_pieces[0x28]);
+  draw_ui_piece(&ui_pieces[0x29]);
+  draw_ui_piece(&ui_pieces[0x2A]);
   display_update();
 
 }
