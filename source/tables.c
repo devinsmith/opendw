@@ -138,7 +138,12 @@ unsigned char or_table[256] = {
 };
 
 /* Stored in dragon.com at 0xBF52-0xC352
- * See ui.c for how this is interpreted. */
+ * See ui.c for how this is interpreted.
+ *
+ * Alpha characters are OR'd with 0x80 like below:
+ * 0xC1 = 'A' | 0x80
+ * 0xE1 = 'a' | 0x80
+ * */
 static unsigned char *chr_table;
 
 void load_chr_table()
