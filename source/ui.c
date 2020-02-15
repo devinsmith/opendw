@@ -180,6 +180,29 @@ static void draw_solid_color(uint8_t color, uint8_t line_num,
   //display_update();
 }
 
+static void draw_character(int x, int y, const unsigned char *chdata)
+{
+  int color = 0xF;
+
+  uint16_t fb_off = get_line_offset(y);
+  fb_off += (x << 3); // 8 bytes
+
+  for (int j = 0; j < 8; j++) {
+    uint8_t bl;
+    uint8_t ch = *chdata++;
+    for (int i = 0; i < 8; i++) {
+      color = 0;
+      bl = (ch << 1) & 0xFF;
+      if (bl < ch) {
+        color = 0xF;
+      }
+      ch = bl;
+      framebuffer[fb_off++] = vga_palette[color];
+    }
+    fb_off += 0x138;
+  }
+}
+
 /* 0x26E9 */
 void ui_draw()
 {
@@ -198,6 +221,16 @@ void ui_draw()
   draw_ui_piece(&ui_pieces[0x1B]);
   draw_ui_piece(&ui_pieces[0x1C]);
   draw_ui_piece(&ui_pieces[0x1D]);
+
+  // draw "Loading..."
+  // 0x288B
+  const unsigned char loading[] = {
+    0xCC, 0xEF, 0xE1, 0xE4, 0xE9, 0xEE, 0xE7, 0xAE, 0xAE, 0xAE
+  };
+  for (int i = 0; i < 10; i++) {
+    draw_character(i + 7, 0, get_chr(loading[i]));
+  }
+  display_update();
 
 }
 
