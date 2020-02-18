@@ -203,6 +203,37 @@ static void draw_character(int x, int y, const unsigned char *chdata)
   }
 }
 
+// 0x3380
+static void draw_pattern(int starting_line, int ending_line, int x_pos, int dx)
+{
+  int num_lines = ending_line - starting_line;
+  dx = dx - x_pos;
+  printf("Number of lines: %d\n", num_lines);
+  printf("Line: %d\n", starting_line);
+  printf("DX: 0x%04x\n", dx);
+
+  uint16_t ax = 0xFFFF; // word_359A
+
+  // 0x3417
+  x_pos = x_pos << 3;
+  dx = dx << 2;
+  ax = ax & 0x0F0F;
+  printf("x_pos: %d\n", x_pos);
+  printf("DX: 0x%04x\n", dx);
+
+  for (int i = 0; i < num_lines; i++) {
+    uint16_t fb_off = get_line_offset(starting_line);
+    fb_off += x_pos;
+    for (int j = 0; j < dx; j++) {
+      int color1 = (ax >> 8) & 0xFF;
+      int color2 = (ax & 0x00FF);
+      framebuffer[fb_off++] = vga_palette[color1];
+      framebuffer[fb_off++] = vga_palette[color2];
+    }
+    starting_line++;
+  }
+}
+
 /* 0x26E9 */
 void ui_draw()
 {
@@ -235,6 +266,9 @@ void ui_draw()
   draw_ui_piece(&ui_pieces[0x28]);
   draw_ui_piece(&ui_pieces[0x29]);
   draw_ui_piece(&ui_pieces[0x2A]);
+
+  // 0x3380
+  draw_pattern(0x98, 0xB8, 0x01, 0x27);
   display_update();
 
 }
