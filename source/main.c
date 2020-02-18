@@ -172,6 +172,18 @@ main(int argc, char *argv[])
   draw_viewport();
   ui_draw();
 
+  // 0x1A6
+  // Loads into 0x1887:0000
+  struct resource other_res;
+  if (resource_load(RESOURCE_UNKNOWN, &other_res) != 0)
+  {
+    printf("Failed to load unknown resource\n");
+  }
+  printf("Resource bytes: %zu\n", other_res.len);
+  dump_hex(other_res.bytes, 0x80);
+
+
+
   // Game loop
   int loop_end = 0;
   while (!loop_end) {
