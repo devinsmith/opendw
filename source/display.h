@@ -19,11 +19,19 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern const uint32_t vga_palette[];
 extern uint32_t *framebuffer;
 
 int display_start(int game_width, int game_height);
 void display_end(void);
 void display_update(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __DW_DISPLAY_H__ */

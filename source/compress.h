@@ -19,6 +19,10 @@
 
 #include <bufio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*!***************************************************************************
  * @short  Decompress data1 content.
  * @param  input  Buffered reader to read from.
@@ -27,5 +31,9 @@
  * @return
  *****************************************************************************/
 void decompress_data1(struct buf_rdr *input, struct buf_wri *output, int size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __COMPRESS_H__ */

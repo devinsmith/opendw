@@ -17,9 +17,17 @@
 #ifndef DW_UI_H
 #define DW_UI_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void ui_load();
 void draw_viewport();
 void ui_draw();
 void ui_clean();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* DW_UI_H */

@@ -17,6 +17,10 @@
 #ifndef __DW_RESOURCE_H__
 #define __DW_RESOURCE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Resource file maps to "data1" and "data2" files. */
 enum resource_section {
   RESOURCE_UNKNOWN = 0x00,
@@ -37,5 +41,9 @@ void rm_exit(void);
 int resource_load(enum resource_section sec, struct resource *out);
 
 unsigned char *com_extract(size_t off, size_t sz);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __DW_RESOURCE_H__ */

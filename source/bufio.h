@@ -21,6 +21,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct buf_wri {
   unsigned char *base;
   size_t len;
@@ -50,6 +54,10 @@ uint16_t buf_get16le(struct buf_rdr *r);
 uint16_t buf_get16be(struct buf_rdr *r);
 uint32_t buf_get32le(struct buf_rdr *r);
 uint32_t buf_get32be(struct buf_rdr *r);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __DW_BUFIO_H__ */
 

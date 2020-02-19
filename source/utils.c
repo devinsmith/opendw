@@ -21,6 +21,8 @@
 
 #include <ctype.h>
 
+#include "utils.h"
+
 void dump_hex(void *vp, size_t len)
 {
   char linebuf[80];

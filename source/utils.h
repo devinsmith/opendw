@@ -19,6 +19,14 @@
 
 #include <stddef.h> /* size_t */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void dump_hex(void *vp, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __UTILS_H__ */

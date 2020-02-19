@@ -19,7 +19,15 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void init_offsets();
 uint16_t get_offset(int pos);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* DW_OFFSETS_H */
