@@ -28,18 +28,74 @@
  *
  * Lots of global variables here until we can figure out how they are used. */
 
-
+uint8_t byte_1CE3 = 0;
+uint8_t byte_1CE4 = 0;
+uint8_t byte_1CE5 = 0;
+uint8_t byte_288A = 0;
 uint8_t byte_3AE1 = 0;
 uint16_t word_3AE2 = 0;
+void (*word_3163)();
 
 // x86 CPU registers
 uint16_t cpu_ax;
+
+unsigned char *cpu_pc;
+
+static void sub_1CF8();
+static void sub_1D8A();
+static void sub_27FA();
 
 // 0x3B0E
 static void op_01(void)
 {
   word_3AE2 = (cpu_ax & 0xFF00);
   byte_3AE1 = (cpu_ax & 0xFF00) >> 8;
+}
+
+static void sub_1C79(void)
+{
+  byte_1CE3 = 0;
+  byte_1CE4 = 0;
+  sub_1CF8();
+}
+
+static void sub_1CF8()
+{
+  sub_1D8A();
+}
+
+static void sub_1D8A()
+{
+  int counter = 5;
+  int al = 0;
+  int dl = byte_1CE3;
+  dl--;
+  if (dl < 0) {
+    dl = *cpu_pc;
+    printf("DL=0x%02x\n", dl);
+    byte_1CE5 = dl;
+    dl = 7;
+    cpu_pc++;
+  }
+  // 0x1D96
+
+}
+
+static void sub_27E3()
+{
+  word_3163 = sub_27FA;
+  byte_288A = 0;
+  sub_1C79();
+}
+
+static void sub_27FA()
+{
+}
+
+// 0x482D
+static void op_7B(void)
+{
+  sub_27E3();
 }
 
 void run_engine()
@@ -54,23 +110,26 @@ void run_engine()
   printf("Resource bytes: %zu\n", code_res.len);
   dump_hex(code_res.bytes, 0x80);
 
-  unsigned char *op_code = code_res.bytes;
+  cpu_pc = code_res.bytes;
 
   int done = 0;
   cpu_ax = 0;
 
   // 0x3AA0
   while (!done) {
-    switch (*op_code) {
+    uint8_t op_code = *cpu_pc++;
+    switch (op_code) {
     case 0x01:
       op_01();
       break;
+    case 0x7B:
+      op_7B();
+      break;
     default:
-      printf("Unhandled op code: 0x%02X\n", *op_code);
+      printf("Unhandled op code: 0x%02X\n", op_code);
       done = 1;
       break;
     }
-    op_code++;
   }
 }
 
