@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "display.h"
 #include "offsets.h"
@@ -65,6 +66,14 @@ struct viewport_data viewports[] = {
 
 #define UI_PIECE_COUNT 0x2B
 struct pic_data ui_pieces[UI_PIECE_COUNT];
+
+// 0x288B
+// Initially "Loading..."
+unsigned char ui_header_loading[] = {
+  0xCC, 0xEF, 0xE1, 0xE4, 0xE9, 0xEE, 0xE7, 0xAE, 0xAE, 0xAE
+};
+
+struct ui_header ui_header;
 
 /* D88 */
 static void process_quadrant(const struct viewport_data *d, unsigned char *data)
@@ -255,13 +264,8 @@ void ui_draw()
   draw_ui_piece(&ui_pieces[0x1C]);
   draw_ui_piece(&ui_pieces[0x1D]);
 
-  // draw "Loading..."
-  // 0x288B
-  const unsigned char loading[] = {
-    0xCC, 0xEF, 0xE1, 0xE4, 0xE9, 0xEE, 0xE7, 0xAE, 0xAE, 0xAE
-  };
-  for (int i = 0; i < 10; i++) {
-    draw_character(i + 7, 0, get_chr(loading[i]));
+  for (int i = 0; i < ui_header.len; i++) {
+    draw_character(i + 7, 0, get_chr(ui_header.data[i]));
   }
   draw_ui_piece(&ui_pieces[0x28]);
   draw_ui_piece(&ui_pieces[0x29]);
@@ -300,6 +304,8 @@ void ui_load()
         ui_pieces[ui_idx].width * ui_pieces[ui_idx].height);
   }
 
+  memcpy(ui_header.data, ui_header_loading, strlen("Loading..."));
+  ui_header.len = strlen("Loading...");
   loaded = 1;
 }
 

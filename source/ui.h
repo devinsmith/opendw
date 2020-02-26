@@ -21,6 +21,11 @@
 extern "C" {
 #endif
 
+struct ui_header {
+  int len; // 0x288A
+  unsigned char data[16]; // 0x288B
+};
+
 void ui_load();
 void draw_viewport();
 void ui_draw();
