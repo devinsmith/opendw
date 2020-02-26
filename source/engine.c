@@ -41,7 +41,7 @@ uint16_t cpu_ax;
 
 unsigned char *cpu_pc;
 
-static void sub_1CF8();
+static uint8_t sub_1CF8();
 static uint8_t sub_1D8A();
 static void sub_27FA();
 
@@ -72,24 +72,22 @@ unsigned char alphabet[] = {
   0xaa, 0xbf, 0xbc, 0xbe, 0xba, 0xbb, 0xad, 0xa5
 };
 
-static void sub_1CF8()
+static uint8_t sub_1CF8()
 {
-  int done = 0;
-  while (!done) {
+  while (1) {
     uint8_t ret = sub_1D8A();
     if (ret == 0) {
-      return;
+      return 0;
     } else if (ret < 0x1E) {
       // 0x1D0A
       // offset
       uint8_t al = alphabet[ret - 1];
       byte_1CE4 = byte_1CE4 >> 1;
-      if (byte_1CE4 < 0x40 || al < 0xE1 || al > 0xFA) {
-      } else {
+      if (byte_1CE4 >= 0x40 && al >= 0xE1 && al <= 0xFA) {
         al = al & 0xDF;
-        // test al, al (set sign flag)
       }
-
+      // test al, al
+      return al;
     } else if (ret == 0x1E) {
       // stc
       // rcr byte [byte_1CE4], 1
