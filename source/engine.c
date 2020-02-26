@@ -36,6 +36,16 @@ uint8_t byte_3AE1 = 0;
 uint16_t word_3AE2 = 0;
 void (*word_3163)();
 
+struct game_state {
+  int unknown1;
+  int unknown2;
+  int unknown3;
+  int unknown4;
+};
+
+// 0x3860
+struct game_state game_state;
+
 // x86 CPU registers
 uint16_t cpu_ax;
 
@@ -56,7 +66,27 @@ static void sub_1C79(void)
 {
   byte_1CE3 = 0;
   byte_1CE4 = 0;
-  sub_1CF8();
+  uint8_t ret = sub_1CF8(); // check for 0
+  if (ret == 0) {
+    // 1CE6
+    return;
+  }
+  if ((game_state.unknown4 & 0x80) == 0)
+  {
+    ret |= 0x80;
+    game_state.unknown4 = ret;
+    ret &= 0x7F;
+  }
+  // 1C9E
+  if (ret == 0xAF) {
+    // 0x1CAB
+  }
+  if (ret == 0xDC) {
+    // 0x1CAF
+  }
+
+
+
 }
 
 // 0x1D2A - 0x1D85
@@ -135,6 +165,7 @@ static void sub_27E3()
   sub_1C79();
 }
 
+// 0x27FA
 static void sub_27FA()
 {
 }
