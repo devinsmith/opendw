@@ -264,6 +264,7 @@ void ui_draw()
   draw_ui_piece(&ui_pieces[0x1C]);
   draw_ui_piece(&ui_pieces[0x1D]);
 
+  // XXX: Extract to seperate function.
   for (int i = 0; i < ui_header.len; i++) {
     draw_character(i + 7, 0, get_chr(ui_header.data[i]));
   }
@@ -319,4 +320,15 @@ void ui_clean()
   for (size_t ui_idx = 0; ui_idx < UI_PIECE_COUNT; ui_idx++) {
     free(ui_pieces[ui_idx].data);
   }
+}
+
+void ui_header_reset()
+{
+  ui_header.len = 0;
+}
+
+// 0x27FA (not really, but close enough).
+void ui_header_set_byte(unsigned char byte)
+{
+  ui_header.data[ui_header.len++] = byte;
 }

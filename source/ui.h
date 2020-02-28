@@ -31,6 +31,9 @@ void draw_viewport();
 void ui_draw();
 void ui_clean();
 
+void ui_header_reset();
+void ui_header_set_byte(unsigned char byte);
+
 #ifdef __cplusplus
 }
 #endif
