@@ -28,7 +28,13 @@
  *
  * Lots of global variables here until we can figure out how they are used. */
 
-uint8_t byte_1CE3 = 0;
+uint8_t byte_1CE1 = 0;
+uint8_t byte_1CE2 = 0;
+
+// 0x1CE3
+// Represents number of bits that are left over to read from byte_1CE5.
+uint8_t num_bits = 0;
+
 uint8_t byte_1CE4 = 0;
 uint8_t byte_1CE5 = 0;
 uint8_t byte_288A = 0;
@@ -37,10 +43,15 @@ uint16_t word_3AE2 = 0;
 void (*word_3163)();
 
 struct game_state {
-  int unknown1;
-  int unknown2;
-  int unknown3;
-  int unknown4;
+  uint8_t unknown1;
+  uint8_t unknown2;
+  uint8_t unknown3;
+  uint8_t unknown4;
+  uint8_t unknown5;
+  uint8_t unknown6;
+  uint8_t unknown7;
+  uint8_t unknown8;
+  uint8_t unknown9;
 };
 
 // 0x3860
@@ -54,6 +65,7 @@ unsigned char *cpu_pc;
 static uint8_t sub_1CF8();
 static uint8_t sub_1D8A();
 static void sub_27FA();
+static void sub_3150();
 
 // 0x3B0E
 static void op_01(void)
@@ -64,29 +76,30 @@ static void op_01(void)
 
 static void sub_1C79(void)
 {
-  byte_1CE3 = 0;
+  num_bits = 0;
+
   byte_1CE4 = 0;
-  uint8_t ret = sub_1CF8(); // check for 0
-  if (ret == 0) {
-    // 1CE6
-    return;
+  while (1) {
+    uint8_t ret = sub_1CF8(); // check for 0
+    if (ret == 0) {
+      // 1CE6
+      return;
+    }
+    if ((game_state.unknown8 & 0x80) == 0)
+    {
+      ret |= 0x80;
+      game_state.unknown8 = ret;
+      ret &= 0x7F;
+    }
+    // 1C9E
+    if (ret == 0xAF) {
+      // 0x1CAB
+    }
+    if (ret == 0xDC) {
+      // 0x1CAF
+    }
+    sub_3150();
   }
-  if ((game_state.unknown4 & 0x80) == 0)
-  {
-    ret |= 0x80;
-    game_state.unknown4 = ret;
-    ret &= 0x7F;
-  }
-  // 1C9E
-  if (ret == 0xAF) {
-    // 0x1CAB
-  }
-  if (ret == 0xDC) {
-    // 0x1CAF
-  }
-
-
-
 }
 
 // 0x1D2A - 0x1D85
@@ -127,11 +140,12 @@ static uint8_t sub_1CF8()
   }
 }
 
+// Extract 5 bits out of each byte.
 static uint8_t sub_1D8A()
 {
   int counter = 5;
   int al = 0;
-  int dl = byte_1CE3;
+  int dl = num_bits;
   while (counter > 0) {
     dl--;
     if (dl < 0) {
@@ -154,7 +168,7 @@ static uint8_t sub_1D8A()
     al += carry;
     counter--;
   }
-  byte_1CE3 = dl;
+  num_bits = dl;
   return al;
 }
 
@@ -167,6 +181,11 @@ static void sub_27E3()
 
 // 0x27FA
 static void sub_27FA()
+{
+}
+
+// 0x3150
+static void sub_3150()
 {
 }
 
