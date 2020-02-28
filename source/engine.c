@@ -19,6 +19,7 @@
 
 #include "engine.h"
 #include "resource.h"
+#include "ui.h"
 #include "utils.h"
 
 /* Represents the engine that Dragon wars runs.
@@ -37,10 +38,12 @@ uint8_t num_bits = 0;
 
 uint8_t byte_1CE4 = 0;
 uint8_t byte_1CE5 = 0;
-uint8_t byte_288A = 0;
 uint8_t byte_3AE1 = 0;
 uint16_t word_3AE2 = 0;
-void (*word_3163)();
+
+// The function signature for this function pointer is not entirely correct
+// but we'll figure it out as we decode more of DW.
+void (*word_3163)(unsigned char byte);
 
 struct game_state {
   uint8_t unknown1;
@@ -64,8 +67,10 @@ unsigned char *cpu_pc;
 
 static uint8_t sub_1CF8();
 static uint8_t sub_1D8A();
-static void sub_27FA();
-static void sub_3150();
+static void sub_3150(unsigned char byte);
+static void sub_316C();
+static void sub_3191(unsigned char byte);
+static void sub_280E();
 
 // 0x3B0E
 static void op_01(void)
@@ -98,7 +103,7 @@ static void sub_1C79(void)
     if (ret == 0xDC) {
       // 0x1CAF
     }
-    sub_3150();
+    sub_3150(ret);
   }
 }
 
@@ -172,21 +177,33 @@ static uint8_t sub_1D8A()
   return al;
 }
 
-static void sub_27E3()
+static void sub_3191(unsigned char byte)
 {
-  word_3163 = sub_27FA;
-  byte_288A = 0;
-  sub_1C79();
 }
 
-// 0x27FA
-static void sub_27FA()
+static void sub_316C()
 {
+  word_3163 = sub_3191;
+}
+
+static void sub_27E3()
+{
+  word_3163 = ui_header_set_byte;
+  ui_header_reset();
+  sub_1C79();
+  sub_316C();
+  sub_280E();
+}
+
+static void sub_280E()
+{
+  // XXX: Unknown.
 }
 
 // 0x3150
-static void sub_3150()
+static void sub_3150(unsigned char byte)
 {
+  word_3163(byte);
 }
 
 // 0x482D
@@ -197,6 +214,8 @@ static void op_7B(void)
 
 void run_engine()
 {
+  game_state.unknown8 = 0xFF;
+
   // 0x1A6
   // Loads into 0x1887:0000
   struct resource code_res;
