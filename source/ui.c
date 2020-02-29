@@ -65,6 +65,7 @@ struct viewport_data viewports[] = {
 };
 
 #define UI_PIECE_COUNT 0x2B
+#define UI_BRICK_FIRST_PICTURE 0x17
 struct pic_data ui_pieces[UI_PIECE_COUNT];
 
 // 0x288B
@@ -257,25 +258,41 @@ void ui_draw()
   }
   display_update();
 
-  /* Draw upper header.
-   * Need to understand why we draw 1B, 1C, 1D then
-   * 28, 29, 2A */
-  draw_ui_piece(&ui_pieces[0x1B]);
-  draw_ui_piece(&ui_pieces[0x1C]);
-  draw_ui_piece(&ui_pieces[0x1D]);
+  // Draw upper header.
+  //
+  // The header is drawn so that there are an appropriate number of
+  // bricks around it.
+  ui_header_draw();
 
-  // XXX: Extract to seperate function.
-  for (int i = 0; i < ui_header.len; i++) {
-    draw_character(i + 7, 0, get_chr(ui_header.data[i]));
-  }
-  draw_ui_piece(&ui_pieces[0x28]);
-  draw_ui_piece(&ui_pieces[0x29]);
-  draw_ui_piece(&ui_pieces[0x2A]);
+//  draw_ui_piece(&ui_pieces[0x28]);
+//  draw_ui_piece(&ui_pieces[0x29]);
+//  draw_ui_piece(&ui_pieces[0x2A]);
 
   // 0x3380
   draw_pattern(0x98, 0xB8, 0x01, 0x27);
   display_update();
 
+}
+
+// 0x2824
+void ui_header_draw()
+{
+  // Calculate label header starting position.
+  int header_start = sizeof(ui_header.data) - ui_header.len;
+  header_start = header_start >> 1;
+  header_start += 4;
+
+  for (int i = 4; i < header_start; i++) {
+    draw_ui_piece(&ui_pieces[i + UI_BRICK_FIRST_PICTURE]);
+  }
+
+  for (int i = 0; i < ui_header.len; i++) {
+    draw_character(i + header_start, 0, get_chr(ui_header.data[i]));
+  }
+
+  for (int i = ui_header.len + header_start; i < 0x14; i++) {
+    draw_ui_piece(&ui_pieces[i + UI_BRICK_FIRST_PICTURE]);
+  }
 }
 
 void ui_load()
