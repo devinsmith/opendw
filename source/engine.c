@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "display.h"
 #include "engine.h"
 #include "resource.h"
 #include "ui.h"
@@ -99,9 +100,13 @@ static void sub_1C79(void)
     // 1C9E
     if (ret == 0xAF) {
       // 0x1CAB
+      printf("Unhandled engine code: 0x1CAB\n");
+      return;
     }
     if (ret == 0xDC) {
       // 0x1CAF
+      printf("Unhandled engine code: 0x1CAF\n");
+      return;
     }
     sub_3150(ret);
   }
@@ -197,7 +202,10 @@ static void sub_27E3()
 
 static void sub_280E()
 {
+  // check length against previous length (max length?)
   // XXX: Unknown.
+  ui_header_draw();
+  display_update();
 }
 
 // 0x3150
@@ -207,7 +215,7 @@ static void sub_3150(unsigned char byte)
 }
 
 // 0x482D
-static void op_7B(void)
+static void read_header_bytes(void)
 {
   sub_27E3();
 }
@@ -239,7 +247,7 @@ void run_engine()
       op_01();
       break;
     case 0x7B:
-      op_7B();
+      read_header_bytes();
       break;
     default:
       printf("Unhandled op code: 0x%02X\n", op_code);
