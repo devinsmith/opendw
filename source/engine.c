@@ -64,6 +64,8 @@ struct game_state game_state;
 // x86 CPU registers
 uint16_t cpu_ax;
 
+uint16_t old_si;
+
 unsigned char *cpu_pc;
 
 static uint8_t sub_1CF8();
@@ -78,6 +80,18 @@ static void op_01(void)
 {
   word_3AE2 = (cpu_ax & 0xFF00);
   byte_3AE1 = (cpu_ax & 0xFF00) >> 8;
+}
+
+// 0x41C0
+static void op_53(void)
+{
+  // CALL function ?
+  // Save source index.
+  // Jump to new source index.
+  int old_si = *cpu_pc++;
+  old_si += *cpu_pc++ << 8;
+  printf("0x%04x\n", old_si);
+
 }
 
 static void sub_1C79(void)
@@ -245,6 +259,9 @@ void run_engine()
     switch (op_code) {
     case 0x01:
       op_01();
+      break;
+    case 0x53:
+      op_53();
       break;
     case 0x7B:
       read_header_bytes();
