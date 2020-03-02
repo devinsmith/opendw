@@ -92,16 +92,38 @@ static void op_01(void)
   byte_3AE1 = (cpu.ax & 0xFF00) >> 8;
 }
 
+// 0x3B67
+static void op_09(void)
+{
+  uint8_t al = *cpu.pc++;
+  word_3AE2 = al;
+  if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8))
+  {
+    // set high byte
+    al = *cpu.pc++;
+    word_3AE2 = (al << 8) | (word_3AE2 & 0xFF);
+  }
+}
+
 // 0x41C0
 static void op_53(void)
 {
   // CALL function ?
   // Save source index.
   // Jump to new source index.
-  int old_si = *cpu.pc++;
-  old_si += *cpu.pc++ << 8;
-  printf("0x%04x\n", old_si);
+  uint16_t new_address = *cpu.pc++;
+  new_address += *cpu.pc++ << 8;
+  printf("New address: 0x%04x\n", new_address);
+  uint16_t existing_address = cpu.pc - cpu.base_pc;
+  printf("Existing address: 0x%04x\n", existing_address);
 
+  cpu.sp[cpu.stack_index++] = existing_address;
+  cpu.pc = cpu.base_pc + new_address;
+}
+
+// 0x493E
+static void op_86(void)
+{
 }
 
 static void sub_1C79(void)
@@ -271,11 +293,17 @@ void run_engine()
     case 0x01:
       op_01();
       break;
+    case 0x09:
+      op_09();
+      break;
     case 0x53:
       op_53();
       break;
     case 0x7B:
       read_header_bytes();
+      break;
+//    case 0x86:
+//      op_86();
       break;
     default:
       printf("Unhandled op code: 0x%02X\n", op_code);
