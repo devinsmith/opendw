@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "display.h"
 #include "engine.h"
@@ -61,12 +62,21 @@ struct game_state {
 // 0x3860
 struct game_state game_state;
 
-// x86 CPU registers
-uint16_t cpu_ax;
+// virtual CPU
+struct virtual_cpu {
+  // registers
+  uint16_t ax;
 
-uint16_t old_si;
+  // stack
+  uint16_t sp[16]; // stacks;
+  int stack_index;
 
-unsigned char *cpu_pc;
+  // program counter
+  unsigned char *pc;
+  unsigned char *base_pc;
+};
+
+struct virtual_cpu cpu;
 
 static uint8_t sub_1CF8();
 static uint8_t sub_1D8A();
@@ -78,8 +88,8 @@ static void sub_280E();
 // 0x3B0E
 static void op_01(void)
 {
-  word_3AE2 = (cpu_ax & 0xFF00);
-  byte_3AE1 = (cpu_ax & 0xFF00) >> 8;
+  word_3AE2 = (cpu.ax & 0xFF00);
+  byte_3AE1 = (cpu.ax & 0xFF00) >> 8;
 }
 
 // 0x41C0
@@ -88,8 +98,8 @@ static void op_53(void)
   // CALL function ?
   // Save source index.
   // Jump to new source index.
-  int old_si = *cpu_pc++;
-  old_si += *cpu_pc++ << 8;
+  int old_si = *cpu.pc++;
+  old_si += *cpu.pc++ << 8;
   printf("0x%04x\n", old_si);
 
 }
@@ -173,11 +183,11 @@ static uint8_t sub_1D8A()
   while (counter > 0) {
     dl--;
     if (dl < 0) {
-      dl = *cpu_pc;
+      dl = *cpu.pc;
       printf("DL=0x%02x\n", dl);
       byte_1CE5 = dl;
       dl = 7;
-      cpu_pc++;
+      cpu.pc++;
     }
     // 0x1D96
     uint8_t tmp = byte_1CE5;
@@ -237,6 +247,7 @@ static void read_header_bytes(void)
 void run_engine()
 {
   game_state.unknown8 = 0xFF;
+  memset(&cpu, 0, sizeof(struct virtual_cpu));
 
   // 0x1A6
   // Loads into 0x1887:0000
@@ -248,14 +259,14 @@ void run_engine()
   printf("Resource bytes: %zu\n", code_res.len);
   dump_hex(code_res.bytes, 0x80);
 
-  cpu_pc = code_res.bytes;
+  cpu.pc = code_res.bytes;
+  cpu.base_pc = cpu.pc;
 
   int done = 0;
-  cpu_ax = 0;
 
   // 0x3AA0
   while (!done) {
-    uint8_t op_code = *cpu_pc++;
+    uint8_t op_code = *cpu.pc++;
     switch (op_code) {
     case 0x01:
       op_01();
