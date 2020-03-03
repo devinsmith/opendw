@@ -27,7 +27,8 @@ enum resource_section {
   RESOURCE_TITLE0 = 0x18,
   RESOURCE_TITLE1 = 0x19,
   RESOURCE_TITLE2 = 0x1A,
-  RESOURCE_TITLE3 = 0x1D
+  RESOURCE_TITLE3 = 0x1D,
+  RESOURCE_MAX
 };
 
 struct resource {
@@ -37,6 +38,9 @@ struct resource {
 
 int rm_init(void);
 void rm_exit(void);
+
+int resource_load_index(enum resource_section sec);
+struct resource* resource_get_index(int index);
 
 int resource_load(enum resource_section sec, struct resource *out);
 

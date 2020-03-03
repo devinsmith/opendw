@@ -26,6 +26,8 @@
 static unsigned char data1_hdr[768];
 static struct buf_rdr *header_rdr = NULL;
 
+static struct resource* resource_cache[128];
+
 #define COM_ORG_START 0x100
 
 static int
@@ -70,6 +72,29 @@ rm_exit(void)
   if (header_rdr != NULL) {
     buf_rdr_free(header_rdr);
   }
+}
+
+int resource_load_index(enum resource_section sec)
+{
+  if (sec >= RESOURCE_MAX) {
+    return -1;
+  }
+
+  int index = 0;
+  for (index = 0; index < 128; index++) {
+    if (resource_cache[index] == NULL) {
+      struct resource *cache_miss = malloc(sizeof(struct resource));
+      resource_load(sec, cache_miss);
+      resource_cache[index] = cache_miss;
+      return index;
+    }
+  }
+  return -1;
+}
+
+struct resource* resource_get_index(int index)
+{
+  return resource_cache[index];
 }
 
 int
