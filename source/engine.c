@@ -42,21 +42,14 @@ uint8_t byte_1CE4 = 0;
 uint8_t byte_1CE5 = 0;
 uint8_t byte_3AE1 = 0;
 uint16_t word_3AE2 = 0;
+uint16_t word_3AE4 = 0;
 
 // The function signature for this function pointer is not entirely correct
 // but we'll figure it out as we decode more of DW.
 void (*word_3163)(unsigned char byte);
 
 struct game_state {
-  uint8_t unknown1;
-  uint8_t unknown2;
-  uint8_t unknown3;
-  uint8_t unknown4;
-  uint8_t unknown5;
-  uint8_t unknown6;
-  uint8_t unknown7;
-  uint8_t unknown8;
-  uint8_t unknown9;
+  unsigned char unknown[256];
 };
 
 // 0x3860
@@ -66,6 +59,10 @@ struct game_state game_state;
 struct virtual_cpu {
   // registers
   uint16_t ax;
+  uint16_t bx;
+  uint16_t cx;
+
+  uint16_t di;
 
   // stack
   uint16_t sp[16]; // stacks;
@@ -94,6 +91,7 @@ struct op_call_table {
   const char *src_offset;
 };
 
+// Not complete.
 struct op_call_table targets[] = {
   { op_00, "0x3B18" },
   { op_01, "0x3B0E" },
@@ -114,16 +112,68 @@ static void op_01()
   byte_3AE1 = (cpu.ax & 0xFF00) >> 8;
 }
 
+// 0x3B4A
+static void op_06()
+{
+  uint8_t al = *cpu.pc++;
+  word_3AE4 = al;
+}
+
 // 0x3B67
 static void op_09(void)
 {
   uint8_t al = *cpu.pc++;
   word_3AE2 = al;
-  if (byte_3AE1 != al)
+  if (byte_3AE1 != (cpu.ax >> 8))
   {
     // set high byte
     al = *cpu.pc++;
     word_3AE2 = (al << 8) | (word_3AE2 & 0xFF);
+  }
+}
+
+// 0x3BED
+static void op_0F(void)
+{
+  uint8_t al = *cpu.pc++;
+  cpu.bx = (cpu.ax & 0xFF00) | al;
+  // load di properly...
+  cpu.di = game_state.unknown[cpu.bx];
+
+  cpu.bx = (cpu.bx & 0xFF00) | game_state.unknown[cpu.bx];
+}
+
+// 0x3C2D
+static void op_11(void)
+{
+  uint8_t al = *cpu.pc++;
+  cpu.bx = (cpu.ax & 0xFF00) | al;
+  game_state.unknown[cpu.bx] = (cpu.ax & 0xFF00) >> 8;
+  if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
+    game_state.unknown[cpu.bx + 1] = (cpu.ax & 0xFF00) >> 8;
+  }
+}
+
+// 0x3C59
+static void op_12(void)
+{
+  uint8_t al = *cpu.pc++;
+  cpu.bx = (cpu.ax & 0xFF00) | al;
+  cpu.cx = word_3AE2;
+  if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
+    printf("TODO, 0x3C59\n");
+  }
+}
+
+// 0x3D5A
+static void op_1A(void)
+{
+  uint8_t al = *cpu.pc++;
+  cpu.di = (cpu.ax & 0xFF00) | al;
+  al = *cpu.pc++;
+  game_state.unknown[cpu.di] = al;
+  if (byte_3AE1 == ((cpu.ax & 0xFF00) >> 8)) {
+    return;
   }
 }
 
@@ -146,6 +196,8 @@ static void op_53(void)
 // 0x493E
 static void op_86(void)
 {
+  word_3AE2 = resource_load_index(word_3AE2);
+  word_3AE2 = word_3AE2 & byte_3AE1;
 }
 
 static void sub_1C79(void)
@@ -159,10 +211,10 @@ static void sub_1C79(void)
       // 1CE6
       return;
     }
-    if ((game_state.unknown8 & 0x80) == 0)
+    if ((game_state.unknown[8] & 0x80) == 0)
     {
       ret |= 0x80;
-      game_state.unknown8 = ret;
+      game_state.unknown[8] = ret;
       ret &= 0x7F;
     }
     // 1C9E
@@ -290,7 +342,7 @@ static void read_header_bytes(void)
 
 void run_engine()
 {
-  game_state.unknown8 = 0xFF;
+  game_state.unknown[8] = 0xFF;
   memset(&cpu, 0, sizeof(struct virtual_cpu));
 
   // 0x1A6
@@ -312,11 +364,29 @@ void run_engine()
   while (!done) {
     uint8_t op_code = *cpu.pc++;
     switch (op_code) {
+    case 0x00:
+      op_00();
+      break;
     case 0x01:
       op_01();
       break;
+    case 0x06:
+      op_06();
+      break;
     case 0x09:
       op_09();
+      break;
+    case 0x0F:
+      op_0F();
+      break;
+    case 0x11:
+      op_11();
+      break;
+    case 0x12:
+      op_12();
+      break;
+    case 0x1A:
+      op_1A();
       break;
     case 0x53:
       op_53();
@@ -324,8 +394,8 @@ void run_engine()
     case 0x7B:
       read_header_bytes();
       break;
-//    case 0x86:
-//      op_86();
+    case 0x86:
+      op_86();
       break;
     default:
       printf("Unhandled op code: 0x%02X\n", op_code);
