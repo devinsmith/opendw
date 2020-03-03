@@ -85,9 +85,31 @@ static void sub_316C();
 static void sub_3191(unsigned char byte);
 static void sub_280E();
 
-// 0x3B0E
-static void op_01(void)
+// Opcode calls.
+static void op_00();
+static void op_01();
+
+struct op_call_table {
+  void (*func)();
+  const char *src_offset;
+};
+
+struct op_call_table targets[] = {
+  { op_00, "0x3B18" },
+  { op_01, "0x3B0E" },
+  { NULL,  "0x3B1F" }
+};
+
+// 0x3B18
+static void op_00()
 {
+  byte_3AE1 = 0xFF;
+}
+
+// 0x3B0E
+static void op_01()
+{
+  // moves AH into two variables.
   word_3AE2 = (cpu.ax & 0xFF00);
   byte_3AE1 = (cpu.ax & 0xFF00) >> 8;
 }
@@ -97,7 +119,7 @@ static void op_09(void)
 {
   uint8_t al = *cpu.pc++;
   word_3AE2 = al;
-  if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8))
+  if (byte_3AE1 != al)
   {
     // set high byte
     al = *cpu.pc++;
