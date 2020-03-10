@@ -197,8 +197,9 @@ static void op_53(void)
 // 0x493E
 static void op_86(void)
 {
-  word_3AE2 = resource_load_index(word_3AE2);
-  word_3AE2 = word_3AE2 & byte_3AE1;
+  uint16_t ax = resource_load_index(word_3AE2);
+  uint8_t ah = (ax & 0xFF00) >> 8;
+  word_3AE2 = (ah & byte_3AE1) | (ax & 0x00FF);
 }
 
 static void sub_1C79(void)
