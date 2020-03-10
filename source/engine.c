@@ -160,6 +160,7 @@ static void op_12(void)
   uint8_t al = *cpu.pc++;
   cpu.bx = (cpu.ax & 0xFF00) | al;
   cpu.cx = word_3AE2;
+  game_state.unknown[cpu.bx] = (cpu.cx & 0xFF);
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
     printf("TODO, 0x3C59\n");
   }
@@ -347,22 +348,26 @@ void run_engine()
 
   // 0x1A6
   // Loads into 0x1887:0000
-  struct resource code_res;
-  if (resource_load(RESOURCE_UNKNOWN, &code_res) != 0)
+  struct resource *code_res = resource_load(RESOURCE_UNKNOWN);
+  if (code_res == NULL)
   {
     printf("Failed to load unknown resource\n");
+    return;
   }
-  printf("Resource bytes: %zu\n", code_res.len);
-  dump_hex(code_res.bytes, 0x80);
+  printf("Resource bytes: %zu\n", code_res->len);
+  dump_hex(code_res->bytes, 0x80);
 
-  cpu.pc = code_res.bytes;
+  cpu.pc = code_res->bytes;
   cpu.base_pc = cpu.pc;
 
   int done = 0;
+  uint8_t prev_op = 0;
+  uint8_t op_code = 0;
 
   // 0x3AA0
   while (!done) {
-    uint8_t op_code = *cpu.pc++;
+    prev_op = op_code;
+    op_code = *cpu.pc++;
     switch (op_code) {
     case 0x00:
       op_00();
@@ -398,7 +403,7 @@ void run_engine()
       op_86();
       break;
     default:
-      printf("Unhandled op code: 0x%02X\n", op_code);
+      printf("Unhandled op code: 0x%02X, last op:0x%02X\n", op_code, prev_op);
       done = 1;
       break;
     }

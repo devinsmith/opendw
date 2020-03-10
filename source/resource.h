@@ -32,6 +32,7 @@ enum resource_section {
 };
 
 struct resource {
+  enum resource_section section;
   unsigned char *bytes;
   size_t len;
 };
@@ -42,7 +43,7 @@ void rm_exit(void);
 int resource_load_index(enum resource_section sec);
 struct resource* resource_get_index(int index);
 
-int resource_load(enum resource_section sec, struct resource *out);
+struct resource* resource_load(enum resource_section sec);
 
 unsigned char *com_extract(size_t off, size_t sz);
 

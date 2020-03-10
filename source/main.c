@@ -83,17 +83,17 @@ title_build(struct buf_wri *output)
 static void
 run_title(void)
 {
-  struct resource title_res;
   struct buf_rdr *title_rdr;
   struct buf_wri *title_wri;
   unsigned int uncompressed_sz;
   int done = 0;
   SDL_Event event;
 
-  if (resource_load(RESOURCE_TITLE3, &title_res) != 0)
+  struct resource *title_res = resource_load(RESOURCE_TITLE3);
+  if (title_res == NULL)
     return;
 
-  title_rdr = buf_rdr_init(title_res.bytes, title_res.len);
+  title_rdr = buf_rdr_init(title_res->bytes, title_res->len);
 
   uncompressed_sz = buf_get16le(title_rdr);
   printf("Unc: 0x%04x\n", uncompressed_sz);
@@ -123,7 +123,6 @@ run_title(void)
 
   buf_wri_free(title_wri);
   buf_rdr_free(title_rdr);
-  free(title_res.bytes);
 }
 
 int check_file(const char *fname)
@@ -190,6 +189,20 @@ main(int argc, char *argv[])
   }
 
   run_engine();
+
+  while (!loop_end) {
+
+    SDL_Event event;
+    SDL_WaitEvent(&event);
+    switch (event.type) {
+    case SDL_QUIT:
+      loop_end = 1;
+      break;
+    case SDL_KEYDOWN:
+      loop_end = 1;
+      break;
+    }
+  }
 
   ui_clean();
 

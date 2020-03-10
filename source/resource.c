@@ -27,6 +27,7 @@ static unsigned char data1_hdr[768];
 static struct buf_rdr *header_rdr = NULL;
 
 static struct resource* resource_cache[128];
+static struct resource *resource_load_cache_miss(enum resource_section sec);
 
 #define COM_ORG_START 0x100
 
@@ -91,30 +92,55 @@ int resource_load_index(enum resource_section sec)
   int index = 0;
   for (index = 0; index < 128; index++) {
     if (resource_cache[index] == NULL) {
-      struct resource *cache_miss = malloc(sizeof(struct resource));
-      resource_load(sec, cache_miss);
-      resource_cache[index] = cache_miss;
+      resource_cache[index] = resource_load_cache_miss(sec);
       return index;
     }
   }
   return -1;
 }
 
-struct resource* resource_get_index(int index)
+struct resource* resource_load(enum resource_section sec)
+{
+  if (sec >= RESOURCE_MAX) {
+    return NULL;
+  }
+
+  // Loop through cache.
+  int index = 0;
+  for (index = 0; index < 128; index++) {
+    if (resource_cache[index] == NULL)
+      break;
+
+    if (resource_cache[index]->section == sec) {
+      return resource_cache[index];
+    }
+  }
+
+  if (index == 128)
+    return NULL;
+
+  // Not found.
+  resource_cache[index] = resource_load_cache_miss(sec);
+  return resource_cache[index];
+}
+
+struct resource* resource_get_by_index(int index)
 {
   return resource_cache[index];
 }
 
-int
-resource_load(enum resource_section sec, struct resource *res)
+static struct resource *
+resource_load_cache_miss(enum resource_section sec)
 {
   int i;
   unsigned int offset = sizeof(data1_hdr);
   FILE *fp;
   size_t n;
 
+  struct resource *res = malloc(sizeof(struct resource));
   if (res == NULL)
-    return -1;
+    return NULL;
+  res->section = sec;
 
   buf_reset(header_rdr);
   for (i = 0; i < sec; i++) {
@@ -130,25 +156,28 @@ resource_load(enum resource_section sec, struct resource *res)
   fp = fopen("data1", "rb");
   if (fp == NULL) {
     fprintf(stderr, "Failed to open data1 file.\n");
-    return -1;
+    free(res);
+    return NULL;
   }
 
   fseek(fp, offset, SEEK_SET);
   res->bytes = malloc(res->len);
   if (res->bytes == NULL) {
     fclose(fp);
-    return -1;
+    free(res);
+    return NULL;
   }
 
   n = fread(res->bytes, 1, res->len, fp);
   if (n != res->len) {
     free(res->bytes);
+    free(res);
     fclose(fp);
-    return -1;
+    return NULL;
   }
   fclose(fp);
 
-  return 0;
+  return res;
 }
 
 /* The DOS COM executable format sets the origin by default at 0x100. So when
