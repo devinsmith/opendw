@@ -72,6 +72,14 @@ rm_exit(void)
   if (header_rdr != NULL) {
     buf_rdr_free(header_rdr);
   }
+
+  // Clean up resource cache.
+  for (int i = 0; i < 128; i++) {
+    if (resource_cache[i] != NULL && resource_cache[i]->bytes != NULL) {
+      free(resource_cache[i]->bytes);
+      free(resource_cache[i]);
+    }
+  }
 }
 
 int resource_load_index(enum resource_section sec)
