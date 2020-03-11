@@ -41,7 +41,7 @@ int rm_init(void);
 void rm_exit(void);
 
 int resource_load_index(enum resource_section sec);
-struct resource* resource_get_index(int index);
+struct resource* resource_get_by_index(int index);
 
 struct resource* resource_load(enum resource_section sec);
 
