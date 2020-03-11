@@ -85,6 +85,8 @@ static void sub_280E();
 // Opcode calls.
 static void op_00();
 static void op_01();
+static void op_17();
+static void op_49();
 
 struct op_call_table {
   void (*func)();
@@ -140,7 +142,17 @@ static void op_0F(void)
   // load di properly...
   cpu.di = game_state.unknown[cpu.bx];
 
-  cpu.bx = (cpu.bx & 0xFF00) | game_state.unknown[cpu.bx];
+  cpu.bx = (cpu.bx & 0xFF00) | game_state.unknown[cpu.bx + 2];
+
+  struct resource *r = resource_get_by_index(cpu.bx);
+  dump_hex(r->bytes, 0x10);
+
+  cpu.di += word_3AE4;
+  cpu.ax = r->bytes[cpu.di];
+  cpu.ax += r->bytes[cpu.di + 1] << 8;
+
+  uint8_t ah = (cpu.ax & 0xFF00) >> 8;
+  word_3AE2 = (ah & byte_3AE1) | (cpu.ax & 0x00FF);
 }
 
 // 0x3C2D
@@ -166,6 +178,19 @@ static void op_12(void)
   }
 }
 
+// 0x3CEF
+static void op_17(void)
+{
+  uint8_t al = *cpu.pc++;
+  cpu.bx = (cpu.ax & 0xFF00) | al;
+  cpu.di = game_state.unknown[cpu.bx];
+  uint8_t bl = game_state.unknown[cpu.bx + 2];
+  printf("op17: %d\n", bl);
+  struct resource *r = resource_get_by_index(bl);
+  dump_hex(r->bytes, 0x10);
+  // XXX: Todo
+}
+
 // 0x3D5A
 static void op_1A(void)
 {
@@ -175,6 +200,22 @@ static void op_1A(void)
   game_state.unknown[cpu.di] = al;
   if (byte_3AE1 == ((cpu.ax & 0xFF00) >> 8)) {
     return;
+  }
+}
+
+// 0x4106
+static void op_49(void)
+{
+  // JMP function ?
+  word_3AE4--;
+  printf("op49: word: %d\n", word_3AE4);
+  if (word_3AE4 != 0xFF) {
+    uint16_t new_address = *cpu.pc++;
+    new_address += *cpu.pc++ << 8;
+    printf("(0x49) New address: 0x%04x\n", new_address);
+    uint16_t existing_address = cpu.pc - cpu.base_pc;
+    printf("Existing address: 0x%04x\n", existing_address);
+    cpu.pc = cpu.base_pc + new_address;
   }
 }
 
@@ -391,8 +432,14 @@ void run_engine()
     case 0x12:
       op_12();
       break;
+    case 0x17:
+      op_17();
+      break;
     case 0x1A:
       op_1A();
+      break;
+    case 0x49:
+      op_49();
       break;
     case 0x53:
       op_53();
