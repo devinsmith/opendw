@@ -23,7 +23,6 @@
 #include "compress.h"
 #include "display.h"
 #include "engine.h"
-#include "memmgr.h"
 #include "offsets.h"
 #include "resource.h"
 #include "tables.h"
@@ -90,9 +89,7 @@ run_title(void)
   int done = 0;
   SDL_Event event;
 
-  find_index_by_tag(RESOURCE_TITLE3);
-
-  struct resource *title_res = resource_load(RESOURCE_TITLE3);
+  const struct resource *title_res = resource_load(RESOURCE_TITLE3);
   if (title_res == NULL)
     return;
 

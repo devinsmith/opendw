@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Devin Smith <devin@devinsmith.net>
+ * Copyright (c) 2018-2020 Devin Smith <devin@devinsmith.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,8 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __DW_RESOURCE_H__
-#define __DW_RESOURCE_H__
+#ifndef DW_RESOURCE_H
+#define DW_RESOURCE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,18 +32,24 @@ enum resource_section {
 };
 
 struct resource {
-  enum resource_section section;
   unsigned char *bytes;
   size_t len;
+  // Seems to be one of these values:
+  // 0x00 - Not used, free spot.
+  // 0x01 - dynamically allocated, must be free'd
+  // ...  - ??? (not sure if values other than 0, 1, and 0xFF are used)
+  // 0xFF - Statically allocated
+  int usage_type;
+  int tag;
 };
 
 int rm_init(void);
 void rm_exit(void);
 
 int resource_load_index(enum resource_section sec);
-struct resource* resource_get_by_index(int index);
+const struct resource* resource_get_by_index(int index);
 
-struct resource* resource_load(enum resource_section sec);
+const struct resource* resource_load(enum resource_section sec);
 
 unsigned char *com_extract(size_t off, size_t sz);
 

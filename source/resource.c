@@ -26,10 +26,17 @@
 static unsigned char data1_hdr[768];
 static struct buf_rdr *header_rdr = NULL;
 
-static struct resource* resource_cache[128];
+static struct resource allocations[128] = { 0 };
 static struct resource *resource_load_cache_miss(enum resource_section sec);
 
-#define COM_ORG_START 0x100
+// Some random data to stick into a memory allocation.
+// This is not in the actual COM file.
+static unsigned char unknown_data[] = { 0x00, 0x01 };
+
+
+#ifndef nitems
+#define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
+#endif /* nitems */
 
 static int
 load_data1_header(void)
@@ -61,9 +68,66 @@ done:
   return rc;
 }
 
+/* 0x1348 */
+struct resource* game_memory_alloc(size_t nbytes, int marker, int tag)
+{
+  int i = 0;
+  struct resource *a;
+
+  for (i = 0; i < nitems(allocations); i++) {
+    a = &allocations[i];
+    if (a->usage_type == 0) {
+      break;
+    }
+  }
+
+  if (i == nitems(allocations))
+    return NULL;
+
+  a = &allocations[i];
+  a->bytes = malloc(nbytes);
+  if (a->bytes == NULL)
+    return NULL;
+
+  a->usage_type = marker;
+  a->len = nbytes;
+  a->tag = tag;
+
+  return a;
+}
+
+/* 0x12C0 inside dragon.com
+ * XXX: Rename this. */
+int find_index_by_tag(int tag)
+{
+  int i = 0;
+  for (i = 0; i < nitems(allocations); i++) {
+    struct resource *a = &allocations[i];
+    if (a->tag == tag && a->usage_type != 0) {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
 int
 rm_init(void)
 {
+  /* First two entries are some unknown data in the COM file, I think,
+   * but I'm not sure how they are used.
+   * For now we just load unknown_data and hope they aren't used. */
+  allocations[0].bytes = unknown_data;
+  allocations[0].tag = 0xFFFF;
+  allocations[0].usage_type = 0xFF;
+  allocations[0].len = 1;
+
+  allocations[1].bytes = unknown_data;
+  allocations[1].tag = 0xFFFF;
+  allocations[1].usage_type = 0xFF;
+  allocations[1].len = 0x0E00;
+
+  // first allocation will be saved at 0x02.
   return load_data1_header();
 }
 
@@ -75,10 +139,9 @@ rm_exit(void)
   }
 
   // Clean up resource cache.
-  for (int i = 0; i < 128; i++) {
-    if (resource_cache[i] != NULL && resource_cache[i]->bytes != NULL) {
-      free(resource_cache[i]->bytes);
-      free(resource_cache[i]);
+  for (int i = 0; i < nitems(allocations); i++) {
+    if (allocations[i].bytes != NULL && allocations[i].usage_type == 1) {
+      free(allocations[i].bytes);
     }
   }
 }
@@ -89,44 +152,28 @@ int resource_load_index(enum resource_section sec)
     return -1;
   }
 
-  int index = 0;
-  for (index = 0; index < 128; index++) {
-    if (resource_cache[index] == NULL) {
-      resource_cache[index] = resource_load_cache_miss(sec);
-      return index;
-    }
-  }
-  return -1;
+  return find_index_by_tag(sec);
 }
 
-struct resource* resource_load(enum resource_section sec)
+const struct resource* resource_load(enum resource_section sec)
 {
   if (sec >= RESOURCE_MAX) {
     return NULL;
   }
 
-  // Loop through cache.
-  int index = 0;
-  for (index = 0; index < 128; index++) {
-    if (resource_cache[index] == NULL)
-      break;
-
-    if (resource_cache[index]->section == sec) {
-      return resource_cache[index];
-    }
+  // Check cache.
+  int index = find_index_by_tag(sec);
+  if (index != -1) {
+    return &allocations[index];
   }
 
-  if (index == 128)
-    return NULL;
-
   // Not found.
-  resource_cache[index] = resource_load_cache_miss(sec);
-  return resource_cache[index];
+  return resource_load_cache_miss(sec);
 }
 
-struct resource* resource_get_by_index(int index)
+const struct resource* resource_get_by_index(int index)
 {
-  return resource_cache[index];
+  return &allocations[index];
 }
 
 static struct resource *
@@ -136,11 +183,7 @@ resource_load_cache_miss(enum resource_section sec)
   unsigned int offset = sizeof(data1_hdr);
   FILE *fp;
   size_t n;
-
-  struct resource *res = malloc(sizeof(struct resource));
-  if (res == NULL)
-    return NULL;
-  res->section = sec;
+  uint16_t len;
 
   buf_reset(header_rdr);
   for (i = 0; i < sec; i++) {
@@ -149,25 +192,19 @@ resource_load_cache_miss(enum resource_section sec)
       offset += header_val;
     }
   }
-  res->len = buf_get16le(header_rdr);
+  len = buf_get16le(header_rdr);
   printf("Section (0x%02x), Offset: 0x%04x Size: 0x%04x\n", sec, offset,
-    (unsigned int)res->len);
+    (unsigned int)len);
+
+  struct resource* res = game_memory_alloc(len, 1, sec);
 
   fp = fopen("data1", "rb");
   if (fp == NULL) {
     fprintf(stderr, "Failed to open data1 file.\n");
-    free(res);
     return NULL;
   }
 
   fseek(fp, offset, SEEK_SET);
-  res->bytes = malloc(res->len);
-  if (res->bytes == NULL) {
-    fclose(fp);
-    free(res);
-    return NULL;
-  }
-
   n = fread(res->bytes, 1, res->len, fp);
   if (n != res->len) {
     free(res->bytes);
@@ -185,6 +222,8 @@ resource_load_cache_miss(enum resource_section sec)
  *
  * Quite a few assets/resources are actually embedded within the DRAGON.COM
  * file, so we extract them with this function. */
+
+#define COM_ORG_START 0x100
 unsigned char *com_extract(size_t off, size_t sz)
 {
   unsigned char *ptr;

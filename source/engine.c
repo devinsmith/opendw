@@ -144,7 +144,7 @@ static void op_0F(void)
 
   cpu.bx = (cpu.bx & 0xFF00) | game_state.unknown[cpu.bx + 2];
 
-  struct resource *r = resource_get_by_index(cpu.bx);
+  const struct resource *r = resource_get_by_index(cpu.bx);
   dump_hex(r->bytes, 0x10);
 
   cpu.di += word_3AE4;
@@ -186,7 +186,7 @@ static void op_17(void)
   cpu.di = game_state.unknown[cpu.bx];
   uint8_t bl = game_state.unknown[cpu.bx + 2];
   printf("op17: %d\n", bl);
-  struct resource *r = resource_get_by_index(bl);
+  const struct resource *r = resource_get_by_index(bl);
   dump_hex(r->bytes, 0x10);
   // XXX: Todo
 }
@@ -390,7 +390,7 @@ void run_engine()
 
   // 0x1A6
   // Loads into 0x1887:0000
-  struct resource *code_res = resource_load(RESOURCE_UNKNOWN);
+  const struct resource *code_res = resource_load(RESOURCE_UNKNOWN);
   if (code_res == NULL)
   {
     printf("Failed to load unknown resource\n");

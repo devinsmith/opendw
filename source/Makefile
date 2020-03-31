@@ -2,7 +2,7 @@
 
 .PHONY: all clean
 
-SRCS = bufio.c compress.c display.c engine.c main.c memmgr.c offsets.c \
+SRCS = bufio.c compress.c display.c engine.c main.c offsets.c \
 			 resource.c tables.c ui.c utils.c
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)
