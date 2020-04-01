@@ -80,6 +80,7 @@ title_build(struct buf_wri *output)
   }
 }
 
+/* 0x387 */
 static void
 run_title(void)
 {
@@ -107,6 +108,7 @@ run_title(void)
   title_build(title_wri);
 
   display_update();
+  resource_index_release(title_res->index);
 
   while (!done) {
 
@@ -123,6 +125,8 @@ run_title(void)
 
   buf_wri_free(title_wri);
   buf_rdr_free(title_rdr);
+
+
 }
 
 int check_file(const char *fname)

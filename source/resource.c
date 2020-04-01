@@ -127,6 +127,10 @@ rm_init(void)
   allocations[1].usage_type = 0xFF;
   allocations[1].len = 0x0E00;
 
+  for (int i = 0; i < nitems(allocations); i++) {
+    allocations[i].index = i;
+  }
+
   // first allocation will be saved at 0x02.
   return load_data1_header();
 }
@@ -174,6 +178,19 @@ const struct resource* resource_load(enum resource_section sec)
 const struct resource* resource_get_by_index(int index)
 {
   return &allocations[index];
+}
+
+void resource_index_release(int index)
+{
+  if (index == 0xFF)
+    return;
+
+  if (index < 2)
+    return;
+
+  allocations[index].usage_type = 0;
+  free(allocations[index].bytes);
+  allocations[index].bytes = NULL;
 }
 
 static struct resource *
