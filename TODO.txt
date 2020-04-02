@@ -1,0 +1,2 @@
+Dump game_state object before engine starts
+Validate op_11 is populating game_state correctly.
