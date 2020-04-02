@@ -47,7 +47,6 @@ struct resource {
 int rm_init(void);
 void rm_exit(void);
 
-int resource_load_index(enum resource_section sec);
 const struct resource* resource_get_by_index(int index);
 void resource_index_release(int index);
 

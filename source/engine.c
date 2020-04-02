@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "display.h"
@@ -185,9 +186,15 @@ static void op_17(void)
   cpu.bx = (cpu.ax & 0xFF00) | al;
   cpu.di = game_state.unknown[cpu.bx];
   uint8_t bl = game_state.unknown[cpu.bx + 2];
-  printf("op17: %d\n", bl);
+  printf("op17  bl: 0x%02X di: 0x%02X\n", bl, cpu.di);
   const struct resource *r = resource_get_by_index(bl);
   dump_hex(r->bytes, 0x10);
+  cpu.di = cpu.di + word_3AE4;
+  cpu.cx = word_3AE2;
+  r->bytes[cpu.di] = (cpu.cx & 0x00FF);
+  if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
+    printf("TODO, 0x3D16\n");
+  }
   // XXX: Todo
 }
 
@@ -231,6 +238,10 @@ static void op_53(void)
   uint16_t existing_address = cpu.pc - cpu.base_pc;
   printf("Existing address: 0x%04x\n", existing_address);
 
+  if (cpu.stack_index >= 16) {
+    printf("Stack overflow!\n");
+    exit(0);
+  }
   cpu.sp[cpu.stack_index++] = existing_address;
   cpu.pc = cpu.base_pc + new_address;
 }
@@ -238,9 +249,10 @@ static void op_53(void)
 // 0x493E
 static void op_86(void)
 {
-  uint16_t ax = resource_load_index(word_3AE2);
-  uint8_t ah = (ax & 0xFF00) >> 8;
-  word_3AE2 = (ah & byte_3AE1) | (ax & 0x00FF);
+  const struct resource *r = resource_load(word_3AE2);
+  cpu.ax = r->index;
+  uint8_t ah = (cpu.ax & 0xFF00) >> 8;
+  word_3AE2 = (ah & byte_3AE1) | (cpu.ax & 0x00FF);
 }
 
 static void sub_1C79(void)

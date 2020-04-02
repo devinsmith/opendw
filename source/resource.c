@@ -30,8 +30,8 @@ static struct resource allocations[128] = { 0 };
 static struct resource *resource_load_cache_miss(enum resource_section sec);
 
 // Some random data to stick into a memory allocation.
-// This is not in the actual COM file.
-static unsigned char unknown_data[] = { 0x00, 0x01 };
+// In the code this occupies 0E73:00-0FF.
+static unsigned char unknown_0E73[256] = { 0 };
 
 
 #ifndef nitems
@@ -117,12 +117,12 @@ rm_init(void)
   /* First two entries are some unknown data in the COM file, I think,
    * but I'm not sure how they are used.
    * For now we just load unknown_data and hope they aren't used. */
-  allocations[0].bytes = unknown_data;
+  allocations[0].bytes = unknown_0E73;
   allocations[0].tag = 0xFFFF;
   allocations[0].usage_type = 0xFF;
   allocations[0].len = 1;
 
-  allocations[1].bytes = unknown_data;
+  allocations[1].bytes = unknown_0E73;
   allocations[1].tag = 0xFFFF;
   allocations[1].usage_type = 0xFF;
   allocations[1].len = 0x0E00;
@@ -148,15 +148,6 @@ rm_exit(void)
       free(allocations[i].bytes);
     }
   }
-}
-
-int resource_load_index(enum resource_section sec)
-{
-  if (sec >= RESOURCE_MAX) {
-    return -1;
-  }
-
-  return find_index_by_tag(sec);
 }
 
 const struct resource* resource_load(enum resource_section sec)
