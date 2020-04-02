@@ -161,6 +161,7 @@ static void op_11(void)
 {
   uint8_t al = *cpu.pc++;
   cpu.bx = (cpu.ax & 0xFF00) | al;
+  printf("op_11: 0x%04X\n", cpu.bx);
   game_state.unknown[cpu.bx] = (cpu.ax & 0xFF00) >> 8;
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
     game_state.unknown[cpu.bx + 1] = (cpu.ax & 0xFF00) >> 8;
@@ -214,9 +215,14 @@ static void op_1A(void)
 static void op_49(void)
 {
   // JMP function ?
-  word_3AE4--;
-  printf("op49: word: %d\n", word_3AE4);
-  if (word_3AE4 != 0xFF) {
+
+  // byte decrement.
+  uint8_t byte_3AE4 = (word_3AE4 & 0x00FF);
+  byte_3AE4--;
+  printf("op49: word: 0x%02X\n", byte_3AE4);
+  word_3AE4 = (word_3AE4 & 0xFF00) | byte_3AE4;
+
+  if (byte_3AE4 != 0xFF) {
     uint16_t new_address = *cpu.pc++;
     new_address += *cpu.pc++ << 8;
     printf("(0x49) New address: 0x%04x\n", new_address);
