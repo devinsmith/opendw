@@ -21,6 +21,7 @@
 extern "C" {
 #endif
 
+void set_game_state(int offset, unsigned char value);
 void run_engine();
 
 #ifdef __cplusplus

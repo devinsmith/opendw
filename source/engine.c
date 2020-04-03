@@ -54,7 +54,7 @@ struct game_state {
 };
 
 // 0x3860
-struct game_state game_state;
+static struct game_state game_state = {0};
 
 // virtual CPU
 struct virtual_cpu {
@@ -476,3 +476,7 @@ void run_engine()
   }
 }
 
+void set_game_state(int offset, unsigned char value)
+{
+  game_state.unknown[offset] = value;
+}

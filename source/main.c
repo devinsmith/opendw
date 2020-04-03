@@ -167,6 +167,18 @@ main(int argc, char *argv[])
   init_offsets();
   load_chr_table();
 
+  set_game_state(87, 0xFF);
+  set_game_state(91, 0xFF);
+  set_game_state(86, 0xFF);
+  set_game_state(90, 0xFF);
+  set_game_state(8, 0xFF);
+
+  // Not sure where this is done or where it goes.
+  // Indicates that part of the UI is drawn?
+  for (int i = 24; i < 31; i++) {
+    set_game_state(i, 0xFF);
+  }
+
   if (display_start(GAME_WIDTH, GAME_HEIGHT) != 0) {
     goto done;
   }
