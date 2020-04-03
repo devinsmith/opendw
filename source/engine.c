@@ -138,33 +138,41 @@ static void op_09(void)
 // 0x3BED
 static void op_0F(void)
 {
-  uint8_t al = *cpu.pc++;
-  cpu.bx = (cpu.ax & 0xFF00) | al;
+  uint8_t ah, al;
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
   // load di properly...
   cpu.di = game_state.unknown[cpu.bx];
-
-  cpu.bx = (cpu.bx & 0xFF00) | game_state.unknown[cpu.bx + 2];
+  uint8_t bl = game_state.unknown[cpu.bx + 2];
+  cpu.bx = (cpu.bx & 0xFF00) | bl;
 
   const struct resource *r = resource_get_by_index(cpu.bx);
   dump_hex(r->bytes, 0x10);
 
   cpu.di += word_3AE4;
-  cpu.ax = r->bytes[cpu.di];
-  cpu.ax += r->bytes[cpu.di + 1] << 8;
 
-  uint8_t ah = (cpu.ax & 0xFF00) >> 8;
-  word_3AE2 = (ah & byte_3AE1) | (cpu.ax & 0x00FF);
+  // little endian load
+  // mov ax, es:[di]
+  al = r->bytes[cpu.di];
+  ah = r->bytes[cpu.di + 1];
+  cpu.ax = (ah << 8) | al;
+  ah = ah & byte_3AE1;
+  cpu.ax = ah << 8 | al;
+  word_3AE2 = (ah << 8) | al;
 }
 
 // 0x3C2D
 static void op_11(void)
 {
   uint8_t al = *cpu.pc++;
-  cpu.bx = (cpu.ax & 0xFF00) | al;
-  printf("op_11: 0x%04X\n", cpu.bx);
-  game_state.unknown[cpu.bx] = (cpu.ax & 0xFF00) >> 8;
-  if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
-    game_state.unknown[cpu.bx + 1] = (cpu.ax & 0xFF00) >> 8;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
+  uint8_t ah = (cpu.ax & 0xFF00) >> 8;
+  printf("op_11: 0x%04X ah: 0x%02X\n", cpu.bx, ah);
+  game_state.unknown[cpu.bx] = ah;
+  if (byte_3AE1 != ah) {
+    game_state.unknown[cpu.bx + 1] = ah;
   }
 }
 
@@ -172,11 +180,12 @@ static void op_11(void)
 static void op_12(void)
 {
   uint8_t al = *cpu.pc++;
-  cpu.bx = (cpu.ax & 0xFF00) | al;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
   cpu.cx = word_3AE2;
   game_state.unknown[cpu.bx] = (cpu.cx & 0xFF);
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
-    printf("TODO, 0x3C59\n");
+    game_state.unknown[cpu.bx+1] = ((cpu.cx & 0xFF00) >> 8);
   }
 }
 
@@ -184,19 +193,21 @@ static void op_12(void)
 static void op_17(void)
 {
   uint8_t al = *cpu.pc++;
-  cpu.bx = (cpu.ax & 0xFF00) | al;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
   cpu.di = game_state.unknown[cpu.bx];
   uint8_t bl = game_state.unknown[cpu.bx + 2];
+  cpu.bx = (cpu.bx & 0xFF00) | bl;
   printf("op17  bl: 0x%02X di: 0x%02X\n", bl, cpu.di);
   const struct resource *r = resource_get_by_index(bl);
   dump_hex(r->bytes, 0x10);
-  cpu.di = cpu.di + word_3AE4;
+  cpu.di += word_3AE4;
   cpu.cx = word_3AE2;
+  printf("  op17: setting byte 0x%04X\n", cpu.di);
   r->bytes[cpu.di] = (cpu.cx & 0x00FF);
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
-    printf("TODO, 0x3D16\n");
+    r->bytes[cpu.di + 1] = ((cpu.cx & 0xFF00) >> 8);
   }
-  // XXX: Todo
 }
 
 // 0x3D5A

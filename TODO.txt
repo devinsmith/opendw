@@ -1,1 +1,1 @@
-Validate op_11 is populating game_state correctly.
+Validate op_49 is handled on end of loop condition.
