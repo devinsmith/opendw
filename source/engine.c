@@ -232,7 +232,9 @@ static void op_23(void)
 // 0x4106
 static void op_49(void)
 {
-  // JMP function ?
+  // This is actually more of a LOOP function.
+  // The counter is stored in word_3AE4, although it's only an 8 bit
+  // counter.
 
   // byte decrement.
   uint8_t byte_3AE4 = (word_3AE4 & 0x00FF);
