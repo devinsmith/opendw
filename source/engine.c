@@ -222,6 +222,13 @@ static void op_1A(void)
   }
 }
 
+// 0x3DC0
+static void op_23(void)
+{
+  printf("op_23 not done, set BP CS:3DC0\n");
+  exit(1);
+}
+
 // 0x4106
 static void op_49(void)
 {
@@ -240,6 +247,10 @@ static void op_49(void)
     uint16_t existing_address = cpu.pc - cpu.base_pc;
     printf("Existing address: 0x%04x\n", existing_address);
     cpu.pc = cpu.base_pc + new_address;
+  } else {
+    // 0x40AA
+    cpu.pc++;
+    cpu.pc++;
   }
 }
 
@@ -466,6 +477,9 @@ void run_engine()
       break;
     case 0x1A:
       op_1A();
+      break;
+    case 0x23:
+      op_23();
       break;
     case 0x49:
       op_49();
