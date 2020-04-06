@@ -1,1 +1,1 @@
-Decode op_23.
+Properly handle pushf/pop in op_3E.

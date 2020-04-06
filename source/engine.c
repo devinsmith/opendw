@@ -44,6 +44,7 @@ uint8_t byte_1CE5 = 0;
 uint8_t byte_3AE1 = 0;
 uint16_t word_3AE2 = 0;
 uint16_t word_3AE4 = 0;
+uint16_t word_3AE6 = 0;
 
 // The function signature for this function pointer is not entirely correct
 // but we'll figure it out as we decode more of DW.
@@ -87,7 +88,7 @@ static void sub_280E();
 static void op_00();
 static void op_01();
 static void op_17();
-static void op_49();
+static void loop();
 
 struct op_call_table {
   void (*func)();
@@ -126,13 +127,32 @@ static void op_06()
 static void op_09(void)
 {
   uint8_t al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
   word_3AE2 = al;
   if (byte_3AE1 != (cpu.ax >> 8))
   {
     // set high byte
     al = *cpu.pc++;
+    cpu.ax = (cpu.ax & 0xFF00) | al;
     word_3AE2 = (al << 8) | (word_3AE2 & 0xFF);
   }
+}
+
+// 0x3B7A
+static void op_0A(void)
+{
+  uint8_t al, ah;
+
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
+
+  // mov ax, [bx + game_state]
+  al = game_state.unknown[cpu.bx];
+  ah = game_state.unknown[cpu.bx+1];
+  ah = ah & byte_3AE1;
+  cpu.ax = (ah << 8) | al;
+  word_3AE2 = cpu.ax;
 }
 
 // 0x3BED
@@ -214,7 +234,8 @@ static void op_17(void)
 static void op_1A(void)
 {
   uint8_t al = *cpu.pc++;
-  cpu.di = (cpu.ax & 0xFF00) | al;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.di = cpu.ax;
   al = *cpu.pc++;
   game_state.unknown[cpu.di] = al;
   if (byte_3AE1 == ((cpu.ax & 0xFF00) >> 8)) {
@@ -225,12 +246,62 @@ static void op_1A(void)
 // 0x3DC0
 static void op_23(void)
 {
-  printf("op_23 not done, set BP CS:3DC0\n");
-  exit(1);
+  // INCREMENT [memory]
+
+  uint8_t al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.di = cpu.ax;
+  game_state.unknown[cpu.di]++;
+  if (game_state.unknown[cpu.di] == 0) {
+    if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
+      game_state.unknown[cpu.di+1]++;
+    }
+  }
+}
+
+// 0x4051
+static void op_3E(void)
+{
+  uint8_t ah, al;
+  int cf = 0;
+  cpu.bx = word_3AE2;
+  ah = ((cpu.ax & 0xFF00) >> 8);
+  if (byte_3AE1 != ah) {
+    al = *cpu.pc++;
+    ah = *cpu.pc++;
+    cpu.ax = (ah << 8) | al;
+    cf = (cpu.bx - cpu.ax) < 0;
+  } else {
+    uint8_t bl = cpu.bx & 0x00FF;
+    al = *cpu.pc++;
+    cpu.ax = (cpu.ax & 0xFF00) | al;
+    cf = (bl - al) < 0;
+  }
+
+  cf = !cf;
+  // pushf
+  // pop word [3AE6]
+  // We should copy:
+  //    Carry flag, parity flag, adjust flag, zero flag
+  //    sign flag, trap flag, interupt enable flag, direction, overflow.
+
+  // For now only carry flag.
+  // XXX: Not correct, but maybe it's all we care about?
+  word_3AE6 = cf;
+}
+
+// 0x407C
+static void op_41(void)
+{
+  // Carry flag check
+  if ((word_3AE6 & 1) == 0) {
+
+  }
 }
 
 // 0x4106
-static void op_49(void)
+// op_49
+static void loop(void)
 {
   // This is actually more of a LOOP function.
   // The counter is stored in word_3AE4, although it's only an 8 bit
@@ -239,15 +310,15 @@ static void op_49(void)
   // byte decrement.
   uint8_t byte_3AE4 = (word_3AE4 & 0x00FF);
   byte_3AE4--;
-  printf("op49: word: 0x%02X\n", byte_3AE4);
+  printf("LOOP Counter: 0x%02X\n", byte_3AE4);
   word_3AE4 = (word_3AE4 & 0xFF00) | byte_3AE4;
 
   if (byte_3AE4 != 0xFF) {
     uint16_t new_address = *cpu.pc++;
     new_address += *cpu.pc++ << 8;
-    printf("(0x49) New address: 0x%04x\n", new_address);
+    printf("    New address: 0x%04x\n", new_address);
     uint16_t existing_address = cpu.pc - cpu.base_pc;
-    printf("Existing address: 0x%04x\n", existing_address);
+    printf("    Existing address: 0x%04x\n", existing_address);
     cpu.pc = cpu.base_pc + new_address;
   } else {
     // 0x40AA
@@ -465,6 +536,9 @@ void run_engine()
     case 0x09:
       op_09();
       break;
+    case 0x0A:
+      op_0A();
+      break;
     case 0x0F:
       op_0F();
       break;
@@ -483,8 +557,14 @@ void run_engine()
     case 0x23:
       op_23();
       break;
+    case 0x3E:
+      op_3E();
+      break;
+    case 0x41:
+      op_41();
+      break;
     case 0x49:
-      op_49();
+      loop();
       break;
     case 0x53:
       op_53();
