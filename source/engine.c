@@ -153,6 +153,7 @@ static void op_0A(void)
   ah = ah & byte_3AE1;
   cpu.ax = (ah << 8) | al;
   word_3AE2 = cpu.ax;
+  printf("OP_0A: 0x%04X\n", cpu.ax);
 }
 
 // 0x3BED
@@ -295,7 +296,14 @@ static void op_41(void)
 {
   // Carry flag check
   if ((word_3AE6 & 1) == 0) {
-
+    uint16_t new_address = *cpu.pc++;
+    new_address += *cpu.pc++ << 8;
+    cpu.ax = new_address;
+    printf("(op41)    New address: 0x%04x\n", new_address);
+    cpu.pc = cpu.base_pc + new_address;
+  } else {
+    cpu.pc++;
+    cpu.pc++;
   }
 }
 
@@ -354,6 +362,11 @@ static void op_86(void)
   cpu.ax = r->index;
   uint8_t ah = (cpu.ax & 0xFF00) >> 8;
   word_3AE2 = (ah & byte_3AE1) | (cpu.ax & 0x00FF);
+}
+
+// 0x40E7
+static void op_99(void)
+{
 }
 
 static void sub_1C79(void)
@@ -522,7 +535,10 @@ void run_engine()
   // 0x3AA0
   while (!done) {
     prev_op = op_code;
+    // es lodsb
     op_code = *cpu.pc++;
+    // xor ah, ah
+    cpu.ax = op_code;
     switch (op_code) {
     case 0x00:
       op_00();
