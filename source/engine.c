@@ -75,6 +75,28 @@ struct virtual_cpu {
   unsigned char *base_pc;
 };
 
+
+
+/* | Bit # |  Mask  | Abbreviation       | Description                     |
+ * +-------+--------+--------------------+---------------------------------+
+ * | 0     | 0x0001 | CF                 | Carry flag                      |
+ * | 1     | 0x0002 | Reserved, always 1 |                                 |
+ * | 2     | 0x0004 | PF                 | Parity flag                     |
+ * | 3     | 0x0008 | Reserved           |                                 |
+ * | 4     | 0x0010 | AF                 | Adjust flag                     |
+ * | 5     | 0x0020 | Reserved[3]        |                                 |
+ * | 6     | 0x0040 | ZF                 | Zero flag                       |
+ * | 7     | 0x0080 | SF                 | Sign flag                       |
+ * | 8     | 0x0100 | TF                 | Trap flag                       |
+ * | 9     | 0x0200 | IF                 | Interrupt enable flag           |
+ * | 10    | 0x0400 | DF                 | Direction flag                  |
+ * | 11    | 0x0800 | OF                 | Overflow flag                   |
+ * | 12-13 | 0x3000 | IOPL               | I/O privilege level (286+ only) |
+ * | 14    | 0x4000 | NT                 | Nested task flag (286+ only)    |
+ * | 15    | 0x8000 | Reserved           |                                 |
+*/
+#define CARRY_FLAG_MASK 0x1
+
 struct virtual_cpu cpu;
 
 static uint8_t sub_1CF8();
@@ -295,7 +317,7 @@ static void op_3E(void)
 static void op_41(void)
 {
   // Carry flag check
-  if ((word_3AE6 & 1) == 0) {
+  if ((word_3AE6 & CARRY_FLAG_MASK) == 0) {
     uint16_t new_address = *cpu.pc++;
     new_address += *cpu.pc++ << 8;
     cpu.ax = new_address;
@@ -305,6 +327,12 @@ static void op_41(void)
     cpu.pc++;
     cpu.pc++;
   }
+}
+
+// 0x4099
+// op_44
+static void op_44(void)
+{
 }
 
 // 0x4106
@@ -367,6 +395,26 @@ static void op_86(void)
 // 0x40E7
 static void op_99(void)
 {
+  cpu.cx = word_3AE2;
+
+  // XXX: Figure out what test this is really trying to do.
+  // Zero flag, carry flag, sign flag?
+
+  int zf = 0;
+  int cf = 0;
+  // 40C9
+  if (byte_3AE1 == (cpu.ax >> 8)) {
+    uint8_t cl = cpu.cx & 0x00FF;
+    if ((cl & cl) == 0) {
+      zf = 1;
+    }
+  } else {
+    if ((cpu.cx & cpu.cx) == 0) {
+      zf = 1;
+    }
+  }
+
+  cpu.ax = zf;
 }
 
 static void sub_1C79(void)
@@ -590,6 +638,9 @@ void run_engine()
       break;
     case 0x86:
       op_86();
+      break;
+    case 0x99:
+      op_99();
       break;
     default:
       printf("Unhandled op code: 0x%02X, last op:0x%02X\n", op_code, prev_op);
