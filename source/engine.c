@@ -96,6 +96,7 @@ struct virtual_cpu {
  * | 15    | 0x8000 | Reserved           |                                 |
 */
 #define CARRY_FLAG_MASK 0x1
+#define ZERO_FLAG_MASK 0x40
 
 struct virtual_cpu cpu;
 
@@ -308,9 +309,10 @@ static void op_3E(void)
   //    Carry flag, parity flag, adjust flag, zero flag
   //    sign flag, trap flag, interupt enable flag, direction, overflow.
 
-  // For now only carry flag.
   // XXX: Not correct, but maybe it's all we care about?
-  word_3AE6 = cf;
+  word_3AE6 = 0;
+  word_3AE6 |= 1 << 1; // Always 1, reserved.
+  word_3AE6 |= cf << 0;
 }
 
 // 0x407C
@@ -333,6 +335,12 @@ static void op_41(void)
 // op_44
 static void op_44(void)
 {
+  if ((word_3AE6 & ZERO_FLAG_MASK) == 0) {
+    cpu.pc++;
+    cpu.pc++;
+    return;
+  }
+  printf("op_44 UNHANDLED\n");
 }
 
 // 0x4106
@@ -383,6 +391,13 @@ static void op_53(void)
   cpu.pc = cpu.base_pc + new_address;
 }
 
+// 0x4920
+static void op_85(void)
+{
+  cpu.ax = word_3AE2;
+  resource_index_release(cpu.ax);
+}
+
 // 0x493E
 static void op_86(void)
 {
@@ -414,7 +429,14 @@ static void op_99(void)
     }
   }
 
-  cpu.ax = zf;
+  uint16_t flags = 0;
+  flags |= zf << 6;
+  flags |= 1 << 1; // Always 1, reserved.
+  flags |= cf << 0;
+  flags &= 0xFFFE;
+  word_3AE6 &= 0x0001;
+  word_3AE6 |= flags;
+  cpu.ax = flags;
 }
 
 static void sub_1C79(void)
@@ -627,6 +649,9 @@ void run_engine()
     case 0x41:
       op_41();
       break;
+    case 0x44:
+      op_44();
+      break;
     case 0x49:
       loop();
       break;
@@ -635,6 +660,9 @@ void run_engine()
       break;
     case 0x7B:
       read_header_bytes();
+      break;
+    case 0x85:
+      op_85();
       break;
     case 0x86:
       op_86();
