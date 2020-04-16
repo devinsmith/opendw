@@ -107,22 +107,292 @@ static void sub_316C();
 static void sub_3191(unsigned char byte);
 static void sub_280E();
 
-// Opcode calls.
+// Decoded opcode calls, foward definition.
 static void op_00();
 static void op_01();
+static void op_06();
+static void op_09();
+static void op_0A();
+static void op_0F();
+static void op_11();
+static void op_12();
+static void op_13();
 static void op_17();
-static void loop();
+static void op_1A();
+static void op_23();
+static void op_3E();
+static void op_40();
+static void op_41();
+static void op_44();
+static void loop(); // 49
+static void op_53();
+static void read_header_bytes(void); // 7B
+static void op_85();
+static void op_86();
+static void op_99();
 
 struct op_call_table {
   void (*func)();
   const char *src_offset;
 };
 
-// Not complete.
 struct op_call_table targets[] = {
   { op_00, "0x3B18" },
   { op_01, "0x3B0E" },
-  { NULL,  "0x3B1F" }
+  { NULL, "0x3B1F" },
+  { NULL, "0x3B2F" },
+  { NULL, "0x3B2A" },
+  { NULL, "0x3B3D" },
+  { op_06, "0x3B4A" },
+  { NULL, "0x3B52" },
+  { NULL, "0x3B59" },
+  { op_09, "0x3B67" },
+  { op_0A, "0x3B7A" },
+  { NULL, "0x3B8C" },
+  { NULL, "0x3BA2" },
+  { NULL, "0x3BB7" },
+  { NULL, "0x3BD0" },
+  { op_0F, "0x3BED" },
+  { NULL, "0x3C10" },
+  { op_11, "0x3C2D" },
+  { op_12, "0x3C59" },
+  { op_13, "0x3C72" },
+  { NULL, "0x3C8F" },
+  { NULL, "0x3CAB" },
+  { NULL, "0x3CCB" },
+  { op_17, "0x3CEF" },
+  { NULL, "0x3D19" },
+  { NULL, "0x3D3D" },
+  { op_1A, "0x3D5A" },
+  { NULL, "0x3D73" },
+  { NULL, "0x3D92" },
+  { NULL, "0x4ACC" },
+  { NULL, "0x01B2" },
+  { NULL, "0x4AF6" },
+  { NULL, "0x0000" },
+  { NULL, "0x3DAE" },
+  { NULL, "0x3DB7" },
+  { op_23, "0x3DC0" },
+  { NULL, "0x3DD7" },
+  { NULL, "0x3DE5" },
+  { NULL, "0x3DEC" },
+  { NULL, "0x3E06" },
+  { NULL, "0x3E14" },
+  { NULL, "0x3E1B" },
+  { NULL, "0x3E36" },
+  { NULL, "0x3E45" },
+  { NULL, "0x3E4C" },
+  { NULL, "0x3E67" },
+  { NULL, "0x3E6E" },
+  { NULL, "0x3E75" },
+  { NULL, "0x3E9D" },
+  { NULL, "0x3EC1" },
+  { NULL, "0x3EEB" },
+  { NULL, "0x3F11" },
+  { NULL, "0x3F4D" },
+  { NULL, "0x3F66" },
+  { NULL, "0x3F8C" },
+  { NULL, "0x3FAD" },
+  { NULL, "0x3FBC" },
+  { NULL, "0x3FD4" },
+  { NULL, "0x3FEA" },
+  { NULL, "0x4002" },
+  { NULL, "0x4018" },
+  { NULL, "0x4030" },
+  { op_3E, "0x4051" },
+  { NULL, "0x4067" },
+  { op_40, "0x4074" },
+  { op_41, "0x407C" },
+  { NULL, "0x4085" },
+  { NULL, "0x408E" },
+  { op_44, "0x4099" },
+  { NULL, "0x40A3" },
+  { NULL, "0x40AF" },
+  { NULL, "0x40B8" },
+  { NULL, "0x40ED" },
+  { loop, "0x4106" },
+  { NULL, "0x4113" },
+  { NULL, "0x4122" },
+  { NULL, "0x412A" },
+  { NULL, "0x4132" },
+  { NULL, "0x414B" },
+  { NULL, "0x4155" },
+  { NULL, "0x4161" },
+  { NULL, "0x418B" },
+  { NULL, "0x41B9" },
+  { op_53, "0x41C0" },
+  { NULL, "0x41E1" },
+  { NULL, "0x41E5" },
+  { NULL, "0x41FD" },
+  { NULL, "0x4215" },
+  { NULL, "0x4239" },
+  { NULL, "0x41C8" },
+  { NULL, "0x3AEE" },
+  { NULL, "0x427A" },
+  { NULL, "0x4295" },
+  { NULL, "0x42D8" },
+  { NULL, "0x4322" },
+  { NULL, "0x4372" },
+  { NULL, "0x438B" },
+  { NULL, "0x43A6" },
+  { NULL, "0x43BF" },
+  { NULL, "0x43F7" },
+  { NULL, "0x446E" },
+  { NULL, "0x44B8" },
+  { NULL, "0x40C1" },
+  { NULL, "0x44CB" },
+  { NULL, "0x450A" },
+  { NULL, "0x453F" },
+  { NULL, "0x4573" },
+  { NULL, "0x45A1" },
+  { NULL, "0x45A8" },
+  { NULL, "0x45F0" },
+  { NULL, "0x45FA" },
+  { NULL, "0x4607" },
+  { NULL, "0x4632" },
+  { NULL, "0x465B" },
+  { NULL, "0x46B6" },
+  { NULL, "0x47B7" },
+  { NULL, "0x47C0" },
+  { NULL, "0x47D1" },
+  { NULL, "0x47D9" },
+  { NULL, "0x47E3" },
+  { NULL, "0x47EC" },
+  { NULL, "0x47FA" },
+  { NULL, "0x4801" },
+  { read_header_bytes, "0x482D" },
+  { NULL, "0x4817" },
+  { NULL, "0x483B" },
+  { NULL, "0x4845" },
+  { NULL, "0x486D" },
+  { NULL, "0x487F" },
+  { NULL, "0x48C5" },
+  { NULL, "0x48D2" },
+  { NULL, "0x48EE" },
+  { NULL, "0x4907" },
+  { op_85, "0x4920" },
+  { op_86, "0x493E" },
+  { NULL, "0x4955" },
+  { NULL, "0x496D" },
+  { NULL, "0x4977" },
+  { NULL, "0x498E" },
+  { NULL, "0x499B" },
+  { NULL, "0x49A5" },
+  { NULL, "0x49D3" },
+  { NULL, "0x0000" },
+  { NULL, "0x49DD" },
+  { NULL, "0x49E7" },
+  { NULL, "0x49F3" },
+  { NULL, "0x49FD" },
+  { NULL, "0x4A67" },
+  { NULL, "0x4A6D" },
+  { NULL, "0x4894" },
+  { NULL, "0x48B5" },
+  { NULL, "0x42FB" },
+  { NULL, "0x4348" },
+  { op_99, "0x40E7" },
+  { NULL, "0x3C42" },
+  { NULL, "0x416B" },
+  { NULL, "0x4175" },
+  { NULL, "0x4181" },
+  { NULL, "0x492D" },
+  { NULL, "0x4AF0" },
+  { NULL, "0x8A06" },
+  { NULL, "0xE80E" },
+  { NULL, "0x513A" },
+  { NULL, "0x36FF" },
+  { NULL, "0x3ADB" },
+  { NULL, "0x36FF" },
+  { NULL, "0x3AEC" },
+  { NULL, "0x2689" },
+  { NULL, "0x3AEC" },
+  { NULL, "0xE8A2" },
+  { NULL, "0xA23A" },
+  { NULL, "0x3AEA" },
+  { NULL, "0xE853" },
+  { NULL, "0x0FE5" },
+  { NULL, "0x325E" },
+  { NULL, "0xA2C0" },
+  { NULL, "0x3AE1" },
+  { NULL, "0xE3A2" },
+  { NULL, "0xEB3A" },
+  { NULL, "0x8B04" },
+  { NULL, "0xDB36" },
+  { NULL, "0x8E3A" },
+  { NULL, "0xDD06" },
+  { NULL, "0x263A" },
+  { NULL, "0x32AC" },
+  { NULL, "0x8BE4" },
+  { NULL, "0xD1D8" },
+  { NULL, "0xFFE3" },
+  { NULL, "0x60A7" },
+  { NULL, "0x0039" },
+  { NULL, "0x0000" },
+  { NULL, "0x0000" },
+  { NULL, "0x0000" },
+  { NULL, "0x0000" },
+  { NULL, "0x0000" },
+  { NULL, "0x0000" },
+  { NULL, "0x0000" },
+  { NULL, "0x0000" },
+  { NULL, "0x0000" },
+  { NULL, "0x268B" },
+  { NULL, "0x3AEC" },
+  { NULL, "0x068F" },
+  { NULL, "0x3AEC" },
+  { NULL, "0x068F" },
+  { NULL, "0x3ADB" },
+  { NULL, "0xA258" },
+  { NULL, "0x3AE8" },
+  { NULL, "0xEAA2" },
+  { NULL, "0xE83A" },
+  { NULL, "0x0F9D" },
+  { NULL, "0xC032" },
+  { NULL, "0xE1A2" },
+  { NULL, "0xA23A" },
+  { NULL, "0x3AE3" },
+  { NULL, "0xC307" },
+  { NULL, "0x2688" },
+  { NULL, "0x3AE3" },
+  { NULL, "0x2688" },
+  { NULL, "0x3AE1" },
+  { NULL, "0xB7EB" },
+  { NULL, "0x06C6" },
+  { NULL, "0x3AE1" },
+  { NULL, "0xEBFF" },
+  { NULL, "0xA0B0" },
+  { NULL, "0x3AEA" },
+  { NULL, "0x8B4C" },
+  { NULL, "0x88EC" },
+  { NULL, "0x0046" },
+  { NULL, "0xA5EB" },
+  { NULL, "0xE8A0" },
+  { NULL, "0xEB3A" },
+  { NULL, "0x8BF3" },
+  { NULL, "0x8AEC" },
+  { NULL, "0x0046" },
+  { NULL, "0xA244" },
+  { NULL, "0x3AEA" },
+  { NULL, "0x66E8" },
+  { NULL, "0xEB0F" },
+  { NULL, "0x2692" },
+  { NULL, "0x8BAC" },
+  { NULL, "0x8AD8" },
+  { NULL, "0x6087" },
+  { NULL, "0xA238" },
+  { NULL, "0x3AE4" },
+  { NULL, "0x85EB" },
+  { NULL, "0xAC26" },
+  { NULL, "0xE4A2" },
+  { NULL, "0xE93A" },
+  { NULL, "0xFF7D" },
+  { NULL, "0x2688" },
+  { NULL, "0x3AE4" },
+  { NULL, "0x76E9" },
+  { NULL, "0x26FF" },
+  { NULL, "0x8BAC" },
+  { NULL, "0xA0D8" },
+  { NULL, "0x3AE4" }
 };
 
 // 0x3B18
@@ -233,6 +503,20 @@ static void op_12(void)
   }
 }
 
+// 0x3C72
+static void op_13(void)
+{
+  uint8_t al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
+  cpu.cx = word_3AE2;
+  cpu.bx += word_3AE4;
+  game_state.unknown[cpu.bx] = (cpu.ax & 0x00FF);
+  if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
+    game_state.unknown[cpu.bx + 1] = ((cpu.cx & 0xFF00) >> 8);
+  }
+}
+
 // 0x3CEF
 static void op_17(void)
 {
@@ -302,6 +586,29 @@ static void op_3E(void)
     cf = (bl - al) < 0;
   }
 
+  // loc_4042
+  cf = !cf;
+  // pushf
+  // pop word [3AE6]
+  // We should copy:
+  //    Carry flag, parity flag, adjust flag, zero flag
+  //    sign flag, trap flag, interupt enable flag, direction, overflow.
+
+  // XXX: Not correct, but maybe it's all we care about?
+  word_3AE6 = 0;
+  word_3AE6 |= 1 << 1; // Always 1, reserved.
+  word_3AE6 |= cf << 0;
+}
+
+// 0x4074
+static void op_40(void)
+{
+  uint8_t al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  uint8_t byte_3AE4 = (word_3AE4 & 0x00FF);
+  int cf = 0;
+
+  cf = (byte_3AE4 - al) < 0;
   cf = !cf;
   // pushf
   // pop word [3AE6]
@@ -609,71 +916,14 @@ void run_engine()
     op_code = *cpu.pc++;
     // xor ah, ah
     cpu.ax = op_code;
-    switch (op_code) {
-    case 0x00:
-      op_00();
-      break;
-    case 0x01:
-      op_01();
-      break;
-    case 0x06:
-      op_06();
-      break;
-    case 0x09:
-      op_09();
-      break;
-    case 0x0A:
-      op_0A();
-      break;
-    case 0x0F:
-      op_0F();
-      break;
-    case 0x11:
-      op_11();
-      break;
-    case 0x12:
-      op_12();
-      break;
-    case 0x17:
-      op_17();
-      break;
-    case 0x1A:
-      op_1A();
-      break;
-    case 0x23:
-      op_23();
-      break;
-    case 0x3E:
-      op_3E();
-      break;
-    case 0x41:
-      op_41();
-      break;
-    case 0x44:
-      op_44();
-      break;
-    case 0x49:
-      loop();
-      break;
-    case 0x53:
-      op_53();
-      break;
-    case 0x7B:
-      read_header_bytes();
-      break;
-    case 0x85:
-      op_85();
-      break;
-    case 0x86:
-      op_86();
-      break;
-    case 0x99:
-      op_99();
-      break;
-    default:
-      printf("Unhandled op code: 0x%02X, last op:0x%02X\n", op_code, prev_op);
+    void (*callfunc)(void) = targets[op_code].func;
+    if (callfunc != NULL) {
+      callfunc();
+    } else {
+      printf("OpenDW has reached an unhandled op code and will terminate.\n");
+      printf("  Opcode: 0x%02X (Addr: %s), Previous op: 0x%02X\n", op_code,
+          targets[op_code].src_offset, prev_op);
       done = 1;
-      break;
     }
   }
 }
