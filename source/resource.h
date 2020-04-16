@@ -23,7 +23,7 @@ extern "C" {
 
 /* Resource file maps to "data1" and "data2" files. */
 enum resource_section {
-  RESOURCE_UNKNOWN = 0x00,
+  RESOURCE_SCRIPT = 0x00,
   RESOURCE_TITLE0 = 0x18,
   RESOURCE_TITLE1 = 0x19,
   RESOURCE_TITLE2 = 0x1A,

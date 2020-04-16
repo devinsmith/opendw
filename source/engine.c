@@ -929,7 +929,7 @@ void run_engine()
 
   // 0x1A6
   // Loads into 0x1887:0000
-  const struct resource *code_res = resource_load(RESOURCE_UNKNOWN);
+  const struct resource *code_res = resource_load(RESOURCE_SCRIPT);
   if (code_res == NULL)
   {
     printf("Failed to load unknown resource\n");
