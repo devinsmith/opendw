@@ -110,6 +110,7 @@ static void sub_280E();
 // Decoded opcode calls, foward definition.
 static void op_00();
 static void op_01();
+static void op_05();
 static void op_06();
 static void op_09();
 static void op_0A();
@@ -129,7 +130,9 @@ static void op_53();
 static void read_header_bytes(void); // 7B
 static void op_85();
 static void op_86();
+static void op_93();
 static void op_99();
+static void op_9A();
 
 struct op_call_table {
   void (*func)();
@@ -142,7 +145,7 @@ struct op_call_table targets[] = {
   { NULL, "0x3B1F" },
   { NULL, "0x3B2F" },
   { NULL, "0x3B2A" },
-  { NULL, "0x3B3D" },
+  { op_05, "0x3B3D" },
   { op_06, "0x3B4A" },
   { NULL, "0x3B52" },
   { NULL, "0x3B59" },
@@ -284,14 +287,14 @@ struct op_call_table targets[] = {
   { NULL, "0x49E7" },
   { NULL, "0x49F3" },
   { NULL, "0x49FD" },
-  { NULL, "0x4A67" },
+  { NULL/* op_93 */, "0x4A67" },
   { NULL, "0x4A6D" },
   { NULL, "0x4894" },
   { NULL, "0x48B5" },
   { NULL, "0x42FB" },
   { NULL, "0x4348" },
   { op_99, "0x40E7" },
-  { NULL, "0x3C42" },
+  { op_9A, "0x3C42" },
   { NULL, "0x416B" },
   { NULL, "0x4175" },
   { NULL, "0x4181" },
@@ -407,6 +410,16 @@ static void op_01()
   // moves AH into two variables.
   word_3AE2 = (cpu.ax & 0xFF00);
   byte_3AE1 = (cpu.ax & 0xFF00) >> 8;
+}
+
+static void op_05(void)
+{
+  uint8_t al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
+  al = game_state.unknown[cpu.bx];
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  word_3AE4 = al;
 }
 
 // 0x3B4A
@@ -714,6 +727,14 @@ static void op_86(void)
   word_3AE2 = (ah & byte_3AE1) | (cpu.ax & 0x00FF);
 }
 
+// 0x4A67
+static void op_93(void)
+{
+  uint8_t byte_3AE4 = (word_3AE4 & 0x00FF);
+  uint8_t al = byte_3AE4;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+}
+
 // 0x40E7
 static void op_99(void)
 {
@@ -744,6 +765,21 @@ static void op_99(void)
   word_3AE6 &= 0x0001;
   word_3AE6 |= flags;
   cpu.ax = flags;
+}
+
+// 0x3C42
+static void op_9A(void)
+{
+  uint8_t al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
+  al = 0xFF;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  game_state.unknown[cpu.bx] = al;
+  uint8_t ah = (cpu.ax & 0xFF00) >> 8;
+  if (byte_3AE1 != ah) {
+    game_state.unknown[cpu.bx + 1] = al;
+  }
 }
 
 static void sub_1C79(void)
