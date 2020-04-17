@@ -45,6 +45,12 @@ uint8_t byte_3AE1 = 0;
 uint16_t word_3AE2 = 0;
 uint16_t word_3AE4 = 0;
 uint16_t word_3AE6 = 0;
+uint16_t word_3AE8 = 0;
+uint16_t word_3AEA = 0;
+
+const struct resource *word_3ADD = NULL;
+const struct resource *word_3ADF = NULL;
+unsigned char *data_D760 = NULL;
 
 // The function signature for this function pointer is not entirely correct
 // but we'll figure it out as we decode more of DW.
@@ -110,6 +116,7 @@ static void sub_280E();
 // Decoded opcode calls, foward definition.
 static void op_00();
 static void op_01();
+static void op_03();
 static void op_05();
 static void op_06();
 static void op_09();
@@ -120,6 +127,7 @@ static void op_12();
 static void op_13();
 static void op_17();
 static void op_1A();
+static void op_1D();
 static void op_23();
 static void op_3E();
 static void op_40();
@@ -143,7 +151,7 @@ struct op_call_table targets[] = {
   { op_00, "0x3B18" },
   { op_01, "0x3B0E" },
   { NULL, "0x3B1F" },
-  { NULL, "0x3B2F" },
+  { op_03, "0x3B2F" },
   { NULL, "0x3B2A" },
   { op_05, "0x3B3D" },
   { op_06, "0x3B4A" },
@@ -169,7 +177,7 @@ struct op_call_table targets[] = {
   { op_1A, "0x3D5A" },
   { NULL, "0x3D73" },
   { NULL, "0x3D92" },
-  { NULL, "0x4ACC" },
+  { op_1D, "0x4ACC" },
   { NULL, "0x01B2" },
   { NULL, "0x4AF6" },
   { NULL, "0x0000" },
@@ -287,7 +295,7 @@ struct op_call_table targets[] = {
   { NULL, "0x49E7" },
   { NULL, "0x49F3" },
   { NULL, "0x49FD" },
-  { NULL/* op_93 */, "0x4A67" },
+  { op_93, "0x4A67" },
   { NULL, "0x4A6D" },
   { NULL, "0x4894" },
   { NULL, "0x48B5" },
@@ -410,6 +418,22 @@ static void op_01()
   // moves AH into two variables.
   word_3AE2 = (cpu.ax & 0xFF00);
   byte_3AE1 = (cpu.ax & 0xFF00) >> 8;
+}
+
+static void populate_3ADD_and_3ADF(void)
+{
+  word_3ADD = resource_get_by_index(word_3AE8);
+  word_3ADF = resource_get_by_index(word_3AEA);
+}
+
+// 0x3B2F
+static void op_03()
+{
+  // pops the stack, 1 byte.
+  uint8_t al = cpu.sp[--cpu.stack_index];
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  word_3AEA = al;
+  populate_3ADD_and_3ADF();
 }
 
 static void op_05(void)
@@ -562,6 +586,25 @@ static void op_1A(void)
   if (byte_3AE1 == ((cpu.ax & 0xFF00) >> 8)) {
     return;
   }
+}
+
+static void op_1D(void)
+{
+  // memcpy 0x700 bytes to or from data_D760.
+  unsigned char *src = data_D760;
+  uint16_t src_offset = 0;
+  unsigned char *dest = word_3ADF->bytes;
+  uint16_t dest_offset = word_3AE2;
+  uint8_t byte_3AE4 = (word_3AE4 & 0x00FF);
+  if ((byte_3AE4 & 0x80) != 0) {
+    unsigned char *tmp = src;
+    src = dest;
+    dest = tmp;
+    uint16_t tmp_offset = src_offset;
+    src_offset = dest_offset;
+    dest_offset = tmp_offset;
+  }
+  memcpy(src + src_offset, dest + dest_offset, 0x700);
 }
 
 // 0x3DC0
@@ -733,6 +776,9 @@ static void op_93(void)
   uint8_t byte_3AE4 = (word_3AE4 & 0x00FF);
   uint8_t al = byte_3AE4;
   cpu.ax = (cpu.ax & 0xFF00) | al;
+
+  // we need to push a byte onto the stack.
+  cpu.sp[cpu.stack_index++] = al;
 }
 
 // 0x40E7
@@ -927,6 +973,9 @@ void run_engine()
   game_state.unknown[8] = 0xFF;
   memset(&cpu, 0, sizeof(struct virtual_cpu));
 
+  // load unknown data from COM file.
+  data_D760 = com_extract(0xD760, 0x700);
+
   // 0x1A6
   // Loads into 0x1887:0000
   const struct resource *code_res = resource_load(RESOURCE_SCRIPT);
@@ -946,6 +995,11 @@ void run_engine()
   uint8_t op_code = 0;
 
   // 0x3AA0
+
+  word_3AE8 = 2;
+  word_3AEA = 2;
+  populate_3ADD_and_3ADF();
+
   while (!done) {
     prev_op = op_code;
     // es lodsb
@@ -962,6 +1016,8 @@ void run_engine()
       done = 1;
     }
   }
+
+  free(data_D760);
 }
 
 void set_game_state(int offset, unsigned char value)
