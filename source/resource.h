@@ -47,10 +47,10 @@ struct resource {
 int rm_init(void);
 void rm_exit(void);
 
-const struct resource* resource_get_by_index(int index);
+struct resource* resource_get_by_index(int index);
 void resource_index_release(int index);
 
-const struct resource* resource_load(enum resource_section sec);
+struct resource* resource_load(enum resource_section sec);
 
 unsigned char *com_extract(size_t off, size_t sz);
 

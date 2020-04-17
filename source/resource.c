@@ -150,7 +150,7 @@ rm_exit(void)
   }
 }
 
-const struct resource* resource_load(enum resource_section sec)
+struct resource* resource_load(enum resource_section sec)
 {
   if (sec >= RESOURCE_MAX) {
     return NULL;
@@ -166,7 +166,7 @@ const struct resource* resource_load(enum resource_section sec)
   return resource_load_cache_miss(sec);
 }
 
-const struct resource* resource_get_by_index(int index)
+struct resource* resource_get_by_index(int index)
 {
   return &allocations[index];
 }
