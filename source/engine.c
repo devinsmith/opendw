@@ -550,7 +550,8 @@ static void op_13(void)
   cpu.bx = cpu.ax;
   cpu.cx = word_3AE2;
   cpu.bx += word_3AE4;
-  game_state.unknown[cpu.bx] = (cpu.ax & 0x00FF);
+  printf("op_13: 0x%04X\n", cpu.bx);
+  game_state.unknown[cpu.bx] = (cpu.cx & 0x00FF);
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
     game_state.unknown[cpu.bx + 1] = ((cpu.cx & 0xFF00) >> 8);
   }
