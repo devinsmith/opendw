@@ -494,7 +494,9 @@ static void op_0F(void)
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.bx = cpu.ax;
   // load di properly...
+  printf("OP_0F: BX: 0x%04X\n", cpu.bx);
   cpu.di = game_state.unknown[cpu.bx];
+  cpu.di += (game_state.unknown[cpu.bx + 1] << 8);
   uint8_t bl = game_state.unknown[cpu.bx + 2];
   cpu.bx = (cpu.bx & 0xFF00) | bl;
 
