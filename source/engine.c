@@ -710,7 +710,11 @@ static void op_44(void)
     cpu.pc++;
     return;
   }
-  printf("op_44 UNHANDLED\n");
+  uint16_t new_address = *cpu.pc++;
+  new_address += *cpu.pc++ << 8;
+  cpu.ax = new_address;
+  printf("(op44)    New address: 0x%04x\n", new_address);
+  cpu.pc = cpu.base_pc + new_address;
 }
 
 // 0x4106
