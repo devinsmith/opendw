@@ -128,6 +128,7 @@ static void op_12();
 static void op_13();
 static void op_17();
 static void op_1A();
+static void op_1C();
 static void op_1D();
 static void op_23();
 static void op_3E();
@@ -135,6 +136,7 @@ static void op_40();
 static void op_41();
 static void op_44();
 static void loop(); // 49
+static void op_4B();
 static void op_53();
 static void read_header_bytes(void); // 7B
 static void op_85();
@@ -177,7 +179,7 @@ struct op_call_table targets[] = {
   { NULL, "0x3D3D" },
   { op_1A, "0x3D5A" },
   { NULL, "0x3D73" },
-  { NULL, "0x3D92" },
+  { op_1C, "0x3D92" },
   { op_1D, "0x4ACC" },
   { NULL, "0x01B2" },
   { NULL, "0x4AF6" },
@@ -224,7 +226,7 @@ struct op_call_table targets[] = {
   { NULL, "0x40ED" },
   { loop, "0x4106" },
   { NULL, "0x4113" },
-  { NULL, "0x4122" },
+  { op_4B, "0x4122" },
   { NULL, "0x412A" },
   { NULL, "0x4132" },
   { NULL, "0x414B" },
@@ -607,6 +609,26 @@ static void op_1A(void)
   }
 }
 
+// 0x3D92
+static void op_1C()
+{
+  uint16_t save_ah = (cpu.ax & 0xFF00) >> 8;
+
+  cpu.ax = *cpu.pc++;
+  cpu.ax += ((*cpu.pc++) << 8);
+  cpu.di = cpu.ax;
+  uint8_t al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+
+  unsigned char *ds = word_3ADF->bytes;
+  ds[cpu.di] = al;
+  if (byte_3AE1 != save_ah) {
+    al = *cpu.pc++;
+    cpu.ax = (cpu.ax & 0xFF00) | al;
+    ds[cpu.di + 1] = al;
+  }
+}
+
 static void op_1D(void)
 {
   // memcpy 0x700 bytes to or from data_D760.
@@ -759,6 +781,12 @@ static void loop(void)
     cpu.pc++;
     cpu.pc++;
   }
+}
+
+// 0x4122
+static void op_4B(void)
+{
+  word_3AE6 |= 0x0001;
 }
 
 // 0x41C0
