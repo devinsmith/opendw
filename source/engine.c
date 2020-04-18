@@ -631,6 +631,7 @@ static void op_3E(void)
 {
   uint8_t ah, al;
   int cf = 0;
+  int zf = 0;
   cpu.bx = word_3AE2;
   ah = ((cpu.ax & 0xFF00) >> 8);
   if (byte_3AE1 != ah) {
@@ -638,11 +639,13 @@ static void op_3E(void)
     ah = *cpu.pc++;
     cpu.ax = (ah << 8) | al;
     cf = (cpu.bx - cpu.ax) < 0;
+    zf = (cpu.bx - cpu.ax) == 0 ? 1 : 0;
   } else {
     uint8_t bl = cpu.bx & 0x00FF;
     al = *cpu.pc++;
     cpu.ax = (cpu.ax & 0xFF00) | al;
     cf = (bl - al) < 0;
+    zf = (bl - al) == 0 ? 1 : 0;
   }
 
   // loc_4042
@@ -655,6 +658,7 @@ static void op_3E(void)
 
   // XXX: Not correct, but maybe it's all we care about?
   word_3AE6 = 0;
+  word_3AE6 |= zf << 6;
   word_3AE6 |= 1 << 1; // Always 1, reserved.
   word_3AE6 |= cf << 0;
 }
