@@ -117,6 +117,7 @@ static void sub_280E();
 static void op_00();
 static void op_01();
 static void op_03();
+static void op_04();
 static void op_05();
 static void op_06();
 static void op_09();
@@ -152,7 +153,7 @@ struct op_call_table targets[] = {
   { op_01, "0x3B0E" },
   { NULL, "0x3B1F" },
   { op_03, "0x3B2F" },
-  { NULL, "0x3B2A" },
+  { op_04, "0x3B2A" },
   { op_05, "0x3B3D" },
   { op_06, "0x3B4A" },
   { NULL, "0x3B52" },
@@ -406,6 +407,12 @@ struct op_call_table targets[] = {
   { NULL, "0x3AE4" }
 };
 
+static void push_byte(uint8_t val)
+{
+  // we need to push a byte onto the stack.
+  cpu.sp[cpu.stack_index++] = val;
+}
+
 // 0x3B18
 static void op_00()
 {
@@ -434,6 +441,15 @@ static void op_03()
   cpu.ax = (cpu.ax & 0xFF00) | al;
   word_3AEA = al;
   populate_3ADD_and_3ADF();
+}
+
+// 0x3B2A
+static void op_04(void)
+{
+  uint8_t al = (word_3AE8 & 0x00FF);
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+
+  push_byte(al);
 }
 
 static void op_05(void)
@@ -788,8 +804,7 @@ static void op_93(void)
   uint8_t al = byte_3AE4;
   cpu.ax = (cpu.ax & 0xFF00) | al;
 
-  // we need to push a byte onto the stack.
-  cpu.sp[cpu.stack_index++] = al;
+  push_byte(al);
 }
 
 // 0x40E7
