@@ -138,6 +138,7 @@ static void op_44();
 static void loop(); // 49
 static void op_4B();
 static void op_53();
+static void op_54();
 static void read_header_bytes(void); // 7B
 static void op_85();
 static void op_86();
@@ -235,7 +236,7 @@ struct op_call_table targets[] = {
   { NULL, "0x418B" },
   { NULL, "0x41B9" },
   { op_53, "0x41C0" },
-  { NULL, "0x41E1" },
+  { op_54, "0x41E1" },
   { NULL, "0x41E5" },
   { NULL, "0x41FD" },
   { NULL, "0x4215" },
@@ -807,6 +808,18 @@ static void op_53(void)
   }
   cpu.sp[cpu.stack_index++] = existing_address;
   cpu.pc = cpu.base_pc + new_address;
+}
+
+static void op_54()
+{
+  // RET function.
+  uint16_t si = cpu.sp[--cpu.stack_index];
+  if (cpu.stack_index < 0) {
+    printf("Stack underflow!\n");
+    exit(0);
+  }
+  printf("SI: %04X\n", si);
+  cpu.pc = cpu.base_pc + si;
 }
 
 // 0x4920
