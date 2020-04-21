@@ -53,6 +53,7 @@ void resource_index_release(int index);
 struct resource* resource_load(enum resource_section sec);
 
 unsigned char *com_extract(size_t off, size_t sz);
+struct resource* game_memory_alloc(size_t nbytes, int marker, int tag);
 
 #ifdef __cplusplus
 }
