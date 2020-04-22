@@ -429,9 +429,11 @@ static void op_00()
 // 0x3B0E
 static void op_01()
 {
+  uint8_t ah = (cpu.ax & 0xFF00) >> 8;
+
   // moves AH into two variables.
-  word_3AE2 = (cpu.ax & 0xFF00);
-  byte_3AE1 = (cpu.ax & 0xFF00) >> 8;
+  word_3AE2 |= ah; // lower portion of word_3AE2 takes ah.
+  byte_3AE1 = ah;
 }
 
 static void populate_3ADD_and_3ADF(void)
@@ -487,7 +489,7 @@ static void op_09(void)
     // set high byte
     al = *cpu.pc++;
     cpu.ax = (cpu.ax & 0xFF00) | al;
-    word_3AE2 = (al << 8) | (word_3AE2 & 0xFF);
+    word_3AE2 = (al << 8) | (word_3AE2 & 0xFF); // XXX ? Correct.
   }
 }
 
@@ -637,6 +639,7 @@ static void op_1C()
   }
 }
 
+// 0x4ACC
 static void op_1D(void)
 {
   // memcpy 0x700 bytes to or from data_D760.
