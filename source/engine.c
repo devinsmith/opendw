@@ -134,12 +134,15 @@ static void op_23();
 static void op_3E();
 static void op_40();
 static void op_41();
+static void op_42();
 static void op_44();
 static void loop(); // 49
 static void op_4B();
 static void op_53();
 static void op_54();
+static void op_56();
 static void read_header_bytes(void); // 7B
+static void op_84();
 static void op_85();
 static void op_86();
 static void op_93();
@@ -218,7 +221,7 @@ struct op_call_table targets[] = {
   { NULL, "0x4067" },
   { op_40, "0x4074" },
   { op_41, "0x407C" },
-  { NULL, "0x4085" },
+  { op_42, "0x4085" },
   { NULL, "0x408E" },
   { op_44, "0x4099" },
   { NULL, "0x40A3" },
@@ -238,7 +241,7 @@ struct op_call_table targets[] = {
   { op_53, "0x41C0" },
   { op_54, "0x41E1" },
   { NULL, "0x41E5" },
-  { NULL, "0x41FD" },
+  { op_56, "0x41FD" },
   { NULL, "0x4215" },
   { NULL, "0x4239" },
   { NULL, "0x41C8" },
@@ -284,7 +287,7 @@ struct op_call_table targets[] = {
   { NULL, "0x48C5" },
   { NULL, "0x48D2" },
   { NULL, "0x48EE" },
-  { NULL, "0x4907" },
+  { op_84, "0x4907" },
   { op_85, "0x4920" },
   { op_86, "0x493E" },
   { NULL, "0x4955" },
@@ -740,6 +743,23 @@ static void op_41(void)
   }
 }
 
+// 0x4085
+// Opposite of op_41
+static void op_42(void)
+{
+  // Carry flag check
+  if ((word_3AE6 & CARRY_FLAG_MASK) == 0) {
+    cpu.pc++;
+    cpu.pc++;
+  } else {
+    uint16_t new_address = *cpu.pc++;
+    new_address += *cpu.pc++ << 8;
+    cpu.ax = new_address;
+    printf("(op42)    New address: 0x%04x\n", new_address);
+    cpu.pc = cpu.base_pc + new_address;
+  }
+}
+
 // 0x4099
 // op_44
 static void op_44(void)
@@ -820,6 +840,30 @@ static void op_54()
   }
   printf("SI: %04X\n", si);
   cpu.pc = cpu.base_pc + si;
+}
+
+// 0x41FD
+static void op_56(void)
+{
+  cpu.cx = word_3AE2;
+
+  uint8_t ah = (cpu.ax & 0xFF00) >> 8;
+  if (byte_3AE1 != ah) {
+    printf("op_56 not done, exiting here\n");
+    cpu.sp[cpu.stack_index++] = cpu.cx;
+    exit(1);
+  } else {
+    // store cl into stack.
+    cpu.sp[cpu.stack_index++] = cpu.cx & 0xFF;
+  }
+}
+
+// 0x4907
+static void op_84(void)
+{
+  struct resource *r = game_memory_alloc(word_3AE2, 1, 0xFFFF);
+  cpu.ax = r->index;
+  word_3AE2 = cpu.ax;
 }
 
 // 0x4920
