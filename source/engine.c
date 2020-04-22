@@ -131,6 +131,7 @@ static void op_1A();
 static void op_1C();
 static void op_1D();
 static void op_23();
+static void op_26();
 static void op_3E();
 static void op_40();
 static void op_41();
@@ -193,7 +194,7 @@ struct op_call_table targets[] = {
   { op_23, "0x3DC0" },
   { NULL, "0x3DD7" },
   { NULL, "0x3DE5" },
-  { NULL, "0x3DEC" },
+  { op_26, "0x3DEC" },
   { NULL, "0x3E06" },
   { NULL, "0x3E14" },
   { NULL, "0x3E1B" },
@@ -671,6 +672,25 @@ static void op_23(void)
   }
 }
 
+// 0x3DEC
+static void op_26(void)
+{
+  uint8_t al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.di = cpu.ax;
+
+  cpu.cx = game_state.unknown[cpu.di];
+  cpu.cx += (game_state.unknown[cpu.di + 1] << 8);
+  cpu.cx--;
+  uint8_t cl, ch;
+  cl = cpu.cx & 0x00FF;
+  ch = (cpu.cx & 0xFF00) >> 8;
+  game_state.unknown[cpu.di] = cl;
+  if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
+    game_state.unknown[cpu.di + 1] = ch;
+  }
+}
+
 // 0x4051
 static void op_3E(void)
 {
@@ -790,15 +810,12 @@ static void loop(void)
   // byte decrement.
   uint8_t byte_3AE4 = (word_3AE4 & 0x00FF);
   byte_3AE4--;
-  printf("LOOP Counter: 0x%02X\n", byte_3AE4);
   word_3AE4 = (word_3AE4 & 0xFF00) | byte_3AE4;
 
   if (byte_3AE4 != 0xFF) {
     uint16_t new_address = *cpu.pc++;
     new_address += *cpu.pc++ << 8;
-    printf("    New address: 0x%04x\n", new_address);
-    uint16_t existing_address = cpu.pc - cpu.base_pc;
-    printf("    Existing address: 0x%04x\n", existing_address);
+    printf("LOOP 0x%04X  Counter: 0x%02X\n", new_address, byte_3AE4);
     cpu.pc = cpu.base_pc + new_address;
   } else {
     // 0x40AA
