@@ -608,8 +608,11 @@ static void op_1A(void)
   cpu.di = cpu.ax;
   al = *cpu.pc++;
   game_state.unknown[cpu.di] = al;
-  if (byte_3AE1 == ((cpu.ax & 0xFF00) >> 8)) {
-    return;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
+    al = *cpu.pc++;
+    game_state.unknown[cpu.di + 1] = al;
+    cpu.ax = (cpu.ax & 0xFF00) | al;
   }
 }
 
