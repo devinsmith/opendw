@@ -414,10 +414,45 @@ struct op_call_table targets[] = {
   { NULL, "0x3AE4" }
 };
 
+static void push_word(uint16_t val)
+{
+  if (cpu.stack_index == 0) {
+    cpu.stack_index = 16;
+  }
+
+  cpu.stack_index--;
+  cpu.sp[cpu.stack_index] = val;
+}
+
 static void push_byte(uint8_t val)
 {
+  if (cpu.stack_index == 0) {
+    cpu.stack_index = 16;
+  }
+
   // we need to push a byte onto the stack.
-  cpu.sp[cpu.stack_index++] = val;
+  cpu.stack_index--;
+  cpu.sp[cpu.stack_index] = val;
+}
+
+static uint8_t pop_byte()
+{
+  uint8_t val = cpu.sp[cpu.stack_index];
+  cpu.stack_index++;
+  if (cpu.stack_index >= 16)
+    cpu.stack_index = 0;
+
+  return val;
+}
+
+static uint16_t pop_word()
+{
+  uint16_t val = cpu.sp[cpu.stack_index];
+  cpu.stack_index++;
+  if (cpu.stack_index >= 16)
+    cpu.stack_index = 0;
+
+  return val;
 }
 
 // 0x3B18
@@ -446,7 +481,7 @@ static void populate_3ADD_and_3ADF(void)
 static void op_03()
 {
   // pops the stack, 1 byte.
-  uint8_t al = cpu.sp[--cpu.stack_index];
+  uint8_t al = pop_byte();
   cpu.ax = (cpu.ax & 0xFF00) | al;
   word_3AEA = al;
   populate_3ADD_and_3ADF();
@@ -656,6 +691,7 @@ static void op_1D(void)
     src_offset = dest_offset;
     dest_offset = tmp_offset;
   }
+  // repe movsw (move word ds:si to es:di (si, di += 2), repeat 0x380 times.
   memcpy(src + src_offset, dest + dest_offset, 0x700);
 }
 
@@ -845,22 +881,15 @@ static void op_53(void)
   uint16_t existing_address = cpu.pc - cpu.base_pc;
   printf("Existing address: 0x%04x\n", existing_address);
 
-  if (cpu.stack_index >= 16) {
-    printf("Stack overflow!\n");
-    exit(0);
-  }
-  cpu.sp[cpu.stack_index++] = existing_address;
+  push_word(existing_address);
   cpu.pc = cpu.base_pc + new_address;
 }
 
+// 0x41E1
 static void op_54()
 {
   // RET function.
-  uint16_t si = cpu.sp[--cpu.stack_index];
-  if (cpu.stack_index < 0) {
-    printf("Stack underflow!\n");
-    exit(0);
-  }
+  uint16_t si = pop_word();
   printf("SI: %04X\n", si);
   cpu.pc = cpu.base_pc + si;
 }
@@ -877,7 +906,7 @@ static void op_56(void)
     exit(1);
   } else {
     // store cl into stack.
-    cpu.sp[cpu.stack_index++] = cpu.cx & 0xFF;
+    push_byte(cpu.cx & 0xFF);
   }
 }
 
@@ -903,6 +932,7 @@ static void op_86(void)
   cpu.ax = r->index;
   uint8_t ah = (cpu.ax & 0xFF00) >> 8;
   word_3AE2 = (ah & byte_3AE1) | (cpu.ax & 0x00FF);
+  dump_hex(r->bytes, 0x80);
 }
 
 // 0x4A67
@@ -1106,6 +1136,7 @@ void run_engine()
 {
   game_state.unknown[8] = 0xFF;
   memset(&cpu, 0, sizeof(struct virtual_cpu));
+  cpu.stack_index = 16; // stack grows downward...
 
   // load unknown data from COM file.
   data_D760 = com_extract(0xD760, 0x700);
