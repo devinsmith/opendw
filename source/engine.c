@@ -48,8 +48,12 @@ uint16_t word_3AE6 = 0;
 uint16_t word_3AE8 = 0;
 uint16_t word_3AEA = 0;
 
+unsigned char *word_3ADB = NULL;
+
 const struct resource *word_3ADD = NULL;
 const struct resource *word_3ADF = NULL;
+
+uint16_t word_42D6 = 0;
 unsigned char *data_D760 = NULL;
 
 // The function signature for this function pointer is not entirely correct
@@ -137,11 +141,15 @@ static void op_40();
 static void op_41();
 static void op_42();
 static void op_44();
+static void op_45();
 static void loop(); // 49
+static void op_4A();
 static void op_4B();
 static void op_53();
 static void op_54();
 static void op_56();
+static void op_5C();
+static void op_66();
 static void read_header_bytes(void); // 7B
 static void op_84();
 static void op_85();
@@ -225,12 +233,12 @@ struct op_call_table targets[] = {
   { op_42, "0x4085" },
   { NULL, "0x408E" },
   { op_44, "0x4099" },
-  { NULL, "0x40A3" },
+  { op_45, "0x40A3" },
   { NULL, "0x40AF" },
   { NULL, "0x40B8" },
   { NULL, "0x40ED" },
   { loop, "0x4106" },
-  { NULL, "0x4113" },
+  { op_4A, "0x4113" },
   { op_4B, "0x4122" },
   { NULL, "0x412A" },
   { NULL, "0x4132" },
@@ -248,7 +256,7 @@ struct op_call_table targets[] = {
   { NULL, "0x41C8" },
   { NULL, "0x3AEE" },
   { NULL, "0x427A" },
-  { NULL, "0x4295" },
+  { op_5C, "0x4295" },
   { NULL, "0x42D8" },
   { NULL, "0x4322" },
   { NULL, "0x4372" },
@@ -258,7 +266,7 @@ struct op_call_table targets[] = {
   { NULL, "0x43F7" },
   { NULL, "0x446E" },
   { NULL, "0x44B8" },
-  { NULL, "0x40C1" },
+  { op_66, "0x40C1" },
   { NULL, "0x44CB" },
   { NULL, "0x450A" },
   { NULL, "0x453F" },
@@ -467,7 +475,7 @@ static void op_01()
   uint8_t ah = (cpu.ax & 0xFF00) >> 8;
 
   // moves AH into two variables.
-  word_3AE2 |= ah; // lower portion of word_3AE2 takes ah.
+  word_3AE2 = (ah << 8) | (word_3AE2 & 0xFF); // lower portion of word_3AE2 takes ah.
   byte_3AE1 = ah;
 }
 
@@ -838,6 +846,21 @@ static void op_44(void)
   cpu.pc = cpu.base_pc + new_address;
 }
 
+// 0x40A3
+static void op_45(void)
+{
+  if ((word_3AE6 & ZERO_FLAG_MASK) != 0) {
+    cpu.pc++;
+    cpu.pc++;
+    return;
+  }
+  uint16_t new_address = *cpu.pc++;
+  new_address += *cpu.pc++ << 8;
+  cpu.ax = new_address;
+  printf("(op45)    New address: 0x%04x\n", new_address);
+  cpu.pc = cpu.base_pc + new_address;
+}
+
 // 0x4106
 // op_49
 static void loop(void)
@@ -860,6 +883,29 @@ static void loop(void)
     // 0x40AA
     cpu.pc++;
     cpu.pc++;
+  }
+}
+
+// 0x4113
+static void op_4A(void)
+{
+  // Increment byte on word.
+  uint8_t byte_3AE4 = word_3AE4 & 0x00FF;
+  byte_3AE4++;
+  word_3AE4 = (word_3AE4 & 0xFF00) | byte_3AE4;
+
+  uint8_t al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  if (al == byte_3AE4) {
+    // eventually just goes to 0x40AA
+    cpu.pc++;
+    cpu.pc++;
+  } else {
+    uint16_t new_address = *cpu.pc++;
+    new_address += *cpu.pc++ << 8;
+    cpu.ax = new_address;
+    printf("(op4A)    New address: 0x%04x\n", new_address);
+    cpu.pc = cpu.base_pc + new_address;
   }
 }
 
@@ -908,6 +954,61 @@ static void op_56(void)
     // store cl into stack.
     push_byte(cpu.cx & 0xFF);
   }
+}
+
+// 0x4295
+static void op_5C(void)
+{
+  op_01();
+  cpu.ax = *cpu.pc++;
+  cpu.ax += ((*cpu.pc++) << 8);
+
+  word_42D6 = cpu.ax;
+  word_3ADB = cpu.pc; // is this correct?
+
+  if (game_state.unknown[0x1F] == 0) {
+    printf("Breakpoint 0x42D3\n");
+    exit(1);
+  } else {
+    uint8_t al = game_state.unknown[6];
+    cpu.ax = (cpu.ax & 0xFF00) | al;
+    push_word(cpu.ax);
+    printf("Breakpoint 0x42B3\n");
+    exit(1);
+  }
+}
+
+// 0x40C1
+static void op_66(void)
+{
+  uint8_t al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
+
+  int zf = 0;
+  int cf = 0;
+
+  cpu.cx = game_state.unknown[cpu.bx];
+  cpu.cx += (game_state.unknown[cpu.bx + 1] << 8);
+  if (byte_3AE1 == (cpu.ax >> 8)) {
+    uint8_t cl = cpu.cx & 0x00FF;
+    if ((cl & cl) == 0) {
+      zf = 1;
+    }
+  } else {
+    if ((cpu.cx & cpu.cx) == 0) {
+      zf = 1;
+    }
+  }
+
+  uint16_t flags = 0;
+  flags |= zf << 6;
+  flags |= 1 << 1; // Always 1, reserved.
+  flags |= cf << 0;
+  flags &= 0xFFFE;
+  word_3AE6 &= 0x0001;
+  word_3AE6 |= flags;
+  cpu.ax = flags;
 }
 
 // 0x4907
