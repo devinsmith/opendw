@@ -632,9 +632,10 @@ static void op_17(void)
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.bx = cpu.ax;
   cpu.di = game_state.unknown[cpu.bx];
+  cpu.di += (game_state.unknown[cpu.bx + 1] << 8);
   uint8_t bl = game_state.unknown[cpu.bx + 2];
   cpu.bx = (cpu.bx & 0xFF00) | bl;
-  printf("op17  bl: 0x%02X di: 0x%02X\n", bl, cpu.di);
+  printf("op17  bl: 0x%02X di: 0x%04X\n", bl, cpu.di);
   const struct resource *r = resource_get_by_index(bl);
   dump_hex(r->bytes, 0x10);
   cpu.di += word_3AE4;
