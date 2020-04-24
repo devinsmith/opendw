@@ -30,8 +30,8 @@ static struct resource allocations[128] = { 0 };
 static struct resource *resource_load_cache_miss(enum resource_section sec);
 
 // Some random data to stick into a memory allocation.
-// In the code this occupies 0E73:00-0FF.
-static unsigned char unknown_0E73[256] = { 0 };
+// In the code this occupies 0E73:0000-0DFF.
+static unsigned char unknown_0E73[0xE00] = { 0 };
 
 
 #ifndef nitems
