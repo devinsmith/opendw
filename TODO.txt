@@ -1,1 +1,3 @@
-op_5C, also need to validate that game_state.unknown is getting set correctly.
+LOOP 3DE.
+- Validate correctness.
+

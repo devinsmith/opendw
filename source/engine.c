@@ -540,6 +540,7 @@ static void op_09(void)
 static void op_0A(void)
 {
   uint8_t al, ah;
+  static int runs = 1;
 
   al = *cpu.pc++;
   cpu.ax = (cpu.ax & 0xFF00) | al;
@@ -551,7 +552,8 @@ static void op_0A(void)
   ah = ah & byte_3AE1;
   cpu.ax = (ah << 8) | al;
   word_3AE2 = cpu.ax;
-  printf("OP_0A: 0x%04X\n", cpu.ax);
+  printf("OP_0A - AX: 0x%04X (run num: %d)\n", cpu.ax, runs);
+  runs++;
 }
 
 // 0x3BED
@@ -569,7 +571,7 @@ static void op_0F(void)
   cpu.bx = (cpu.bx & 0xFF00) | bl;
 
   const struct resource *r = resource_get_by_index(cpu.bx);
-  dump_hex(r->bytes, 0x10);
+  //dump_hex(r->bytes, 0x10);
 
   cpu.di += word_3AE4;
 
@@ -637,7 +639,7 @@ static void op_17(void)
   cpu.bx = (cpu.bx & 0xFF00) | bl;
   printf("op17  bl: 0x%02X di: 0x%04X\n", bl, cpu.di);
   const struct resource *r = resource_get_by_index(bl);
-  dump_hex(r->bytes, 0x10);
+  //dump_hex(r->bytes, 0x10);
   cpu.di += word_3AE4;
   cpu.cx = word_3AE2;
   printf("  op17: setting byte 0x%04X\n", cpu.di);
@@ -783,8 +785,10 @@ static void op_40(void)
   cpu.ax = (cpu.ax & 0xFF00) | al;
   uint8_t byte_3AE4 = (word_3AE4 & 0x00FF);
   int cf = 0;
+  int zf = 0;
 
   cf = (byte_3AE4 - al) < 0;
+  zf = (byte_3AE4 - al) == 0;
   cf = !cf;
   // pushf
   // pop word [3AE6]
@@ -794,6 +798,7 @@ static void op_40(void)
 
   // XXX: Not correct, but maybe it's all we care about?
   word_3AE6 = 0;
+  word_3AE6 |= zf << 6;
   word_3AE6 |= 1 << 1; // Always 1, reserved.
   word_3AE6 |= cf << 0;
 }
@@ -1034,7 +1039,7 @@ static void op_86(void)
   cpu.ax = r->index;
   uint8_t ah = (cpu.ax & 0xFF00) >> 8;
   word_3AE2 = (ah & byte_3AE1) | (cpu.ax & 0x00FF);
-  dump_hex(r->bytes, 0x80);
+  //dump_hex(r->bytes, 0x80);
 }
 
 // 0x4A67
@@ -1273,6 +1278,8 @@ void run_engine()
     op_code = *cpu.pc++;
     // xor ah, ah
     cpu.ax = op_code;
+    cpu.bx = cpu.ax;
+
     void (*callfunc)(void) = targets[op_code].func;
     if (callfunc != NULL) {
       callfunc();
