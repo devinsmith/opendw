@@ -110,6 +110,7 @@ run_title(void)
   display_update();
   resource_index_release(title_res->index);
 
+#ifndef NO_DISPLAY
   while (!done) {
 
     SDL_WaitEvent(&event);
@@ -122,6 +123,7 @@ run_title(void)
       break;
     }
   }
+#endif
 
   buf_wri_free(title_wri);
   buf_rdr_free(title_rdr);
@@ -188,6 +190,7 @@ main(int argc, char *argv[])
   draw_viewport();
   ui_draw();
 
+#ifndef NO_DISPLAY
   // Wait for key, temporary.
   int loop_end = 0;
   while (!loop_end) {
@@ -203,9 +206,11 @@ main(int argc, char *argv[])
       break;
     }
   }
+#endif
 
   run_engine();
 
+#ifndef NO_DISPLAY
   while (!loop_end) {
 
     SDL_Event event;
@@ -219,6 +224,7 @@ main(int argc, char *argv[])
       break;
     }
   }
+#endif
 
   ui_clean();
 

@@ -17,7 +17,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifndef NO_DISPLAY
 #include <SDL.h>
+#endif
 
 #include <display.h>
 
@@ -26,9 +28,11 @@
 #define VGA_WIDTH 320
 #define VGA_HEIGHT 200
 
+#ifndef NO_DISPLAY
 static SDL_Window *main_window = NULL;
 static SDL_Renderer *renderer = NULL;
 static SDL_Texture *texture = NULL;
+#endif
 
 /* http://www.brackeen.com/vga/basics.html */
 const uint32_t vga_palette[] = {
@@ -56,6 +60,7 @@ uint32_t *framebuffer;
 int
 display_start(int game_width, int game_height)
 {
+#ifndef NO_DISPLAY
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
     fprintf(stderr, "SDL could not initialize. SDL Error: %s\n",
       SDL_GetError());
@@ -83,6 +88,7 @@ display_start(int game_width, int game_height)
       SDL_GetError());
     return -1;
   }
+#endif
 
   if ((framebuffer = calloc(VGA_WIDTH * VGA_HEIGHT,
     sizeof(uint32_t))) == NULL) {
@@ -98,6 +104,7 @@ display_end(void)
 {
   free(framebuffer);
 
+#ifndef NO_DISPLAY
   if (texture != NULL) {
     SDL_DestroyTexture(texture);
   }
@@ -110,13 +117,16 @@ display_end(void)
     SDL_DestroyWindow(main_window);
   }
   SDL_Quit();
+#endif
 }
 
 void
 display_update(void)
 {
+#ifndef NO_DISPLAY
   SDL_UpdateTexture(texture, NULL, framebuffer, VGA_WIDTH * sizeof(uint32_t));
   SDL_RenderClear(renderer);
   SDL_RenderCopy(renderer, texture, NULL, NULL);
   SDL_RenderPresent(renderer);
+#endif
 }
