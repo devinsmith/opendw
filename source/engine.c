@@ -48,7 +48,7 @@ uint16_t word_3AE6 = 0;
 uint16_t word_3AE8 = 0;
 uint16_t word_3AEA = 0;
 
-unsigned char *word_3ADB = NULL;
+uint16_t word_3ADB = 0;
 
 const struct resource *word_3ADD = NULL;
 const struct resource *word_3ADF = NULL;
@@ -970,7 +970,7 @@ static void op_5C(void)
   cpu.ax += ((*cpu.pc++) << 8);
 
   word_42D6 = cpu.ax;
-  word_3ADB = cpu.pc; // is this correct?
+  word_3ADB = cpu.pc - cpu.base_pc; // is this correct?
 
   if (game_state.unknown[0x1F] == 0) {
     printf("Breakpoint 0x42D3\n");
@@ -979,8 +979,11 @@ static void op_5C(void)
     uint8_t al = game_state.unknown[6];
     cpu.ax = (cpu.ax & 0xFF00) | al;
     push_word(cpu.ax);
-    printf("Breakpoint 0x42B3\n");
-    exit(1);
+    game_state.unknown[6] = 0;
+    cpu.bx = word_42D6;
+    al = word_3AE8;
+    printf("Breakpoint 0x42BF\n");
+    //exit(1);
   }
 }
 
@@ -1239,6 +1242,40 @@ static void read_header_bytes(void)
   sub_27E3();
 }
 
+static void run_script(const struct resource *script, uint8_t al,
+  uint16_t src_offset)
+{
+  int done = 0;
+  uint8_t prev_op = 0;
+  uint8_t op_code = 0;
+
+  word_3AE8 = 2;
+  word_3AEA = 2;
+  populate_3ADD_and_3ADF();
+
+  cpu.pc = script->bytes + src_offset;
+  cpu.base_pc = cpu.pc;
+
+  while (!done) {
+    prev_op = op_code;
+    // es lodsb
+    op_code = *cpu.pc++;
+    // xor ah, ah
+    cpu.ax = op_code;
+    cpu.bx = cpu.ax;
+
+    void (*callfunc)(void) = targets[op_code].func;
+    if (callfunc != NULL) {
+      callfunc();
+    } else {
+      printf("OpenDW has reached an unhandled op code and will terminate.\n");
+      printf("  Opcode: 0x%02X (Addr: %s), Previous op: 0x%02X\n", op_code,
+          targets[op_code].src_offset, prev_op);
+      done = 1;
+    }
+  }
+}
+
 void run_engine()
 {
   game_state.unknown[8] = 0xFF;
@@ -1259,37 +1296,8 @@ void run_engine()
   printf("Resource bytes: %zu\n", code_res->len);
   dump_hex(code_res->bytes, 0x80);
 
-  cpu.pc = code_res->bytes;
-  cpu.base_pc = cpu.pc;
-
-  int done = 0;
-  uint8_t prev_op = 0;
-  uint8_t op_code = 0;
-
   // 0x3AA0
-
-  word_3AE8 = 2;
-  word_3AEA = 2;
-  populate_3ADD_and_3ADF();
-
-  while (!done) {
-    prev_op = op_code;
-    // es lodsb
-    op_code = *cpu.pc++;
-    // xor ah, ah
-    cpu.ax = op_code;
-    cpu.bx = cpu.ax;
-
-    void (*callfunc)(void) = targets[op_code].func;
-    if (callfunc != NULL) {
-      callfunc();
-    } else {
-      printf("OpenDW has reached an unhandled op code and will terminate.\n");
-      printf("  Opcode: 0x%02X (Addr: %s), Previous op: 0x%02X\n", op_code,
-          targets[op_code].src_offset, prev_op);
-      done = 1;
-    }
-  }
+  run_script(code_res, 2, 0);
 
   free(data_D760);
 }
