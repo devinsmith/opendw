@@ -27,7 +27,7 @@
 #include "tables.h"
 #include "utils.h"
 #include "ui.h"
-#include "vga_sdl.h"
+#include "vga.h"
 
 /* Original Dragon Wars resoluation */
 #define GAME_WIDTH 320

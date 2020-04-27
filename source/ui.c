@@ -23,7 +23,7 @@
 #include "tables.h"
 #include "ui.h"
 #include "utils.h"
-#include "vga_sdl.h"
+#include "vga.h"
 
 struct viewport_data {
   int xpos;

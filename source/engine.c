@@ -19,11 +19,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "vga_sdl.h"
 #include "engine.h"
 #include "resource.h"
 #include "ui.h"
 #include "utils.h"
+#include "vga.h"
 
 /* Represents the engine that Dragon wars runs.
  *
