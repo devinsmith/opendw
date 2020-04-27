@@ -3,12 +3,18 @@
 .PHONY: all clean
 
 SRCS = bufio.c compress.c engine.c main.c offsets.c \
-			 resource.c tables.c ui.c utils.c vga_sdl.c
+			 resource.c tables.c ui.c utils.c
+
+DEP_INCLUDES = -I.
+DEP_LIBS =
+
+# SDL VGA implementation.
+SRCS += vga_sdl.c
+DEP_INCLUDES += $(shell pkg-config sdl2 --cflags)
+DEP_LIBS += $(shell pkg-config sdl2 --libs)
+
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)
-
-DEP_INCLUDES = -I. $(shell pkg-config sdl2 --cflags)
-DEP_LIBS = $(shell pkg-config sdl2 --libs)
 
 # Debugging flags
 #CFLAGS = -Wall -g3 -DNO_DISPLAY
