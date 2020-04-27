@@ -21,7 +21,7 @@
 #include <SDL.h>
 #endif
 
-#include <display.h>
+#include "vga_sdl.h"
 
 #define WIN_WIDTH 640
 #define WIN_HEIGHT 400

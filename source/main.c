@@ -21,13 +21,13 @@
 
 #include "bufio.h"
 #include "compress.h"
-#include "display.h"
 #include "engine.h"
 #include "offsets.h"
 #include "resource.h"
 #include "tables.h"
 #include "utils.h"
 #include "ui.h"
+#include "vga_sdl.h"
 
 /* Original Dragon Wars resoluation */
 #define GAME_WIDTH 320

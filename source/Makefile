@@ -2,15 +2,17 @@
 
 .PHONY: all clean
 
-SRCS = bufio.c compress.c display.c engine.c main.c offsets.c \
-			 resource.c tables.c ui.c utils.c
+SRCS = bufio.c compress.c engine.c main.c offsets.c \
+			 resource.c tables.c ui.c utils.c vga_sdl.c
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)
 
 DEP_INCLUDES = -I. $(shell pkg-config sdl2 --cflags)
 DEP_LIBS = $(shell pkg-config sdl2 --libs)
 
-CFLAGS = -Wall -O3
+# Debugging flags
+#CFLAGS = -Wall -g3 -DNO_DISPLAY
+CFLAGS = -Wall -O2
 EXE = dragon
 
 all: $(EXE)

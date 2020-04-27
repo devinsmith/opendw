@@ -18,12 +18,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "display.h"
 #include "offsets.h"
 #include "resource.h"
 #include "tables.h"
 #include "ui.h"
 #include "utils.h"
+#include "vga_sdl.h"
 
 struct viewport_data {
   int xpos;

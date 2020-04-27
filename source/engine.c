@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "display.h"
+#include "vga_sdl.h"
 #include "engine.h"
 #include "resource.h"
 #include "ui.h"
