@@ -22,30 +22,10 @@
 #define VGA_WIDTH 320
 #define VGA_HEIGHT 200
 
-/* http://www.brackeen.com/vga/basics.html */
-const uint32_t vga_palette[] = {
-  0x000000, /* BLACK */
-  0x000080, /* BLUE */
-  0x008000, /* GREEN */
-  0x008080, /* CYAN */
-  0x800000, /* RED */
-  0x800080, /* MAGENTA */
-  0x808000, /* BROWN */
-  0xC0C0C0, /* LIGHT GRAY */
-  0x808080, /* DARK GRAY */
-  0x0000FF, /* LIGHT BLUE */
-  0x00FF00, /* LIGHT GREEN */
-  0x00FFFF, /* LIGHT CYAN */
-  0xFF0000, /* LIGHT RED */
-  0xFF00FF, /* LIGHT MAGENTA */
-  0xFFFF00, /* YELLOW */
-  0xFFFFFF, /* WHITE */
-};
-
 /* Represents 0xA0000 (0xA000:0000) memory, but in 32 bit for SDL */
-uint32_t *framebuffer;
+static uint32_t *framebuffer;
 
-int
+static int
 display_start(int game_width, int game_height)
 {
   if ((framebuffer = calloc(VGA_WIDTH * VGA_HEIGHT,
@@ -57,17 +37,32 @@ display_start(int game_width, int game_height)
   return 0;
 }
 
-void
+static void
 display_end(void)
 {
   free(framebuffer);
 }
 
-void
+static void
 display_update(void)
 {
 }
 
-void waitkey()
+static void waitkey()
 {
 }
+
+static uint32_t *
+get_fb_mem()
+{
+  return framebuffer;
+}
+
+struct vga_driver null_driver = {
+  "null",
+  display_start,
+  display_end,
+  display_update,
+  waitkey,
+  get_fb_mem
+};

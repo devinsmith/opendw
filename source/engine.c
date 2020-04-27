@@ -983,7 +983,7 @@ static void op_5C(void)
     cpu.bx = word_42D6;
     al = word_3AE8;
     printf("Breakpoint 0x42BF\n");
-    //exit(1);
+    exit(1);
   }
 }
 
@@ -1227,7 +1227,7 @@ static void sub_280E()
   // check length against previous length (max length?)
   // XXX: Unknown.
   ui_header_draw();
-  display_update();
+  vga->update();
 }
 
 // 0x3150

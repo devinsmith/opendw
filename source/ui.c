@@ -116,6 +116,7 @@ void draw_viewport()
   int line_num = 8;
 
   unsigned char *data = calloc(sizeof(unsigned char), rows * cols);
+  uint32_t *framebuffer = vga->memory();
 
   /* Iterate backwards like DW does */
   int vidx = 3;
@@ -144,7 +145,7 @@ void draw_viewport()
     }
     line_num++;
   }
-  display_update();
+  vga->update();
 
   free(data);
 }
@@ -157,6 +158,8 @@ void draw_ui_piece(const struct pic_data *pic)
   uint16_t fb_off = starting_off;
   printf("Line number: %d - FB offset: 0x%04x\n", pic->y_pos, fb_off);
   unsigned char *src = pic->data;
+  uint32_t *framebuffer = vga->memory();
+
   for (int y = 0; y < pic->height; y++) {
     for (int x = 0; x < pic->width; x++) {
       uint8_t al = *src++;
@@ -173,7 +176,7 @@ void draw_ui_piece(const struct pic_data *pic)
     starting_off += 0x140;
     fb_off = starting_off;
   }
-  display_update();
+  vga->update();
 }
 
 /* 0x36C8 */
@@ -183,6 +186,8 @@ static void draw_solid_color(uint8_t color, uint8_t line_num,
   uint16_t fb_off = get_line_offset(line_num);
   inset = inset << 2;
   fb_off += inset;
+  uint32_t *framebuffer = vga->memory();
+
   for (uint16_t i = 0; i < count; i++) {
     framebuffer[fb_off++] = vga_palette[color];
     framebuffer[fb_off++] = vga_palette[color];
@@ -194,6 +199,7 @@ static void draw_character(int x, int y, const unsigned char *chdata)
 {
   int color = 0xF;
 
+  uint32_t *framebuffer = vga->memory();
   uint16_t fb_off = get_line_offset(y);
   fb_off += (x << 3); // 8 bytes
 
@@ -223,6 +229,8 @@ static void draw_pattern(int starting_line, int ending_line, int x_pos, int dx)
   printf("DX: 0x%04x\n", dx);
 
   uint16_t ax = 0xFFFF; // word_359A
+
+  uint32_t *framebuffer = vga->memory();
 
   // 0x3417
   x_pos = x_pos << 3;
@@ -256,7 +264,7 @@ void ui_draw()
   for (uint8_t i = 0x20; i < 0x90; i++) {
     draw_solid_color(0, i, 0x36, 0x30);
   }
-  display_update();
+  vga->update();
 
   // Draw upper header.
   //
@@ -270,7 +278,7 @@ void ui_draw()
 
   // 0x3380
   draw_pattern(0x98, 0xB8, 0x01, 0x27);
-  display_update();
+  vga->update();
 
 }
 

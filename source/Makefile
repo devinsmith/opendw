@@ -2,18 +2,17 @@
 
 .PHONY: all clean
 
-SRCS = bufio.c compress.c engine.c main.c offsets.c \
+SRCS = bufio.c compress.c engine.c main.c offsets.c palette.c \
 			 resource.c tables.c ui.c utils.c
+# VGA drivers
+SRCS += vga_null.c vga_sdl.c
 
 DEP_INCLUDES = -I.
 DEP_LIBS =
 
 # SDL VGA implementation.
-SRCS += vga_sdl.c
 DEP_INCLUDES += $(shell pkg-config sdl2 --cflags)
 DEP_LIBS += $(shell pkg-config sdl2 --libs)
-# Console implementation
-#SRCS += vga_null.c
 
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)

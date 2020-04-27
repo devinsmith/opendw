@@ -31,6 +31,12 @@
 #define GAME_WIDTH 320
 #define GAME_HEIGHT 200
 
+// VGA Drivers
+extern struct vga_driver sdl_driver;
+extern struct vga_driver null_driver;
+
+struct vga_driver *vga = &sdl_driver;
+
 static void
 title_adjust(struct buf_wri *title)
 {
@@ -63,6 +69,7 @@ title_build(struct buf_wri *output)
   unsigned char *src = output->base;
   int i, counter = 64000;
   int hi, lo;
+  uint32_t *framebuffer = vga->memory();
 
   for (i = 0; i < counter; i += 2) {
 
@@ -103,10 +110,10 @@ run_title(void)
   dump_hex(title_wri->base, 32);
   title_build(title_wri);
 
-  display_update();
+  vga->update();
   resource_index_release(title_res->index);
 
-  waitkey();
+  vga->waitkey();
 
   buf_wri_free(title_wri);
   buf_rdr_free(title_rdr);
@@ -162,7 +169,7 @@ main(int argc, char *argv[])
     set_game_state(i, 0xFF);
   }
 
-  if (display_start(GAME_WIDTH, GAME_HEIGHT) != 0) {
+  if (vga->initialize(GAME_WIDTH, GAME_HEIGHT) != 0) {
     goto done;
   }
 
@@ -171,22 +178,18 @@ main(int argc, char *argv[])
   draw_viewport();
   ui_draw();
 
-#ifndef NO_DISPLAY
   // Wait for key, temporary.
-  waitkey();
-#endif
+  vga->waitkey();
 
   run_engine();
 
-#ifndef NO_DISPLAY
-  waitkey();
-#endif
+  vga->waitkey();
 
   ui_clean();
 
 done:
   unload_chr_table();
   rm_exit();
-  display_end();
+  vga->end();
   return 0;
 }
