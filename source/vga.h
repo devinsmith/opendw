@@ -29,6 +29,7 @@ extern uint32_t *framebuffer;
 int display_start(int game_width, int game_height);
 void display_end(void);
 void display_update(void);
+void waitkey();
 
 #ifdef __cplusplus
 }

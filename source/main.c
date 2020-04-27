@@ -17,8 +17,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <SDL.h>
-
 #include "bufio.h"
 #include "compress.h"
 #include "engine.h"
@@ -87,8 +85,6 @@ run_title(void)
   struct buf_rdr *title_rdr;
   struct buf_wri *title_wri;
   unsigned int uncompressed_sz;
-  int done = 0;
-  SDL_Event event;
 
   const struct resource *title_res = resource_load(RESOURCE_TITLE3);
   if (title_res == NULL)
@@ -110,25 +106,10 @@ run_title(void)
   display_update();
   resource_index_release(title_res->index);
 
-#ifndef NO_DISPLAY
-  while (!done) {
-
-    SDL_WaitEvent(&event);
-    switch (event.type) {
-    case SDL_QUIT:
-      done = 1;
-      break;
-    case SDL_KEYDOWN:
-      done = 1;
-      break;
-    }
-  }
-#endif
+  waitkey();
 
   buf_wri_free(title_wri);
   buf_rdr_free(title_rdr);
-
-
 }
 
 int check_file(const char *fname)
@@ -192,38 +173,13 @@ main(int argc, char *argv[])
 
 #ifndef NO_DISPLAY
   // Wait for key, temporary.
-  int loop_end = 0;
-  while (!loop_end) {
-
-    SDL_Event event;
-    SDL_WaitEvent(&event);
-    switch (event.type) {
-    case SDL_QUIT:
-      loop_end = 1;
-      break;
-    case SDL_KEYDOWN:
-      loop_end = 1;
-      break;
-    }
-  }
+  waitkey();
 #endif
 
   run_engine();
 
 #ifndef NO_DISPLAY
-  while (!loop_end) {
-
-    SDL_Event event;
-    SDL_WaitEvent(&event);
-    switch (event.type) {
-    case SDL_QUIT:
-      loop_end = 1;
-      break;
-    case SDL_KEYDOWN:
-      loop_end = 1;
-      break;
-    }
-  }
+  waitkey();
 #endif
 
   ui_clean();

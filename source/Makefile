@@ -12,12 +12,14 @@ DEP_LIBS =
 SRCS += vga_sdl.c
 DEP_INCLUDES += $(shell pkg-config sdl2 --cflags)
 DEP_LIBS += $(shell pkg-config sdl2 --libs)
+# Console implementation
+#SRCS += vga_null.c
 
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)
 
 # Debugging flags
-#CFLAGS = -Wall -g3 -DNO_DISPLAY
+#CFLAGS = -Wall -g3
 CFLAGS = -Wall -O2
 EXE = dragon
 
