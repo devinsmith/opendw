@@ -28,10 +28,27 @@
 
 static SDL_Window *main_window = NULL;
 static SDL_Renderer *renderer = NULL;
-static SDL_Texture *texture = NULL;
+static SDL_Surface *surface = NULL;
 
-/* Represents 0xA0000 (0xA000:0000) memory, but in 32 bit for SDL */
-static uint32_t *framebuffer;
+/* http://www.brackeen.com/vga/basics.html */
+static const SDL_Color sdl_palette[] = {
+  { 0x00, 0x00, 0x00, 0xFF }, /* BLACK */
+  { 0x00, 0x00, 0x80, 0xFF }, /* BLUE */
+  { 0x00, 0x80, 0x00, 0xFF }, /* GREEN */
+  { 0x00, 0x80, 0x80, 0xFF }, /* CYAN */
+  { 0x80, 0x00, 0x00, 0xFF }, /* RED */
+  { 0x80, 0x00, 0x80, 0xFF }, /* MAGENTA */
+  { 0x80, 0x80, 0x00, 0xFF }, /* BROWN */
+  { 0xC0, 0xC0, 0xC0, 0xFF }, /* LIGHT GRAY */
+  { 0x80, 0x80, 0x80, 0xFF }, /* DARK GRAY */
+  { 0x00, 0x00, 0xFF, 0xFF }, /* LIGHT BLUE */
+  { 0x00, 0xFF, 0x00, 0xFF }, /* LIGHT GREEN */
+  { 0x00, 0xFF, 0xFF, 0xFF }, /* LIGHT CYAN */
+  { 0xFF, 0x00, 0x00, 0xFF }, /* LIGHT RED */
+  { 0xFF, 0x00, 0xFF, 0xFF }, /* LIGHT MAGENTA */
+  { 0xFF, 0xFF, 0x00, 0xFF }, /* YELLOW */
+  { 0xFF, 0xFF, 0xFF, 0xFF } /* WHITE */
+};
 
 int
 display_start(int game_width, int game_height)
@@ -57,16 +74,16 @@ display_start(int game_width, int game_height)
     return -1;
   }
 
-  if ((texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
-    SDL_TEXTUREACCESS_STREAMING, game_width, game_height)) == NULL) {
-    fprintf(stderr, "Main texture could not be created. SDL Error: %s\n",
+  if ((surface = SDL_CreateRGBSurface(SDL_SWSURFACE, game_width, game_height,
+       8 /* bpp */, /* RGBA masks */ 0, 0, 0, 0)) == NULL) {
+    fprintf(stderr, "8 bit surface could not be created. SDL Error: %s\n",
       SDL_GetError());
     return -1;
   }
 
-  if ((framebuffer = calloc(VGA_WIDTH * VGA_HEIGHT,
-    sizeof(uint32_t))) == NULL) {
-    fprintf(stderr, "Framebuffer could not be allocated.\n");
+  if (SDL_SetPaletteColors(surface->format->palette, sdl_palette, 0, 16) != 0) {
+    fprintf(stderr, "Failed to set palette. SDL Error: %s\n",
+      SDL_GetError());
     return -1;
   }
 
@@ -76,10 +93,8 @@ display_start(int game_width, int game_height)
 void
 display_end(void)
 {
-  free(framebuffer);
-
-  if (texture != NULL) {
-    SDL_DestroyTexture(texture);
+  if (surface != NULL) {
+    SDL_FreeSurface(surface);
   }
 
   if (renderer != NULL) {
@@ -95,10 +110,10 @@ display_end(void)
 void
 display_update(void)
 {
-  SDL_UpdateTexture(texture, NULL, framebuffer, VGA_WIDTH * sizeof(uint32_t));
-  SDL_RenderClear(renderer);
+  SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
   SDL_RenderCopy(renderer, texture, NULL, NULL);
   SDL_RenderPresent(renderer);
+  SDL_DestroyTexture(texture);
 }
 
 void waitkey()
@@ -120,10 +135,10 @@ void waitkey()
   }
 }
 
-static uint32_t *
+static uint8_t *
 get_fb_mem()
 {
-  return framebuffer;
+  return surface->pixels;
 }
 
 struct vga_driver sdl_driver = {

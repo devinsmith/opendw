@@ -69,7 +69,7 @@ title_build(struct buf_wri *output)
   unsigned char *src = output->base;
   int i, counter = 64000;
   int hi, lo;
-  uint32_t *framebuffer = vga->memory();
+  uint8_t *framebuffer = vga->memory();
 
   for (i = 0; i < counter; i += 2) {
 
@@ -80,8 +80,8 @@ title_build(struct buf_wri *output)
     hi = (al >> 4) & 0xf;
     lo = al & 0xf;
 
-    framebuffer[i] = vga_palette[hi];
-    framebuffer[i + 1] = vga_palette[lo];
+    framebuffer[i] = hi;
+    framebuffer[i + 1] = lo;
   }
 }
 

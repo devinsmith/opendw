@@ -116,7 +116,7 @@ void draw_viewport()
   int line_num = 8;
 
   unsigned char *data = calloc(sizeof(unsigned char), rows * cols);
-  uint32_t *framebuffer = vga->memory();
+  uint8_t *framebuffer = vga->memory();
 
   /* Iterate backwards like DW does */
   int vidx = 3;
@@ -140,8 +140,8 @@ void draw_viewport()
       hi = (al >> 4) & 0xf;
       lo = al & 0xf;
 
-      framebuffer[fb_off++] = vga_palette[hi];
-      framebuffer[fb_off++] = vga_palette[lo];
+      framebuffer[fb_off++] = hi;
+      framebuffer[fb_off++] = lo;
     }
     line_num++;
   }
@@ -158,7 +158,7 @@ void draw_ui_piece(const struct pic_data *pic)
   uint16_t fb_off = starting_off;
   printf("Line number: %d - FB offset: 0x%04x\n", pic->y_pos, fb_off);
   unsigned char *src = pic->data;
-  uint32_t *framebuffer = vga->memory();
+  uint8_t *framebuffer = vga->memory();
 
   for (int y = 0; y < pic->height; y++) {
     for (int x = 0; x < pic->width; x++) {
@@ -170,8 +170,8 @@ void draw_ui_piece(const struct pic_data *pic)
       hi = (al >> 4) & 0xf;
       lo = al & 0xf;
 
-      framebuffer[fb_off++] = vga_palette[hi];
-      framebuffer[fb_off++] = vga_palette[lo];
+      framebuffer[fb_off++] = hi;
+      framebuffer[fb_off++] = lo;
     }
     starting_off += 0x140;
     fb_off = starting_off;
@@ -186,11 +186,11 @@ static void draw_solid_color(uint8_t color, uint8_t line_num,
   uint16_t fb_off = get_line_offset(line_num);
   inset = inset << 2;
   fb_off += inset;
-  uint32_t *framebuffer = vga->memory();
+  uint8_t *framebuffer = vga->memory();
 
   for (uint16_t i = 0; i < count; i++) {
-    framebuffer[fb_off++] = vga_palette[color];
-    framebuffer[fb_off++] = vga_palette[color];
+    framebuffer[fb_off++] = color;
+    framebuffer[fb_off++] = color;
   }
   //display_update();
 }
@@ -199,7 +199,7 @@ static void draw_character(int x, int y, const unsigned char *chdata)
 {
   int color = 0xF;
 
-  uint32_t *framebuffer = vga->memory();
+  uint8_t *framebuffer = vga->memory();
   uint16_t fb_off = get_line_offset(y);
   fb_off += (x << 3); // 8 bytes
 
@@ -213,7 +213,7 @@ static void draw_character(int x, int y, const unsigned char *chdata)
         color = 0xF;
       }
       ch = bl;
-      framebuffer[fb_off++] = vga_palette[color];
+      framebuffer[fb_off++] = color;
     }
     fb_off += 0x138;
   }
@@ -230,7 +230,7 @@ static void draw_pattern(int starting_line, int ending_line, int x_pos, int dx)
 
   uint16_t ax = 0xFFFF; // word_359A
 
-  uint32_t *framebuffer = vga->memory();
+  uint8_t *framebuffer = vga->memory();
 
   // 0x3417
   x_pos = x_pos << 3;
@@ -245,8 +245,8 @@ static void draw_pattern(int starting_line, int ending_line, int x_pos, int dx)
     for (int j = 0; j < dx; j++) {
       int color1 = (ax >> 8) & 0xFF;
       int color2 = (ax & 0x00FF);
-      framebuffer[fb_off++] = vga_palette[color1];
-      framebuffer[fb_off++] = vga_palette[color2];
+      framebuffer[fb_off++] = color1;
+      framebuffer[fb_off++] = color2;
     }
     starting_line++;
   }

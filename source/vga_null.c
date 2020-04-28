@@ -22,14 +22,13 @@
 #define VGA_WIDTH 320
 #define VGA_HEIGHT 200
 
-/* Represents 0xA0000 (0xA000:0000) memory, but in 32 bit for SDL */
-static uint32_t *framebuffer;
+/* Represents 0xA0000 (0xA000:0000) memory. */
+static uint8_t *framebuffer;
 
 static int
 display_start(int game_width, int game_height)
 {
-  if ((framebuffer = calloc(VGA_WIDTH * VGA_HEIGHT,
-    sizeof(uint32_t))) == NULL) {
+  if ((framebuffer = calloc(VGA_WIDTH * VGA_HEIGHT, 1)) == NULL) {
     fprintf(stderr, "Framebuffer could not be allocated.\n");
     return -1;
   }
@@ -52,7 +51,7 @@ static void waitkey()
 {
 }
 
-static uint32_t *
+static uint8_t *
 get_fb_mem()
 {
   return framebuffer;

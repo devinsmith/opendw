@@ -31,7 +31,7 @@ struct vga_driver {
   void (*end)();
   void (*update)();
   void (*waitkey)();
-  uint32_t* (*memory)();
+  uint8_t* (*memory)();
 };
 
 extern struct vga_driver *vga;
