@@ -23,8 +23,6 @@
 extern "C" {
 #endif
 
-extern const uint32_t vga_palette[];
-
 struct vga_driver {
   const char *driver_name;
   int (*initialize)(int game_width, int game_height);
