@@ -50,7 +50,8 @@ uint16_t word_3AEA = 0;
 
 uint16_t word_3ADB = 0;
 
-const struct resource *word_3ADD = NULL;
+/* 0x3ADD */
+const struct resource *running_script = NULL;
 const struct resource *word_3ADF = NULL;
 
 uint16_t word_42D6 = 0;
@@ -110,6 +111,7 @@ struct virtual_cpu {
 
 struct virtual_cpu cpu;
 
+static void run_script(uint8_t script_index, uint16_t src_offset);
 static uint8_t sub_1CF8();
 static uint8_t sub_1D8A();
 static void sub_3150(unsigned char byte);
@@ -481,7 +483,7 @@ static void op_01()
 
 static void populate_3ADD_and_3ADF(void)
 {
-  word_3ADD = resource_get_by_index(word_3AE8);
+  running_script = resource_get_by_index(word_3AE8);
   word_3ADF = resource_get_by_index(word_3AEA);
 }
 
@@ -983,6 +985,7 @@ static void op_5C(void)
     cpu.bx = word_42D6;
     al = word_3AE8;
     printf("Breakpoint 0x42BF\n");
+    run_script(al, word_42D6);
     exit(1);
   }
 }
@@ -1242,18 +1245,17 @@ static void read_header_bytes(void)
   sub_27E3();
 }
 
-static void run_script(const struct resource *script, uint8_t al,
-  uint16_t src_offset)
+static void run_script(uint8_t script_index, uint16_t src_offset)
 {
   int done = 0;
   uint8_t prev_op = 0;
   uint8_t op_code = 0;
 
-  word_3AE8 = 2;
-  word_3AEA = 2;
+  word_3AE8 = script_index;
+  word_3AEA = script_index;
   populate_3ADD_and_3ADF();
 
-  cpu.pc = script->bytes + src_offset;
+  cpu.pc = running_script->bytes + src_offset;
   cpu.base_pc = cpu.pc;
 
   while (!done) {
@@ -1297,7 +1299,7 @@ void run_engine()
   dump_hex(code_res->bytes, 0x80);
 
   // 0x3AA0
-  run_script(code_res, 2, 0);
+  run_script(code_res->index, 0);
 
   free(data_D760);
 }
