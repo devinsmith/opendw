@@ -21,6 +21,7 @@
 
 #include "engine.h"
 #include "resource.h"
+#include "tables.h"
 #include "ui.h"
 #include "utils.h"
 #include "vga.h"
@@ -41,12 +42,18 @@ uint8_t num_bits = 0;
 
 uint8_t byte_1CE4 = 0;
 uint8_t byte_1CE5 = 0;
+
+uint16_t data_268F[4];
+
+
 uint8_t byte_3AE1 = 0;
 uint16_t word_3AE2 = 0;
 uint16_t word_3AE4 = 0;
 uint16_t word_3AE6 = 0;
 uint16_t word_3AE8 = 0;
 uint16_t word_3AEA = 0;
+// 0x3AEC
+uint16_t saved_stack = 0;
 
 uint16_t word_3ADB = 0;
 
@@ -56,6 +63,10 @@ const struct resource *word_3ADF = NULL;
 
 uint16_t word_42D6 = 0;
 unsigned char *data_D760 = NULL;
+
+// XXX:How big should these be???
+unsigned char data_C960[4096] = { 0 };
+unsigned char data_CA4C[4096] = { 0 };
 
 // The function signature for this function pointer is not entirely correct
 // but we'll figure it out as we decode more of DW.
@@ -68,6 +79,9 @@ struct game_state {
 // 0x3860
 static struct game_state game_state = {0};
 
+// Small stack, hopefully we don't use much of it.
+#define STACK_SIZE 16
+
 // virtual CPU
 struct virtual_cpu {
   // registers
@@ -78,8 +92,8 @@ struct virtual_cpu {
   uint16_t di;
 
   // stack
-  uint16_t sp[16]; // stacks;
-  int stack_index;
+  uint16_t stack[STACK_SIZE]; // stacks;
+  uint16_t sp;
 
   // program counter
   unsigned char *pc;
@@ -126,6 +140,7 @@ static void op_03();
 static void op_04();
 static void op_05();
 static void op_06();
+static void op_08();
 static void op_09();
 static void op_0A();
 static void op_0F();
@@ -150,8 +165,12 @@ static void op_4B();
 static void op_53();
 static void op_54();
 static void op_56();
+static void op_5A();
 static void op_5C();
+static void op_5E();
 static void op_66();
+static void op_69();
+static void op_74();
 static void read_header_bytes(void); // 7B
 static void op_84();
 static void op_85();
@@ -174,7 +193,7 @@ struct op_call_table targets[] = {
   { op_05, "0x3B3D" },
   { op_06, "0x3B4A" },
   { NULL, "0x3B52" },
-  { NULL, "0x3B59" },
+  { op_08, "0x3B59" },
   { op_09, "0x3B67" },
   { op_0A, "0x3B7A" },
   { NULL, "0x3B8C" },
@@ -256,11 +275,11 @@ struct op_call_table targets[] = {
   { NULL, "0x4215" },
   { NULL, "0x4239" },
   { NULL, "0x41C8" },
-  { NULL, "0x3AEE" },
+  { op_5A, "0x3AEE" },
   { NULL, "0x427A" },
   { op_5C, "0x4295" },
   { NULL, "0x42D8" },
-  { NULL, "0x4322" },
+  { op_5E, "0x4322" },
   { NULL, "0x4372" },
   { NULL, "0x438B" },
   { NULL, "0x43A6" },
@@ -271,7 +290,7 @@ struct op_call_table targets[] = {
   { op_66, "0x40C1" },
   { NULL, "0x44CB" },
   { NULL, "0x450A" },
-  { NULL, "0x453F" },
+  { op_69, "0x453F" },
   { NULL, "0x4573" },
   { NULL, "0x45A1" },
   { NULL, "0x45A8" },
@@ -282,7 +301,7 @@ struct op_call_table targets[] = {
   { NULL, "0x465B" },
   { NULL, "0x46B6" },
   { NULL, "0x47B7" },
-  { NULL, "0x47C0" },
+  { op_74, "0x47C0" },
   { NULL, "0x47D1" },
   { NULL, "0x47D9" },
   { NULL, "0x47E3" },
@@ -426,41 +445,41 @@ struct op_call_table targets[] = {
 
 static void push_word(uint16_t val)
 {
-  if (cpu.stack_index == 0) {
-    cpu.stack_index = 16;
+  if (cpu.sp == 0) {
+    cpu.sp = STACK_SIZE;
   }
 
-  cpu.stack_index--;
-  cpu.sp[cpu.stack_index] = val;
+  cpu.sp--;
+  cpu.stack[cpu.sp] = val;
 }
 
 static void push_byte(uint8_t val)
 {
-  if (cpu.stack_index == 0) {
-    cpu.stack_index = 16;
+  if (cpu.sp == 0) {
+    cpu.sp = STACK_SIZE;
   }
 
   // we need to push a byte onto the stack.
-  cpu.stack_index--;
-  cpu.sp[cpu.stack_index] = val;
+  cpu.sp--;
+  cpu.stack[cpu.sp] = val;
 }
 
 static uint8_t pop_byte()
 {
-  uint8_t val = cpu.sp[cpu.stack_index];
-  cpu.stack_index++;
-  if (cpu.stack_index >= 16)
-    cpu.stack_index = 0;
+  uint8_t val = cpu.stack[cpu.sp];
+  cpu.sp++;
+  if (cpu.sp >= STACK_SIZE)
+    cpu.sp = 0;
 
   return val;
 }
 
 static uint16_t pop_word()
 {
-  uint16_t val = cpu.sp[cpu.stack_index];
-  cpu.stack_index++;
-  if (cpu.stack_index >= 16)
-    cpu.stack_index = 0;
+  uint16_t val = cpu.stack[cpu.sp];
+  cpu.sp++;
+  if (cpu.sp >= STACK_SIZE)
+    cpu.sp = 0;
 
   return val;
 }
@@ -520,7 +539,18 @@ static void op_05(void)
 static void op_06()
 {
   uint8_t al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
   word_3AE4 = al;
+}
+
+// 0x3B59
+static void op_08(void)
+{
+  uint8_t al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
+  al = word_3AE4;
+  game_state.unknown[cpu.bx] = al;
 }
 
 // 0x3B67
@@ -956,12 +986,34 @@ static void op_56(void)
   uint8_t ah = (cpu.ax & 0xFF00) >> 8;
   if (byte_3AE1 != ah) {
     printf("op_56 not done, exiting here\n");
-    cpu.sp[cpu.stack_index++] = cpu.cx;
+    cpu.stack[cpu.sp++] = cpu.cx;
     exit(1);
   } else {
     // store cl into stack.
     push_byte(cpu.cx & 0xFF);
   }
+}
+
+// 0x3AEE
+static void op_5A(void)
+{
+  // mov sp, [3AEC]
+  cpu.sp = saved_stack;
+  saved_stack = pop_word();
+  word_3ADB = pop_word();
+  cpu.ax = pop_word();
+
+  uint8_t al = cpu.ax & 0xFF;
+  word_3AE8 = al;
+  word_3AEA = al;
+  populate_3ADD_and_3ADF();
+  al = 0;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+
+  byte_3AE1 = al;
+  word_3AE2 = (al << 8) | (word_3AE2 & 0xFF); // lower portion of word_3AE2 takes al.
+
+
 }
 
 // 0x4295
@@ -973,21 +1025,58 @@ static void op_5C(void)
 
   word_42D6 = cpu.ax;
   word_3ADB = cpu.pc - cpu.base_pc; // is this correct?
+  unsigned char *save_pc = cpu.pc;
 
   if (game_state.unknown[0x1F] == 0) {
-    printf("Breakpoint 0x42D3\n");
-    exit(1);
-  } else {
-    uint8_t al = game_state.unknown[6];
-    cpu.ax = (cpu.ax & 0xFF00) | al;
-    push_word(cpu.ax);
-    game_state.unknown[6] = 0;
+    return;
+  }
+
+  uint8_t al = game_state.unknown[6];
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  push_word(cpu.ax);
+  game_state.unknown[6] = 0;
+  while (al < game_state.unknown[0x1F]) {
     cpu.bx = word_42D6;
     al = word_3AE8;
-    printf("Breakpoint 0x42BF\n");
     run_script(al, word_42D6);
+    game_state.unknown[6]++;
+    al = game_state.unknown[6];
+  }
+  cpu.ax = pop_word();
+  al = cpu.ax & 0xFF;
+  game_state.unknown[6] = al;
+
+  cpu.pc = save_pc;
+}
+
+// 0x4322
+static void op_5E(void)
+{
+  uint8_t al = game_state.unknown[6];
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.di = cpu.ax;
+  game_state.unknown[cpu.di + 0x18] = (cpu.ax & 0xFF00) >> 8;
+  cpu.bx = 0xC960;
+  uint8_t bh = (cpu.bx & 0xFF00) >> 8;
+  bh += game_state.unknown[cpu.di + 0xA];
+  cpu.bx = bh << 8 | (cpu.bx & 0xFF);
+
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx += cpu.ax;
+  cpu.cx = word_3AE2;
+
+  // Validation that we aren't writing outside our array.
+  if ((cpu.bx - 0xC960) >= sizeof(data_C960)) {
+    printf("Array of data_C960 not large enough!\n");
     exit(1);
   }
+  // mov [di], al
+  data_C960[cpu.bx - 0xC960] = cpu.cx & 0xFF;
+  if (byte_3AE1 != 0) {
+    data_C960[cpu.bx - 0xC960 + 1] = (cpu.cx & 0xFF00) >> 8;
+  }
+
 }
 
 // 0x40C1
@@ -1021,6 +1110,66 @@ static void op_66(void)
   word_3AE6 &= 0x0001;
   word_3AE6 |= flags;
   cpu.ax = flags;
+}
+
+// 0x453F
+static void op_69(void)
+{
+  cpu.bx = game_state.unknown[7];
+  // shl bx, 1
+  cpu.ax = game_state.unknown[6];
+  cpu.di = cpu.ax;
+  cpu.ax = 0xCA4C;
+
+  uint8_t ah = (cpu.ax & 0xFF00) >> 8;
+  ah += game_state.unknown[0xA + cpu.di];
+  cpu.ax = ah << 8 | (cpu.ax & 0xFF);
+  cpu.ax += get_unknown_4456(cpu.bx);
+  cpu.di = cpu.ax;
+
+  cpu.ax = *cpu.pc++;
+  cpu.di += cpu.ax;
+
+  cpu.ax = word_3AE2;
+  // Validation that we aren't writing outside our array.
+  if ((cpu.di - 0xCA4C) >= sizeof(data_CA4C)) {
+    printf("Array of data_CA4C not large enough!\n");
+    exit(1);
+  }
+  // mov [di], al
+  data_CA4C[cpu.di - 0xCA4C] = cpu.ax & 0xFF;
+  if (byte_3AE1 != 0) {
+    data_CA4C[cpu.di - 0xCA4C + 1] = (cpu.ax & 0xFF00) >> 8;
+  }
+
+}
+
+static void sub_25E0(void)
+{
+  for (int i = 0; i < 4; i++) {
+    uint8_t al = *cpu.pc++;
+    data_268F[i] = al;
+  }
+//  sub_3177
+  printf("sub_25E0 is not finished. Exiting here\n");
+  exit(1);
+}
+
+// 0x47C0
+static void op_74(void)
+{
+  unsigned char *saved_pc = cpu.pc;
+  sub_25E0();
+  // push si
+  // mov bx, si
+  // mov cx, es
+  // cx:bx = cpu.pc
+
+  // push cs
+  // pop es
+  // call sub_25E0
+  // pop si
+  // add si, 0x0004
 }
 
 // 0x4907
@@ -1245,18 +1394,27 @@ static void read_header_bytes(void)
   sub_27E3();
 }
 
+// 0x3AA0
 static void run_script(uint8_t script_index, uint16_t src_offset)
 {
   int done = 0;
   uint8_t prev_op = 0;
   uint8_t op_code = 0;
 
+  uint8_t cl = word_3AE8;
+  cpu.cx = (cpu.cx & 0xFF00) | cl;
+
+  push_word(cpu.cx);
+  push_word(word_3ADB);
+  push_word(saved_stack);
+  saved_stack = cpu.sp;
+
   word_3AE8 = script_index;
   word_3AEA = script_index;
   populate_3ADD_and_3ADF();
 
   cpu.pc = running_script->bytes + src_offset;
-  cpu.base_pc = cpu.pc;
+  cpu.base_pc = running_script->bytes;
 
   while (!done) {
     prev_op = op_code;
@@ -1269,6 +1427,9 @@ static void run_script(uint8_t script_index, uint16_t src_offset)
     void (*callfunc)(void) = targets[op_code].func;
     if (callfunc != NULL) {
       callfunc();
+      if (op_code == 0x5A)
+        done = 1;
+
     } else {
       printf("OpenDW has reached an unhandled op code and will terminate.\n");
       printf("  Opcode: 0x%02X (Addr: %s), Previous op: 0x%02X\n", op_code,
@@ -1282,7 +1443,7 @@ void run_engine()
 {
   game_state.unknown[8] = 0xFF;
   memset(&cpu, 0, sizeof(struct virtual_cpu));
-  cpu.stack_index = 16; // stack grows downward...
+  cpu.sp = STACK_SIZE; // stack grows downward...
 
   // load unknown data from COM file.
   data_D760 = com_extract(0xD760, 0x700);
