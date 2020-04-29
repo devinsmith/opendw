@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "tables.h"
@@ -137,6 +138,12 @@ unsigned char or_table[256] = {
   0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF  // 0xB44A-0xB451
 };
 
+// Increasing by 23 (0x17) ?
+static uint16_t unknown_4456[] = {
+  0x0000, 0x0017, 0x002E, 0x0045, 0x005C, 0x0073, 0x008A, 0x00A1,
+  0x00B8, 0x00CF, 0x00E6, 0x00FD, 0x00E8
+};
+
 /* Stored in dragon.com at 0xBF52-0xC352
  * See ui.c for how this is interpreted.
  *
@@ -177,4 +184,13 @@ uint8_t get_or_table(uint8_t offset)
 uint16_t get_line_offset(uint8_t index)
 {
   return framebuffer_line_offsets[index];
+}
+
+uint16_t get_unknown_4456(uint8_t index)
+{
+  if (index >= sizeof(unknown_4456) / sizeof(unknown_4456[0])) {
+    printf("Requested %d index out of bounds in unknown 4456\n", index);
+    exit(1);
+  }
+  return unknown_4456[index];
 }
