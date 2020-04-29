@@ -195,6 +195,7 @@ static void draw_solid_color(uint8_t color, uint8_t line_num,
   //display_update();
 }
 
+// 0x3351 (sort of).
 static void draw_character(int x, int y, const unsigned char *chdata)
 {
   int color = 0xF;
