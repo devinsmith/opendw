@@ -64,6 +64,9 @@ struct viewport_data viewports[] = {
   }
 };
 
+#define COLOR_BLACK 0
+#define COLOR_WHITE 0xF
+
 #define UI_PIECE_COUNT 0x2B
 #define UI_BRICK_FIRST_PICTURE 0x17
 struct pic_data ui_pieces[UI_PIECE_COUNT];
@@ -263,7 +266,7 @@ void ui_draw()
   /* Not the most ideal piece of code, but this is what dragon.com does. */
   /* clear out for character list */
   for (uint8_t i = 0x20; i < 0x90; i++) {
-    draw_solid_color(0, i, 0x36, 0x30);
+    draw_solid_color(COLOR_BLACK, i, 0x36, 0x30);
   }
   vga->update();
 
@@ -357,4 +360,47 @@ void ui_header_reset()
 void ui_header_set_byte(unsigned char byte)
 {
   ui_header.data[ui_header.len++] = byte;
+}
+
+// 0x269F
+void ui_draw_box(int x, int y, int width, int height)
+{
+  int x2 = x;
+  uint8_t start_chr = 0x80;
+  // Draw corner box.
+  draw_character(x2, y, get_chr(start_chr));
+  x2++;
+  start_chr++;
+  for (; x2 < width - 1; x2++) {
+    draw_character(x2, y, get_chr(start_chr));
+  }
+  start_chr++;
+  draw_character(x2, y, get_chr(start_chr));
+  y += 8;
+  for (; y < height; y += 8)
+  {
+    draw_character(x, y, get_chr(0x83));
+    draw_character(x2, y, get_chr(0x84));
+  }
+
+  // Bottom left corner.
+  x2 = x;
+  start_chr = 0x85;
+  draw_character(x2, y, get_chr(start_chr));
+  x2++;
+  start_chr++;
+  for (; x2 < width - 1; x2++) {
+    draw_character(x2, y, get_chr(start_chr));
+  }
+  // Bottom right corner.
+  start_chr++;
+  draw_character(x2, y, get_chr(start_chr));
+
+  // 0x2683
+  // Fill with solid color (not done, not correct)
+  // 0x28, 0x90, 0x5, 0x23 (0x68 = 0x90-0x28)
+  for (uint8_t i = 0x24; i < 0x30; i++) {
+    draw_solid_color(COLOR_WHITE, i, 9, 0x7B);
+  }
+  vga->update();
 }

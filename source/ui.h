@@ -34,6 +34,7 @@ void ui_clean();
 void ui_header_reset();
 void ui_header_draw();
 void ui_header_set_byte(unsigned char byte);
+void ui_draw_box(int x, int y, int width, int height);
 
 #ifdef __cplusplus
 }
