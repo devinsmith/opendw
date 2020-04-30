@@ -44,7 +44,8 @@ uint8_t byte_1CE4 = 0;
 uint8_t byte_1CE5 = 0;
 
 uint16_t data_268F[4];
-
+uint16_t data_2697[4];
+uint8_t byte_3236 = 0;
 
 uint8_t byte_3AE1 = 0;
 uint16_t word_3AE2 = 0;
@@ -171,6 +172,7 @@ static void op_5E();
 static void op_66();
 static void op_69();
 static void op_74();
+static void op_78();
 static void read_header_bytes(void); // 7B
 static void op_84();
 static void op_85();
@@ -305,7 +307,7 @@ struct op_call_table targets[] = {
   { NULL, "0x47D1" },
   { NULL, "0x47D9" },
   { NULL, "0x47E3" },
-  { NULL, "0x47EC" },
+  { NULL/*op_78*/, "0x47EC" },
   { NULL, "0x47FA" },
   { NULL, "0x4801" },
   { read_header_bytes, "0x482D" },
@@ -1144,32 +1146,39 @@ static void op_69(void)
 
 }
 
+static void sub_3177(void)
+{
+  uint8_t al = game_state.unknown[0x5f];
+  byte_3236 = al;
+}
+
 static void sub_25E0(void)
 {
   for (int i = 0; i < 4; i++) {
     uint8_t al = *cpu.pc++;
     data_268F[i] = al;
   }
-//  sub_3177
-  printf("sub_25E0 is not finished. Exiting here\n");
-  exit(1);
+  sub_3177();
+  memcpy(data_2697, data_268F, sizeof(data_268F));
+
+
+  // 0x32BF, 0x32C1, 0x80
+  printf("sub_269F(%d, %d, 0x80)\n", data_2697[0], data_2697[1]);
+  // 
+  ui_draw_box(data_2697[0], data_2697[1], data_2697[2], data_2697[3]);
+  //exit(1);
 }
 
 // 0x47C0
 static void op_74(void)
 {
-  unsigned char *saved_pc = cpu.pc;
+  // draws frame, reads next 4 bytes to get rectangle dimensions.
   sub_25E0();
-  // push si
-  // mov bx, si
-  // mov cx, es
-  // cx:bx = cpu.pc
+}
 
-  // push cs
-  // pop es
-  // call sub_25E0
-  // pop si
-  // add si, 0x0004
+// 0x47EC
+static void op_78(void)
+{
 }
 
 // 0x4907
