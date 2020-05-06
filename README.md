@@ -17,6 +17,13 @@ This game can be purchased at [GOG](https://www.gog.com/game/dragon_wars).
 Under Linux/Unix operating systems, this engine expects that the original game
 files should be all lowercase (e.g. DRAGON.COM -> dragon.com).
 
+# Building
+VoidLinux
+
+```
+sudo xbps-install -S SDL2-devel
+```
+
 # Screenshot
 
 ![Title screen](img/dw.png)
