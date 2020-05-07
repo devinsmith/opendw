@@ -11,7 +11,7 @@ DEP_INCLUDES = -I.
 DEP_LIBS =
 
 # SDL VGA implementation.
-DEP_INCLUDES += $(shell pkg-config sdl2 --cflags)
+SDL_INCLUDES = $(shell pkg-config sdl2 --cflags)
 DEP_LIBS += $(shell pkg-config sdl2 --libs)
 
 OBJS = $(SRCS:.c=.o)
@@ -26,6 +26,9 @@ all: $(EXE)
 
 $(EXE): $(OBJS)
 	$(CC) $(CFLAGS) -o $(EXE) $(OBJS) $(DEP_LFLAGS) $(DEP_LIBS)
+
+vga_sdl.o:
+	$(CC) $(CFLAGS) $(DEP_INCLUDES) $(SDL_INCLUDES) -MMD -MP -MT $@ -o $@ -c vga_sdl.c
 
 .c.o:
 	$(CC) $(CFLAGS) $(DEP_INCLUDES) -MMD -MP -MT $@ -o $@ -c $<
