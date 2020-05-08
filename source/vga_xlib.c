@@ -64,8 +64,7 @@ display_start(int game_width, int game_height)
   disp_env = getenv("DISPLAY");
   dpy = XOpenDisplay(disp_env);
   if (dpy == NULL) {
-    fprintf(stderr, "Failed to open X display %s\n",
-        disp_env == NULL ? "(null)" : disp_env);
+    fprintf(stderr, "Failed to open X display %s\n", XDisplayName(disp_env));
     return -1;
   }
   screen = DefaultScreen(dpy);
