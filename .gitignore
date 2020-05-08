@@ -52,6 +52,8 @@ Mkfile.old
 dkms.conf
 
 # Dragon Wars specific files.
-dragon
+sdldragon
+xdragon
+ndragon
 data1
 data2

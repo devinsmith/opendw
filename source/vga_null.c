@@ -65,3 +65,5 @@ struct vga_driver null_driver = {
   waitkey,
   get_fb_mem
 };
+
+struct vga_driver *vga = &null_driver;

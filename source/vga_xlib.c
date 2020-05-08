@@ -17,7 +17,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <SDL.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
 
 #include "vga.h"
 
@@ -26,11 +27,8 @@
 #define VGA_WIDTH 320
 #define VGA_HEIGHT 200
 
-static SDL_Window *main_window = NULL;
-static SDL_Renderer *renderer = NULL;
-static SDL_Surface *surface = NULL;
-
 /* http://www.brackeen.com/vga/basics.html */
+#if 0
 static const SDL_Color sdl_palette[] = {
   { 0x00, 0x00, 0x00, 0xFF }, /* BLACK */
   { 0x00, 0x00, 0x80, 0xFF }, /* BLUE */
@@ -49,43 +47,49 @@ static const SDL_Color sdl_palette[] = {
   { 0xFF, 0xFF, 0x00, 0xFF }, /* YELLOW */
   { 0xFF, 0xFF, 0xFF, 0xFF } /* WHITE */
 };
+#endif
+
+Display *dpy;
+int screen;
+Window root;
+XVisualInfo *vi;
 
 int
 display_start(int game_width, int game_height)
 {
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
-    fprintf(stderr, "SDL could not initialize. SDL Error: %s\n",
-      SDL_GetError());
+  const char *disp_env;
+  XVisualInfo vinfo;
+  int num_visuals;
+
+  disp_env = getenv("DISPLAY");
+  dpy = XOpenDisplay(disp_env);
+  if (dpy == NULL) {
+    fprintf(stderr, "Failed to open X display %s\n",
+        disp_env == NULL ? "(null)" : disp_env);
+    return -1;
+  }
+  screen = DefaultScreen(dpy);
+  root = RootWindow(dpy, screen);
+
+  vinfo.screen = screen;
+  vinfo.depth = 8;
+  vinfo.class = PseudoColor;
+
+  vi = XGetVisualInfo(dpy, VisualScreenMask | VisualDepthMask |
+      VisualClassMask, &vinfo, &num_visuals);
+
+  if ((vi == NULL) || (num_visuals == 0)) {
+    fprintf(stderr, "No visuals found!\n");
     return -1;
   }
 
-  if ((main_window = SDL_CreateWindow("OpenDW",
-    SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-    WIN_WIDTH, WIN_HEIGHT,
-    SDL_WINDOW_RESIZABLE)) == NULL) {
-    fprintf(stderr, "Main window could not be created. SDL Error: %s\n",
-      SDL_GetError());
+  if (vi->class != PseudoColor) {
+    fprintf(stderr, "Currently no support for non-TrueColor visuals.\n");
     return -1;
   }
 
-  if ((renderer = SDL_CreateRenderer(main_window, -1, 0)) == NULL) {
-    fprintf(stderr, "Main renderer could not be created. SDL Error: %s\n",
-      SDL_GetError());
-    return -1;
-  }
 
-  if ((surface = SDL_CreateRGBSurface(SDL_SWSURFACE, game_width, game_height,
-       8 /* bpp */, /* RGBA masks */ 0, 0, 0, 0)) == NULL) {
-    fprintf(stderr, "8 bit surface could not be created. SDL Error: %s\n",
-      SDL_GetError());
-    return -1;
-  }
 
-  if (SDL_SetPaletteColors(surface->format->palette, sdl_palette, 0, 16) != 0) {
-    fprintf(stderr, "Failed to set palette. SDL Error: %s\n",
-      SDL_GetError());
-    return -1;
-  }
 
   return 0;
 }
@@ -93,56 +97,25 @@ display_start(int game_width, int game_height)
 void
 display_end(void)
 {
-  if (surface != NULL) {
-    SDL_FreeSurface(surface);
-  }
-
-  if (renderer != NULL) {
-    SDL_DestroyRenderer(renderer);
-  }
-
-  if (main_window != NULL) {
-    SDL_DestroyWindow(main_window);
-  }
-  SDL_Quit();
 }
 
 void
 display_update(void)
 {
-  SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-  SDL_RenderCopy(renderer, texture, NULL, NULL);
-  SDL_RenderPresent(renderer);
-  SDL_DestroyTexture(texture);
 }
 
 void waitkey()
 {
-  SDL_Event event;
-  int done = 0;
-
-  while (!done) {
-
-    SDL_WaitEvent(&event);
-    switch (event.type) {
-    case SDL_QUIT:
-      done = 1;
-      break;
-    case SDL_KEYDOWN:
-      done = 1;
-      break;
-    }
-  }
 }
 
 static uint8_t *
 get_fb_mem()
 {
-  return surface->pixels;
+  return NULL;
 }
 
-struct vga_driver sdl_driver = {
-  "SDL", // 2.0
+struct vga_driver x_driver = {
+  "xlib",
   display_start,
   display_end,
   display_update,
@@ -150,4 +123,4 @@ struct vga_driver sdl_driver = {
   get_fb_mem
 };
 
-struct vga_driver *vga = &sdl_driver;
+struct vga_driver *vga = &x_driver;

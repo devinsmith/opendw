@@ -31,12 +31,6 @@
 #define GAME_WIDTH 320
 #define GAME_HEIGHT 200
 
-// VGA Drivers
-extern struct vga_driver sdl_driver;
-extern struct vga_driver null_driver;
-
-struct vga_driver *vga = &sdl_driver;
-
 static void
 title_adjust(struct buf_wri *title)
 {
