@@ -150,7 +150,33 @@ static uint16_t unknown_4456[] = {
  * Alpha characters are OR'd with 0x80 like below:
  * 0xC1 = 'A' | 0x80
  * 0xE1 = 'a' | 0x80
- * */
+ *
+ * Each character is an 8x8 square and stored as 8 bytes.
+ * For example, the letter "A" is stored as:
+ *
+ * 0x30 0x78 0xCC 0xCC 0xFC 0xCC 0xCC 0x00
+ *
+ * Each byte represents a single 8 pixel line:
+ * 00110000
+ * 01111000
+ * 11001100
+ * 11001100
+ * 11111100
+ * 11001100
+ * 11001100
+ * 00000000
+ *
+ * Plotting only the "on" bits:
+ *
+ *   ##
+ *  ####
+ * ##  ##
+ * ##  ##
+ * ######
+ * ##  ##
+ * ##  ##
+ *
+ **/
 static unsigned char *chr_table;
 
 void load_chr_table()
