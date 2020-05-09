@@ -199,6 +199,7 @@ static void draw_solid_color(uint8_t color, uint8_t line_num,
 }
 
 // 0x3351 (sort of).
+// x stored in DX, y = DI
 static void draw_character(int x, int y, const unsigned char *chdata)
 {
   int color = 0xF;
@@ -362,45 +363,36 @@ void ui_header_set_byte(unsigned char byte)
   ui_header.data[ui_header.len++] = byte;
 }
 
-// 0x269F
-void ui_draw_box(int x, int y, int width, int height)
+// 0x3237
+void ui_draw_box_piece(uint8_t chr, struct ui_rect *rect)
 {
-  int x2 = x;
-  uint8_t start_chr = 0x80;
+  // XXX: Check chr for 0x80
+  // XXX: Check chr for 0x8D
+  draw_character(rect->x, rect->y, get_chr(chr));
+  rect->x++;
+}
+
+// 0x269F
+void ui_draw_box_segment(uint8_t chr, struct ui_rect *rect, struct ui_rect *outer)
+{
   // Draw corner box.
-  draw_character(x2, y, get_chr(start_chr));
-  x2++;
-  start_chr++;
-  for (; x2 < width - 1; x2++) {
-    draw_character(x2, y, get_chr(start_chr));
-  }
-  start_chr++;
-  draw_character(x2, y, get_chr(start_chr));
-  y += 8;
-  for (; y < height; y += 8)
-  {
-    draw_character(x, y, get_chr(0x83));
-    draw_character(x2, y, get_chr(0x84));
+  ui_draw_box_piece(chr, rect);
+  chr++;
+
+  while (rect->x < outer->w - 1) {
+    ui_draw_box_piece(chr, rect);
   }
 
-  // Bottom left corner.
-  x2 = x;
-  start_chr = 0x85;
-  draw_character(x2, y, get_chr(start_chr));
-  x2++;
-  start_chr++;
-  for (; x2 < width - 1; x2++) {
-    draw_character(x2, y, get_chr(start_chr));
-  }
-  // Bottom right corner.
-  start_chr++;
-  draw_character(x2, y, get_chr(start_chr));
+  chr++;
+  ui_draw_box_piece(chr, rect);
 
+#if 0
   // 0x2683
   // Fill with solid color (not done, not correct)
   // 0x28, 0x90, 0x5, 0x23 (0x68 = 0x90-0x28)
   for (uint8_t i = 0x24; i < 0x30; i++) {
     draw_solid_color(COLOR_WHITE, i, 9, 0x7B);
   }
+#endif
   vga->update();
 }

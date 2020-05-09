@@ -43,7 +43,9 @@ void ui_clean();
 void ui_header_reset();
 void ui_header_draw();
 void ui_header_set_byte(unsigned char byte);
-void ui_draw_box(int x, int y, int width, int height);
+
+void ui_draw_box_segment(uint8_t chr, struct ui_rect *rect, struct ui_rect *outer);
+void ui_draw_box_piece(uint8_t chr, struct ui_rect *rect);
 
 #ifdef __cplusplus
 }

@@ -1164,6 +1164,7 @@ static void sub_25E0(void)
 
   sub_3177();
   if (ui_drawn_yet != 0) {
+    // call sub_2720
     printf("BP 0x25FC\n");
     exit(1);
   }
@@ -1174,8 +1175,24 @@ static void sub_25E0(void)
 
   // 0x32BF, 0x32C1, 0x80
   printf("sub_269F(%d, %d, 0x80)\n", data_32BF.x, data_32BF.y);
-  //
-  ui_draw_box(data_2697.x, data_2697.y, data_2697.w, data_2697.h);
+  // 0x269F
+  ui_draw_box_segment(0x80, &data_32BF, &data_2697);
+
+  // loc_2668
+  // Draw left and right sides.
+  while (data_32BF.y < data_2697.h - 8) {
+    data_32BF.x = data_2697.x;
+    data_32BF.y += 8;
+    ui_draw_box_piece(0x83, &data_32BF);
+    data_32BF.x = data_2697.w - 1;
+    ui_draw_box_piece(0x84, &data_32BF);
+  }
+  data_32BF.x = data_2697.x;
+  ui_draw_box_segment(0x85, &data_32BF, &data_2697);
+
+  ui_drawn_yet = 0xFF;
+
+  // 0x2739
   //exit(1);
 }
 
