@@ -135,6 +135,7 @@ static void sub_3150(unsigned char byte);
 static void sub_316C();
 static void sub_3191(unsigned char byte);
 static void sub_280E();
+static void sub_1C79(void);
 
 // Decoded opcode calls, foward definition.
 static void op_00();
