@@ -43,9 +43,11 @@ uint8_t num_bits = 0;
 uint8_t byte_1CE4 = 0;
 uint8_t byte_1CE5 = 0;
 
-uint16_t data_268F[4];
-uint16_t data_2697[4];
+uint8_t ui_drawn_yet = 0; // 0x268E
+struct ui_rect data_268F;
+struct ui_rect data_2697;
 uint8_t byte_3236 = 0;
+struct ui_rect data_32BF;
 
 uint8_t byte_3AE1 = 0;
 uint16_t word_3AE2 = 0;
@@ -1154,18 +1156,25 @@ static void sub_3177(void)
 
 static void sub_25E0(void)
 {
-  for (int i = 0; i < 4; i++) {
-    uint8_t al = *cpu.pc++;
-    data_268F[i] = al;
-  }
-  sub_3177();
-  memcpy(data_2697, data_268F, sizeof(data_268F));
+  data_268F.x = *cpu.pc++;
+  data_268F.y = *cpu.pc++;
+  data_268F.w = *cpu.pc++;
+  data_268F.h = *cpu.pc++;
 
+  sub_3177();
+  if (ui_drawn_yet != 0) {
+    printf("BP 0x25FC\n");
+    exit(1);
+  }
+
+  memcpy(&data_2697, &data_268F, sizeof(data_268F));
+  data_32BF.x = data_2697.x;
+  data_32BF.y = data_2697.y;
 
   // 0x32BF, 0x32C1, 0x80
-  printf("sub_269F(%d, %d, 0x80)\n", data_2697[0], data_2697[1]);
-  // 
-  ui_draw_box(data_2697[0], data_2697[1], data_2697[2], data_2697[3]);
+  printf("sub_269F(%d, %d, 0x80)\n", data_32BF.x, data_32BF.y);
+  //
+  ui_draw_box(data_2697.x, data_2697.y, data_2697.w, data_2697.h);
   //exit(1);
 }
 
@@ -1179,6 +1188,7 @@ static void op_74(void)
 // 0x47EC
 static void op_78(void)
 {
+  sub_1C79();
 }
 
 // 0x4907
@@ -1284,11 +1294,13 @@ static void sub_1C79(void)
     if (ret == 0xAF) {
       // 0x1CAB
       printf("Unhandled engine code: 0x1CAB\n");
+      exit(1);
       return;
     }
     if (ret == 0xDC) {
       // 0x1CAF
       printf("Unhandled engine code: 0x1CAF\n");
+      exit(1);
       return;
     }
     sub_3150(ret);
@@ -1327,6 +1339,7 @@ static uint8_t sub_1CF8()
     } else if (ret == 0x1E) {
       // stc
       // rcr byte [byte_1CE4], 1
+      // rotate carry right bit.
       byte_1CE4 = byte_1CE4 >> 1;
       byte_1CE4 += 0x80;
     }
@@ -1334,6 +1347,7 @@ static uint8_t sub_1CF8()
 }
 
 // Extract 5 bits out of each byte.
+// byte_1CE5 contains leftover bit buffer.
 static uint8_t sub_1D8A()
 {
   int counter = 5;

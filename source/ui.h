@@ -21,9 +21,18 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
 struct ui_header {
   int len; // 0x288A
   unsigned char data[16]; // 0x288B
+};
+
+struct ui_rect {
+  uint16_t x;
+  uint16_t y;
+  uint16_t w;
+  uint16_t h;
 };
 
 void ui_load();
