@@ -1155,6 +1155,15 @@ static void sub_3177(void)
   byte_3236 = al;
 }
 
+// 0x2739
+static void rect_insets()
+{
+  data_2697.y += 8;
+  data_2697.h -= 8;
+  data_2697.x++;
+  data_2697.w--;
+}
+
 static void sub_25E0(void)
 {
   data_268F.x = *cpu.pc++;
@@ -1191,9 +1200,9 @@ static void sub_25E0(void)
   ui_draw_box_segment(0x85, &data_32BF, &data_2697);
 
   ui_drawn_yet = 0xFF;
-
-  // 0x2739
-  //exit(1);
+  rect_insets();
+  draw_pattern(&data_2697);
+  vga->update();
 }
 
 // 0x47C0
