@@ -225,20 +225,21 @@ static void draw_character(int x, int y, const unsigned char *chdata)
 }
 
 // 0x3380
-static void draw_pattern(int starting_line, int ending_line, int x_pos, int dx)
+void draw_pattern(struct ui_rect *rect)
 {
-  int num_lines = ending_line - starting_line;
-  dx = dx - x_pos;
+  int num_lines = rect->h - rect->y;
+  int dx = rect->w - rect->x;
+  int starting_line = rect->y;
   printf("Number of lines: %d\n", num_lines);
   printf("Line: %d\n", starting_line);
   printf("DX: 0x%04x\n", dx);
 
-  uint16_t ax = 0xFFFF; // word_359A
+  uint16_t ax = 0xFFFF; // word_359A (color)
 
   uint8_t *framebuffer = vga->memory();
 
   // 0x3417
-  x_pos = x_pos << 3;
+  int x_pos = rect->x << 3;
   dx = dx << 2;
   ax = ax & 0x0F0F;
   printf("x_pos: %d\n", x_pos);
@@ -282,7 +283,13 @@ void ui_draw()
 //  draw_ui_piece(&ui_pieces[0x2A]);
 
   // 0x3380
-  draw_pattern(0x98, 0xB8, 0x01, 0x27);
+  //
+  struct ui_rect r;
+  r.x = 1;
+  r.y = 0x98;
+  r.w = 0x27;
+  r.h = 0xB8;
+  draw_pattern(&r);
   vga->update();
 
 }
