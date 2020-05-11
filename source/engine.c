@@ -77,6 +77,14 @@ unsigned char data_CA4C[4096] = { 0 };
 // but we'll figure it out as we decode more of DW.
 void (*word_3163)(unsigned char byte);
 
+struct len_bytes {
+  uint16_t len;
+  uint8_t bytes[40];
+};
+
+// 0x320C
+struct len_bytes data_320C = { 0 };
+
 struct game_state {
   unsigned char unknown[256];
 };
@@ -312,7 +320,7 @@ struct op_call_table targets[] = {
   { NULL, "0x47D1" },
   { NULL, "0x47D9" },
   { NULL, "0x47E3" },
-  { NULL/*op_78*/, "0x47EC" },
+  { op_78, "0x47EC" },
   { NULL, "0x47FA" },
   { NULL, "0x4801" },
   { read_header_bytes, "0x482D" },
@@ -1153,7 +1161,15 @@ static void op_69(void)
 
 static void sub_3177(void)
 {
-  uint8_t al = game_state.unknown[0x5f];
+  uint16_t i;
+  for (i = 0; i < data_320C.len; i++) {
+    uint8_t al = data_320C.bytes[i];
+    ui_draw_chr_piece(al, &data_32BF, &data_2697);
+  }
+  data_320C.len = 0;
+
+  // 0x318A
+  uint8_t al = data_32BF.x;
   byte_3236 = al;
 }
 
@@ -1195,9 +1211,9 @@ static void draw_rectangle(void)
   while (data_32BF.y < data_2697.h - 8) {
     data_32BF.x = data_2697.x;
     data_32BF.y += 8;
-    ui_draw_chr_piece(0x83, &data_32BF);
+    ui_draw_chr_piece(0x83, &data_32BF, &data_2697);
     data_32BF.x = data_2697.w - 1;
-    ui_draw_chr_piece(0x84, &data_32BF);
+    ui_draw_chr_piece(0x84, &data_32BF, &data_2697);
   }
   data_32BF.x = data_2697.x;
   ui_draw_box_segment(0x85, &data_32BF, &data_2697);
@@ -1205,6 +1221,11 @@ static void draw_rectangle(void)
   ui_drawn_yet = 0xFF;
   rect_insets();
   draw_pattern(&data_2697);
+  // Technically this is done in draw_pattern
+  data_32BF.x = data_2697.x;
+  byte_3236 = data_2697.x;
+  data_32BF.y = data_2697.y;
+  data_320C.len = 0;
   vga->update();
 }
 
@@ -1409,8 +1430,27 @@ static uint8_t sub_1D8A()
   return al;
 }
 
+// append to string buffer.
 static void sub_3191(unsigned char byte)
 {
+  uint16_t bx = data_320C.len;
+  data_320C.bytes[bx] = byte;
+  data_320C.len++;
+  printf("sub_3191 0x%02X\n", byte);
+  if (byte == 0x8D) { // new line.
+    printf("data len: %d\n", data_320C.len);
+    printf("2697: 0x%04x\n", data_2697.x);
+    printf("2697: 0x%04x\n", data_2697.y);
+    printf("32BF: 0x%04x\n", data_32BF.x);
+    printf("32BF: 0x%04x\n", data_32BF.y);
+    sub_3177();
+  }
+
+  //printf("0x%02X\n", byte_3236);
+  // 0x3236
+  // 0x269B
+
+//  exit(1);
 }
 
 static void sub_316C()
@@ -1497,6 +1537,8 @@ void run_engine()
   game_state.unknown[8] = 0xFF;
   memset(&cpu, 0, sizeof(struct virtual_cpu));
   cpu.sp = STACK_SIZE; // stack grows downward...
+
+  ui_set_background(0x0000); // Not correct.
 
   // load unknown data from COM file.
   data_D760 = com_extract(0xD760, 0x700);

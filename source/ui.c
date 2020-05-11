@@ -43,6 +43,12 @@ struct pic_data {
   unsigned char *data;
 };
 
+// 0x2AAA
+uint8_t data_2AAA[0x19];
+
+// 0x2AC3
+uint8_t data_2AC3[0x19];
+
 static int loaded = 0;
 
 struct viewport_data viewports[] = {
@@ -78,6 +84,8 @@ unsigned char ui_header_loading[] = {
 };
 
 struct ui_header ui_header;
+
+static uint16_t word_359A = 0x0000; // XXX: Starts out as 0xFFFF.
 
 /* D88 */
 static void process_quadrant(const struct viewport_data *d, unsigned char *data)
@@ -202,7 +210,8 @@ static void draw_solid_color(uint8_t color, uint8_t line_num,
 // x stored in DX, y = DI
 static void draw_character(int x, int y, const unsigned char *chdata)
 {
-  int color = 0xF;
+  uint8_t color = COLOR_WHITE; // bh.
+  uint8_t ah = (word_359A >> 8) & 0xFF;
 
   uint8_t *framebuffer = vga->memory();
   uint16_t fb_off = get_line_offset(y);
@@ -210,18 +219,26 @@ static void draw_character(int x, int y, const unsigned char *chdata)
 
   for (int j = 0; j < 8; j++) {
     uint8_t bl;
-    uint8_t ch = *chdata++;
+    uint8_t al = *chdata++;
+    al = al ^ ah;
+    bl = al;
     for (int i = 0; i < 8; i++) {
-      color = 0;
-      bl = (ch << 1) & 0xFF;
-      if (bl < ch) {
-        color = 0xF;
+      color = COLOR_BLACK;
+      bl = (al << 1) & 0xFF;
+      if (bl < al) {
+        color = COLOR_WHITE;
       }
-      ch = bl;
       framebuffer[fb_off++] = color;
+      al = bl;
     }
     fb_off += 0x138;
   }
+}
+
+// 0x2AE3
+static void zero_out_2AAA()
+{
+  memset(data_2AAA, 0, sizeof(data_2AAA));
 }
 
 // 0x3380
@@ -230,6 +247,7 @@ void draw_pattern(struct ui_rect *rect)
   int num_lines = rect->h - rect->y;
   int dx = rect->w - rect->x;
   int starting_line = rect->y;
+  zero_out_2AAA();
   printf("Number of lines: %d\n", num_lines);
   printf("Line: %d\n", starting_line);
   printf("DX: 0x%04x\n", dx);
@@ -371,10 +389,29 @@ void ui_header_set_byte(unsigned char byte)
 }
 
 // 0x3237
-void ui_draw_chr_piece(uint8_t chr, struct ui_rect *rect)
+void ui_draw_chr_piece(uint8_t chr, struct ui_rect *rect, struct ui_rect *other)
 {
-  // XXX: Check chr for 0x80
-  // XXX: Check chr for 0x8D
+  if ((chr & 0x80) == 0) {
+    int16_t bx = (int16_t)rect->y;
+    bx -= other->y;
+    if (bx > 0) {
+      bx = bx << 3;
+
+      data_2AC3[bx] = chr;
+      data_2AAA[bx] = 0xFF;
+    }
+  }
+  if (chr == 0x8D) {
+    rect->x = other->x;
+    uint8_t al = rect->y;
+    al += 8;
+    if (al > other->h) {
+      printf("BP CS:3275\n");
+      exit(1);
+    }
+    rect->y = al;
+    return;
+  }
   draw_character(rect->x, rect->y, get_chr(chr));
   rect->x++;
 }
@@ -383,23 +420,20 @@ void ui_draw_chr_piece(uint8_t chr, struct ui_rect *rect)
 void ui_draw_box_segment(uint8_t chr, struct ui_rect *rect, struct ui_rect *outer)
 {
   // Draw corner box.
-  ui_draw_chr_piece(chr, rect);
+  ui_draw_chr_piece(chr, rect, outer);
   chr++;
 
   while (rect->x < outer->w - 1) {
-    ui_draw_chr_piece(chr, rect);
+    ui_draw_chr_piece(chr, rect, outer);
   }
 
   chr++;
-  ui_draw_chr_piece(chr, rect);
+  ui_draw_chr_piece(chr, rect, outer);
 
-#if 0
-  // 0x2683
-  // Fill with solid color (not done, not correct)
-  // 0x28, 0x90, 0x5, 0x23 (0x68 = 0x90-0x28)
-  for (uint8_t i = 0x24; i < 0x30; i++) {
-    draw_solid_color(COLOR_WHITE, i, 9, 0x7B);
-  }
-#endif
   vga->update();
+}
+
+void ui_set_background(uint16_t val)
+{
+  word_359A = val;
 }
