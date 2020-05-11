@@ -15,7 +15,8 @@ This game can be purchased at [GOG](https://www.gog.com/game/dragon_wars).
 - SDL2.
 
 Under Linux/Unix operating systems, this engine expects that the original game
-files should be all lowercase (e.g. DRAGON.COM -> dragon.com).
+files should be all lowercase (e.g. DRAGON.COM -> dragon.com). The files
+dragon.com, data1, and data2 should be in the same directory with the build.
 
 # Building
 VoidLinux
