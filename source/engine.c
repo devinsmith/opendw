@@ -1166,7 +1166,8 @@ static void rect_insets()
   data_2697.w--;
 }
 
-static void sub_25E0(void)
+// 0x25E0
+static void draw_rectangle(void)
 {
   data_268F.x = *cpu.pc++;
   data_268F.y = *cpu.pc++;
@@ -1211,7 +1212,7 @@ static void sub_25E0(void)
 static void op_74(void)
 {
   // draws frame, reads next 4 bytes to get rectangle dimensions.
-  sub_25E0();
+  draw_rectangle();
 }
 
 // 0x47EC
