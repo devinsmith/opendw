@@ -371,7 +371,7 @@ void ui_header_set_byte(unsigned char byte)
 }
 
 // 0x3237
-void ui_draw_box_piece(uint8_t chr, struct ui_rect *rect)
+void ui_draw_chr_piece(uint8_t chr, struct ui_rect *rect)
 {
   // XXX: Check chr for 0x80
   // XXX: Check chr for 0x8D
@@ -383,15 +383,15 @@ void ui_draw_box_piece(uint8_t chr, struct ui_rect *rect)
 void ui_draw_box_segment(uint8_t chr, struct ui_rect *rect, struct ui_rect *outer)
 {
   // Draw corner box.
-  ui_draw_box_piece(chr, rect);
+  ui_draw_chr_piece(chr, rect);
   chr++;
 
   while (rect->x < outer->w - 1) {
-    ui_draw_box_piece(chr, rect);
+    ui_draw_chr_piece(chr, rect);
   }
 
   chr++;
-  ui_draw_box_piece(chr, rect);
+  ui_draw_chr_piece(chr, rect);
 
 #if 0
   // 0x2683

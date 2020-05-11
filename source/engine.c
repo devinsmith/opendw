@@ -1195,9 +1195,9 @@ static void draw_rectangle(void)
   while (data_32BF.y < data_2697.h - 8) {
     data_32BF.x = data_2697.x;
     data_32BF.y += 8;
-    ui_draw_box_piece(0x83, &data_32BF);
+    ui_draw_chr_piece(0x83, &data_32BF);
     data_32BF.x = data_2697.w - 1;
-    ui_draw_box_piece(0x84, &data_32BF);
+    ui_draw_chr_piece(0x84, &data_32BF);
   }
   data_32BF.x = data_2697.x;
   ui_draw_box_segment(0x85, &data_32BF, &data_2697);
