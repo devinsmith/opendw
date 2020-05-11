@@ -37,11 +37,13 @@ uint8_t byte_1CE1 = 0;
 uint8_t byte_1CE2 = 0;
 
 // 0x1CE3
-// Represents number of bits that are left over to read from byte_1CE5.
+// Represents number of bits that are remaining to be read from bit_buffer.
 uint8_t num_bits = 0;
+// 0x1CE5
+// Will contain actual remaining bits.
+uint8_t bit_buffer = 0;
 
 uint8_t byte_1CE4 = 0;
-uint8_t byte_1CE5 = 0;
 
 uint8_t ui_drawn_yet = 0; // 0x268E
 struct ui_rect data_268F;
@@ -1374,7 +1376,7 @@ static uint8_t sub_1CF8()
 }
 
 // Extract 5 bits out of each byte.
-// byte_1CE5 contains leftover bit buffer.
+// bit_buffer contains leftover bit buffer.
 static uint8_t sub_1D8A()
 {
   int counter = 5;
@@ -1385,24 +1387,24 @@ static uint8_t sub_1D8A()
     if (dl < 0) {
       dl = *cpu.pc;
       printf("DL=0x%02x\n", dl);
-      byte_1CE5 = dl;
+      bit_buffer = dl;
       dl = 7;
       cpu.pc++;
     }
     // 0x1D96
-    uint8_t tmp = byte_1CE5;
-    byte_1CE5 = byte_1CE5 << 1;
+    uint8_t tmp = bit_buffer;
+    bit_buffer = bit_buffer << 1;
 
     // rcl al, 1
     int carry = 0;
-    if (tmp > byte_1CE5) {
+    if (tmp > bit_buffer) {
       carry = 1;
     }
     al = al << 1;
     al += carry;
     counter--;
   }
-  num_bits = dl;
+  num_bits = dl; // leftover bits
   return al;
 }
 
