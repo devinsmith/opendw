@@ -167,6 +167,7 @@ static void op_1C();
 static void op_1D();
 static void op_23();
 static void op_26();
+static void op_30();
 static void op_3E();
 static void op_40();
 static void op_41();
@@ -248,7 +249,7 @@ struct op_call_table targets[] = {
   { NULL, "0x3E67" },
   { NULL, "0x3E6E" },
   { NULL, "0x3E75" },
-  { NULL, "0x3E9D" },
+  { op_30, "0x3E9D" },
   { NULL, "0x3EC1" },
   { NULL, "0x3EEB" },
   { NULL, "0x3F11" },
@@ -473,7 +474,6 @@ static void push_byte(uint8_t val)
   if (cpu.sp == 0) {
     cpu.sp = STACK_SIZE;
   }
-
   // we need to push a byte onto the stack.
   cpu.sp--;
   cpu.stack[cpu.sp] = val;
@@ -786,6 +786,38 @@ static void op_26(void)
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
     game_state.unknown[cpu.di + 1] = ch;
   }
+}
+
+// 0x3E9D
+static void op_30(void)
+{
+  uint8_t ah, al;
+
+  // shr byte [word_3AE6], 1
+  uint8_t cf = 0;
+  cf = word_3AE6 & CARRY_FLAG_MASK;
+  word_3AE6 = (word_3AE6 & 0xFF00) | ((word_3AE6 & 0xFF) >> 1);
+
+  ah = ((cpu.ax & 0xFF00) >> 8);
+  if (byte_3AE1 != ah) {
+      // es:lodsw
+      uint16_t ax = *cpu.pc++;
+      ax += *cpu.pc++ << 8;
+      cpu.ax = ax;
+
+      // add [3AE2], ax
+      word_3AE2 += ax;
+      // rcl byte [3AE6], 1
+      word_3AE6 = (word_3AE6 & 0xFF00) | (((word_3AE6 & 0xFF) << 1) | cf);
+      return;
+  }
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  word_3AE2 += al;
+  // rcl byte [3AE6], 1
+  word_3AE6 = (word_3AE6 & 0xFF00) | (((word_3AE6 & 0xFF) << 1) | cf);
+
+  return;
 }
 
 // 0x4051
