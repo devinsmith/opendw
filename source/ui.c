@@ -85,7 +85,17 @@ unsigned char ui_header_loading[] = {
 
 struct ui_header ui_header;
 
-static uint16_t word_359A = 0x0000; // XXX: Starts out as 0xFFFF.
+// 0x3598
+static uint8_t prev_bg_index = 0;
+// 0x3599
+static uint8_t curr_bg_index = 0;
+
+// 0x359A
+static uint16_t current_background = 0xFFFF;
+// 0x359C
+static uint16_t backgrounds[2] = { 0xFFFF, 0x0000 };
+
+static void reset_ui_background();
 
 /* D88 */
 static void process_quadrant(const struct viewport_data *d, unsigned char *data)
@@ -211,7 +221,7 @@ static void draw_solid_color(uint8_t color, uint8_t line_num,
 static void draw_character(int x, int y, const unsigned char *chdata)
 {
   uint8_t color = COLOR_WHITE; // bh.
-  uint8_t ah = (word_359A >> 8) & 0xFF;
+  uint8_t ah = (current_background >> 8) & 0xFF;
 
   uint8_t *framebuffer = vga->memory();
   uint16_t fb_off = get_line_offset(y);
@@ -315,6 +325,8 @@ void ui_draw()
 // 0x2824
 void ui_header_draw()
 {
+  ui_set_background(0x10);
+
   // Calculate label header starting position.
   int header_start = sizeof(ui_header.data) - ui_header.len;
   header_start = header_start >> 1;
@@ -331,6 +343,7 @@ void ui_header_draw()
   for (int i = ui_header.len + header_start; i < 0x14; i++) {
     draw_ui_piece(&ui_pieces[i + UI_BRICK_FIRST_PICTURE]);
   }
+  reset_ui_background();
 }
 
 void ui_load()
@@ -433,7 +446,23 @@ void ui_draw_box_segment(uint8_t chr, struct ui_rect *rect, struct ui_rect *oute
   vga->update();
 }
 
+// 0x3578
 void ui_set_background(uint16_t val)
 {
-  word_359A = val;
+  val = val >> 3;
+  val = val & 2;
+
+  if (val == 2) {
+    current_background = backgrounds[1];
+  } else {
+    current_background = backgrounds[0];
+  }
+  prev_bg_index = curr_bg_index;
+  curr_bg_index = (val & 0xFF);
+}
+
+// 0x3575
+static void reset_ui_background()
+{
+  ui_set_background(prev_bg_index);
 }
