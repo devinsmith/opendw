@@ -47,6 +47,8 @@ uint8_t byte_1CE4 = 0;
 
 uint8_t ui_drawn_yet = 0; // 0x268E
 struct ui_rect data_268F;
+
+// 0x2697
 struct ui_rect data_2697;
 uint8_t byte_3236 = 0;
 struct ui_rect data_32BF;
@@ -143,7 +145,7 @@ static uint8_t sub_1CF8();
 static uint8_t sub_1D8A();
 static void sub_3150(unsigned char byte);
 static void sub_316C();
-static void sub_3191(unsigned char byte);
+static void append_string(unsigned char byte);
 static void sub_280E();
 static void sub_1C79(void);
 
@@ -188,6 +190,7 @@ static void op_69();
 static void op_74();
 static void op_78();
 static void read_header_bytes(void); // 7B
+static void op_83();
 static void op_84();
 static void op_85();
 static void op_86();
@@ -332,7 +335,7 @@ struct op_call_table targets[] = {
   { NULL, "0x487F" },
   { NULL, "0x48C5" },
   { NULL, "0x48D2" },
-  { NULL, "0x48EE" },
+  { op_83, "0x48EE" },
   { op_84, "0x4907" },
   { op_85, "0x4920" },
   { op_86, "0x493E" },
@@ -1274,6 +1277,19 @@ static void op_78(void)
   sub_1C79();
 }
 
+// 0x48EE
+static void op_83(void)
+{
+  uint8_t al;
+  if (byte_3AE1 != (cpu.ax >> 8)) {
+    // high byte of 3AE2;
+    al = ((word_3AE2 & 0xFF00) >> 8);
+    sub_3150(al);
+  }
+  al = word_3AE2;
+  sub_3150(al);
+}
+
 // 0x4907
 static void op_84(void)
 {
@@ -1403,29 +1419,75 @@ unsigned char alphabet[] = {
   0xaa, 0xbf, 0xbc, 0xbe, 0xba, 0xbb, 0xad, 0xa5
 };
 
+static uint8_t sub_1D86()
+{
+  uint8_t al, bl;
+
+  bl = 0x06;
+
+  // 0x1D8C
+  // xor al, al
+  cpu.ax = cpu.ax & 0xFF00;
+  al = 0;
+  int8_t dl = (int8_t)num_bits;
+  while (bl != 0) {
+    dl--;
+    if (dl < 0) {
+      // 0x1DA5
+      //
+      dl = *cpu.pc;
+      printf("DL=0x%02x\n", dl);
+      bit_buffer = dl;
+      dl = 7;
+      cpu.pc++;
+    }
+
+    int cf = 0;
+    if (bit_buffer & 0x80) {
+      cf = 1;
+    }
+    bit_buffer = bit_buffer << 1;
+    al = al << 1;
+    al |= cf;
+    bl--;
+  }
+
+  num_bits = dl; // leftover bits
+  return al;
+}
+
 static uint8_t sub_1CF8()
 {
   while (1) {
     uint8_t ret = sub_1D8A();
-    if (ret == 0) {
+    if (ret == 0)
       return 0;
-    } else if (ret < 0x1E) {
-      // 0x1D0A
-      // offset
-      uint8_t al = alphabet[ret - 1];
-      byte_1CE4 = byte_1CE4 >> 1;
-      if (byte_1CE4 >= 0x40 && al >= 0xE1 && al <= 0xFA) {
-        al = al & 0xDF;
-      }
-      // test al, al
-      return al;
-    } else if (ret == 0x1E) {
+
+    if (ret == 0x1E) {
       // stc
       // rcr byte [byte_1CE4], 1
       // rotate carry right bit.
       byte_1CE4 = byte_1CE4 >> 1;
       byte_1CE4 += 0x80;
+      continue;
     }
+
+    if (ret > 0x1E) {
+      ret = sub_1D86();
+      ret += 0x1E;
+    }
+
+    // ret != 0x1E
+
+    // 0x1D0A
+    // offset
+    uint8_t al = alphabet[ret - 1];
+    byte_1CE4 = byte_1CE4 >> 1;
+    if (byte_1CE4 >= 0x40 && al >= 0xE1 && al <= 0xFA) {
+      al = al & 0xDF;
+    }
+    // test al, al
+    return al;
   }
 }
 
@@ -1462,13 +1524,13 @@ static uint8_t sub_1D8A()
   return al;
 }
 
+// 0x3191
 // append to string buffer.
-static void sub_3191(unsigned char byte)
+static void append_string(unsigned char byte)
 {
   uint16_t bx = data_320C.len;
   data_320C.bytes[bx] = byte;
   data_320C.len++;
-  printf("sub_3191 0x%02X\n", byte);
   if (byte == 0x8D) { // new line.
     printf("data len: %d\n", data_320C.len);
     printf("2697: 0x%04x\n", data_2697.x);
@@ -1476,18 +1538,29 @@ static void sub_3191(unsigned char byte)
     printf("32BF: 0x%04x\n", data_32BF.x);
     printf("32BF: 0x%04x\n", data_32BF.y);
     sub_3177();
-  }
+  } else {
+    cpu.ax = bx;
 
-  //printf("0x%02X\n", byte_3236);
+    // Validate that string doesn't run past rectangle.
+    cpu.ax += byte_3236;
+    printf("append_string: 3236, 0x%02X\n", byte_3236);
+    if (cpu.ax > data_2697.w) {
+      printf("BP 0x31AE (not finished)\n");
+      data_320C.len--;
+      if (data_320C.len == 0) {
+
+      }
+      exit(1);
+    }
+  }
   // 0x3236
   // 0x269B
 
-//  exit(1);
 }
 
 static void sub_316C()
 {
-  word_3163 = sub_3191;
+  word_3163 = append_string;
 }
 
 static void sub_27E3()
