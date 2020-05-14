@@ -406,7 +406,7 @@ void ui_draw_chr_piece(uint8_t chr, struct ui_rect *rect, struct ui_rect *other)
     int16_t bx = (int16_t)rect->y;
     bx -= other->y;
     if (bx > 0) {
-      bx = bx << 3;
+      bx = bx >> 3;
 
       data_2AC3[bx] = chr;
       data_2AAA[bx] = 0xFF;
