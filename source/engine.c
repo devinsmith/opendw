@@ -1286,11 +1286,14 @@ static void sub_1A40()
   cpu.bx = game_state.unknown[6];
   cpu.ax = 0xC960;
   ah = (cpu.ax & 0xFF00) >> 8;
-  ah += game_state.unknown[10];
+  uint8_t val = game_state.unknown[cpu.bx + 10];
+  ah += val;
   cpu.ax = (ah << 8) | (cpu.ax & 0xFF);
   cpu.bx = cpu.ax;
 
   unsigned char *c960 = get_C960();
+  c960 += val << 8; // 512 bytes.
+  printf("%s: 0x%04X, 0x%02X\n", __func__, cpu.bx, val);
   while (1) {
     al = *c960++;
     ah = al;
@@ -1468,7 +1471,6 @@ static uint8_t sub_1D86()
       // 0x1DA5
       //
       dl = *cpu.pc;
-      printf("DL=0x%02x\n", dl);
       bit_buffer = dl;
       dl = 7;
       cpu.pc++;
@@ -1534,7 +1536,6 @@ static uint8_t sub_1D8A()
     dl--;
     if (dl < 0) {
       dl = *cpu.pc;
-      printf("DL=0x%02x\n", dl);
       bit_buffer = dl;
       dl = 7;
       cpu.pc++;
@@ -1563,6 +1564,7 @@ static void append_string(unsigned char byte)
   uint16_t bx = data_320C.len;
   data_320C.bytes[bx] = byte;
   data_320C.len++;
+  printf("%s: 0x%02X %c\n", __func__, byte, byte & 0x7F);
   if (byte == 0x8D) { // new line.
     printf("data len: %d\n", data_320C.len);
     printf("2697: 0x%04x\n", data_2697.x);
@@ -1575,7 +1577,6 @@ static void append_string(unsigned char byte)
 
     // Validate that string doesn't run past rectangle.
     cpu.ax += byte_3236;
-    printf("append_string: 3236, 0x%02X\n", byte_3236);
     if (cpu.ax > data_2697.w) {
       printf("BP 0x31AE (not finished)\n");
       data_320C.len--;
