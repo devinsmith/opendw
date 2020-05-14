@@ -41,6 +41,9 @@ static struct resource *resource_load_cache_miss(enum resource_section sec);
 //    0xE73 -     (0xC960 >> 4) + 0x1DD
 //
 // 01DD:C960 -> 0E73:0000
+//
+// This is character data. A Dragon Wars party can be 7 people.
+// Each character uses 512 bytes (0x200) so 512 * 7 = 0xE00
 static unsigned char data_C960[0xE00] = { 0 };
 
 #ifndef nitems
