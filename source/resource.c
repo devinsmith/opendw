@@ -247,7 +247,7 @@ unsigned char *com_extract(size_t off, size_t sz)
   FILE *fp;
 
   if (off < COM_ORG_START) {
-    fprintf(stderr, "Invalid offset specified, too low!\n");
+    fprintf(stderr, "com_extract: Invalid offset specified, too low!\n");
     return NULL;
   }
   off -= COM_ORG_START;
@@ -262,6 +262,7 @@ unsigned char *com_extract(size_t off, size_t sz)
 
   fseek(fp, off, SEEK_SET);
   if (fread(ptr, 1, sz, fp) != sz) {
+    fprintf(stderr, "com_extract: Failed to read %zu bytes from file.\n", sz);
     free(ptr);
     return NULL;
   }
