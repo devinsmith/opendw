@@ -190,6 +190,7 @@ static void op_69();
 static void op_74();
 static void op_78();
 static void read_header_bytes(void); // 7B
+static void op_7D();
 static void op_83();
 static void op_84();
 static void op_85();
@@ -329,7 +330,7 @@ struct op_call_table targets[] = {
   { NULL, "0x4801" },
   { read_header_bytes, "0x482D" },
   { NULL, "0x4817" },
-  { NULL, "0x483B" },
+  { op_7D, "0x483B" },
   { NULL, "0x4845" },
   { NULL, "0x486D" },
   { NULL, "0x487F" },
@@ -1276,6 +1277,36 @@ static void op_74(void)
 static void op_78(void)
 {
   sub_1C79();
+}
+
+static void sub_1A40()
+{
+  uint8_t al, ah;
+
+  cpu.bx = game_state.unknown[6];
+  cpu.ax = 0xC960;
+  ah = (cpu.ax & 0xFF00) >> 8;
+  ah += game_state.unknown[10];
+  cpu.ax = (ah << 8) | (cpu.ax & 0xFF);
+  cpu.bx = cpu.ax;
+
+  unsigned char *c960 = get_C960();
+  while (1) {
+    al = *c960++;
+    ah = al;
+    cpu.ax = al;
+    al = al | 0x80;
+    sub_3150(al);
+    if ((ah & 0x80) == 0) {
+      break;
+    }
+  }
+}
+
+// 0x483B
+static void op_7D(void)
+{
+  sub_1A40();
 }
 
 // 0x48EE
