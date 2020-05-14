@@ -29,10 +29,19 @@ static struct buf_rdr *header_rdr = NULL;
 static struct resource allocations[128] = { 0 };
 static struct resource *resource_load_cache_miss(enum resource_section sec);
 
-// Some random data to stick into a memory allocation.
-// In the code this occupies 0E73:0000-0DFF.
-static unsigned char unknown_0E73[0xE00] = { 0 };
-
+// In the dragon.com implementation this occupies 0E73:0000-0DFF, but in the
+// COM file it's at 0x1DD:C960 (where CS = 0x1DD)
+//
+// This is because it is calculated as
+// ax = 0xC960 >> 4
+// mov bx, cs
+// add ax, bx
+//
+// Where CS is 0x1DD
+//    0xE73 -     (0xC960 >> 4) + 0x1DD
+//
+// 01DD:C960 -> 0E73:0000
+static unsigned char data_C960[0xE00] = { 0 };
 
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
@@ -117,12 +126,12 @@ rm_init(void)
   /* First two entries are some unknown data in the COM file, I think,
    * but I'm not sure how they are used.
    * For now we just load unknown_data and hope they aren't used. */
-  allocations[0].bytes = unknown_0E73;
+  allocations[0].bytes = data_C960;
   allocations[0].tag = 0xFFFF;
   allocations[0].usage_type = 0xFF;
   allocations[0].len = 1;
 
-  allocations[1].bytes = unknown_0E73;
+  allocations[1].bytes = data_C960;
   allocations[1].tag = 0xFFFF;
   allocations[1].usage_type = 0xFF;
   allocations[1].len = 0x0E00;
@@ -259,4 +268,9 @@ unsigned char *com_extract(size_t off, size_t sz)
 
   fclose(fp);
   return ptr;
+}
+
+unsigned char *get_C960()
+{
+  return data_C960;
 }

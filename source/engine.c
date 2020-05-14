@@ -72,7 +72,7 @@ uint16_t word_42D6 = 0;
 unsigned char *data_D760 = NULL;
 
 // XXX:How big should these be???
-unsigned char data_C960[4096] = { 0 };
+// It looks like they can be 0x0E00 bytes, but we round up to 4096.
 unsigned char data_CA4C[4096] = { 0 };
 
 // The function signature for this function pointer is not entirely correct
@@ -1117,14 +1117,15 @@ static void op_5E(void)
   cpu.cx = word_3AE2;
 
   // Validation that we aren't writing outside our array.
-  if ((cpu.bx - 0xC960) >= sizeof(data_C960)) {
+  if ((cpu.bx - 0xC960) >= 0xE00) {
     printf("Array of data_C960 not large enough!\n");
     exit(1);
   }
   // mov [di], al
-  data_C960[cpu.bx - 0xC960] = cpu.cx & 0xFF;
+  unsigned char *c960 = get_C960();
+  c960[cpu.bx - 0xC960] = cpu.cx & 0xFF;
   if (byte_3AE1 != 0) {
-    data_C960[cpu.bx - 0xC960 + 1] = (cpu.cx & 0xFF00) >> 8;
+    c960[cpu.bx - 0xC960 + 1] = (cpu.cx & 0xFF00) >> 8;
   }
 
 }
