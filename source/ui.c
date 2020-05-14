@@ -36,9 +36,9 @@ struct viewport_data {
 };
 
 struct pic_data {
-  int width;
-  int height;
-  int offset_delta;
+  uint8_t width;
+  uint8_t height;
+  uint8_t offset_delta;
   uint8_t y_pos; // Starting line.
   unsigned char *data;
 };
@@ -75,7 +75,7 @@ struct viewport_data viewports[] = {
 
 #define UI_PIECE_COUNT 0x2B
 #define UI_BRICK_FIRST_PICTURE 0x17
-struct pic_data ui_pieces[UI_PIECE_COUNT];
+static struct pic_data ui_pieces[UI_PIECE_COUNT];
 
 // 0x288B
 // Initially "Loading..."
@@ -306,10 +306,6 @@ void ui_draw()
   // bricks around it.
   ui_header_draw();
 
-//  draw_ui_piece(&ui_pieces[0x28]);
-//  draw_ui_piece(&ui_pieces[0x29]);
-//  draw_ui_piece(&ui_pieces[0x2A]);
-
   // 0x3380
   //
   struct ui_rect r;
@@ -354,7 +350,8 @@ void ui_load()
   viewports[2].data = com_extract(0x67B0 + 4, 4 * 0xD);
   viewports[3].data = com_extract(0x67E8 + 4, 4 * 0xD);
 
-  unsigned char *ui_piece_offsets = com_extract(0x6AE0, UI_PIECE_COUNT * 2);
+  unsigned char *ui_piece_offsets_base = com_extract(0x6AE0, UI_PIECE_COUNT * 2);
+  unsigned char *ui_piece_offsets = ui_piece_offsets_base;
   printf("UI Pieces:\n");
   dump_hex(ui_piece_offsets, UI_PIECE_COUNT * 2);
   for (size_t ui_idx = 0; ui_idx < UI_PIECE_COUNT; ui_idx++) {
@@ -369,9 +366,10 @@ void ui_load()
     ui_pieces[ui_idx].offset_delta = *piece_struct++;
     ui_pieces[ui_idx].y_pos = *piece_struct;
     free(org);
-    ui_pieces[ui_idx].data = com_extract(ui_off + 4,
-        ui_pieces[ui_idx].width * ui_pieces[ui_idx].height);
+    size_t data_sz = ui_pieces[ui_idx].width * ui_pieces[ui_idx].height;
+    ui_pieces[ui_idx].data = com_extract(ui_off + 4, data_sz);
   }
+  free(ui_piece_offsets_base);
 
   memcpy(ui_header.data, ui_header_loading, strlen("Loading..."));
   ui_header.len = strlen("Loading...");
