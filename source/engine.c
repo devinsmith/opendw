@@ -163,6 +163,7 @@ static void op_0F();
 static void op_11();
 static void op_12();
 static void op_13();
+static void op_14();
 static void op_17();
 static void op_1A();
 static void op_1C();
@@ -226,7 +227,7 @@ struct op_call_table targets[] = {
   { op_11, "0x3C2D" },
   { op_12, "0x3C59" },
   { op_13, "0x3C72" },
-  { NULL, "0x3C8F" },
+  { op_14, "0x3C8F" },
   { NULL, "0x3CAB" },
   { NULL, "0x3CCB" },
   { op_17, "0x3CEF" },
@@ -676,6 +677,26 @@ static void op_13(void)
   game_state.unknown[cpu.bx] = (cpu.cx & 0x00FF);
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
     game_state.unknown[cpu.bx + 1] = ((cpu.cx & 0xFF00) >> 8);
+  }
+}
+
+// 0x3C8F
+static void op_14(void)
+{
+  uint16_t save_ah = (cpu.ax & 0xFF00) >> 8;
+
+  uint16_t ax = *cpu.pc++;
+  ax += *cpu.pc++ << 8;
+  cpu.ax = ax;
+  cpu.bx = cpu.ax;
+
+  // es:cx
+  unsigned char *dest = word_3ADF->bytes;
+  uint16_t dest_offset = word_3AE2;
+
+  dest[cpu.bx] = dest_offset;
+  if (byte_3AE1 != save_ah) {
+    dest[cpu.bx + 1] = (dest_offset & 0xFF00) >> 8;
   }
 }
 
