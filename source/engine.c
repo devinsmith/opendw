@@ -184,6 +184,7 @@ static void op_54();
 static void op_56();
 static void op_5A();
 static void op_5C();
+static void op_5D();
 static void op_5E();
 static void op_66();
 static void op_69();
@@ -298,7 +299,7 @@ struct op_call_table targets[] = {
   { op_5A, "0x3AEE" },
   { NULL, "0x427A" },
   { op_5C, "0x4295" },
-  { NULL, "0x42D8" },
+  { op_5D, "0x42D8" },
   { op_5E, "0x4322" },
   { NULL, "0x4372" },
   { NULL, "0x438B" },
@@ -1098,6 +1099,32 @@ static void op_5C(void)
   game_state.unknown[6] = al;
 
   cpu.pc = save_pc;
+}
+
+// 0x42D8
+static void op_5D(void)
+{
+  uint8_t al = game_state.unknown[6];
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.di = cpu.ax;
+  cpu.bx = 0xC960;
+
+  uint8_t bh = (cpu.bx & 0xFF00) >> 8;
+  bh += game_state.unknown[cpu.di + 0xA]; // Character selector ?
+  cpu.bx = bh << 8 | (cpu.bx & 0xFF);
+
+  al = *cpu.pc++; // Character offset
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx += cpu.ax;
+
+  unsigned char *c960 = get_C960();
+  cpu.cx = c960[cpu.bx - 0xC960];
+
+  word_3AE2 = cpu.cx & 0xFF;
+  if (byte_3AE1 != 0) {
+    // 0x3AE3
+    word_3AE2 = (cpu.cx & 0xFF00) | (word_3AE2 & 0xFF); // XXX ? Correct.
+  }
 }
 
 // 0x4322
