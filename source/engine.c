@@ -53,6 +53,12 @@ struct ui_rect data_2697;
 uint8_t byte_3236 = 0;
 struct ui_rect data_32BF;
 
+uint16_t word_2AA2;
+unsigned char *word_2AA4;
+// 0x2AA7
+uint16_t word_2AA7;
+uint8_t byte_2AA9;
+
 uint8_t byte_3AE1 = 0;
 uint16_t word_3AE2 = 0;
 uint16_t word_3AE4 = 0;
@@ -69,6 +75,20 @@ const struct resource *running_script = NULL;
 const struct resource *word_3ADF = NULL;
 
 uint16_t word_42D6 = 0;
+uint8_t byte_4F2B = 0;
+
+/* Timers? */
+struct timer_ctx {
+  uint8_t  timer0; // 0x4C35
+  uint8_t  timer1; // 0x4C36
+  uint8_t  timer2; // 0x4C37
+  uint16_t timer3; // 0x4C38
+  uint16_t timer4; // 0x4C3A
+  uint8_t  timer5; // 0x4C3C
+};
+
+struct timer_ctx timers;
+
 unsigned char *data_D760 = NULL;
 
 // XXX:How big should these be???
@@ -180,6 +200,7 @@ static void op_45();
 static void loop(); // 49
 static void op_4A();
 static void op_4B();
+static void op_52();
 static void op_53();
 static void op_54();
 static void op_56();
@@ -197,6 +218,7 @@ static void op_83();
 static void op_84();
 static void op_85();
 static void op_86();
+static void op_89();
 static void op_93();
 static void op_99();
 static void op_9A();
@@ -289,7 +311,7 @@ struct op_call_table targets[] = {
   { NULL, "0x4155" },
   { NULL, "0x4161" },
   { NULL, "0x418B" },
-  { NULL, "0x41B9" },
+  { op_52, "0x41B9" },
   { op_53, "0x41C0" },
   { op_54, "0x41E1" },
   { NULL, "0x41E5" },
@@ -344,7 +366,7 @@ struct op_call_table targets[] = {
   { op_86, "0x493E" },
   { NULL, "0x4955" },
   { NULL, "0x496D" },
-  { NULL, "0x4977" },
+  { op_89, "0x4977" },
   { NULL, "0x498E" },
   { NULL, "0x499B" },
   { NULL, "0x49A5" },
@@ -1026,6 +1048,24 @@ static void op_4B(void)
   word_3AE6 |= 0x0001;
 }
 
+// 0x41B9
+static void op_52(void)
+{
+  // CALL function ?
+  // Save source index.
+  // Jump to new source index.
+  uint16_t new_address = *cpu.pc++;
+  new_address += *cpu.pc++ << 8;
+  printf("New address: 0x%04x\n", new_address);
+  uint16_t existing_address = cpu.pc - cpu.base_pc;
+  printf("Existing address: 0x%04x\n", existing_address);
+
+  cpu.pc = cpu.base_pc + new_address;
+
+  printf("%s: unimplemented BP 0x41B9\n", __func__);
+  exit(1);
+}
+
 // 0x41C0
 static void op_53(void)
 {
@@ -1244,7 +1284,8 @@ static void op_69(void)
 
 }
 
-static void sub_3177(void)
+// 0x3177
+static void draw_string(void)
 {
   uint16_t i;
   for (i = 0; i < data_320C.len; i++) {
@@ -1258,8 +1299,17 @@ static void sub_3177(void)
   byte_3236 = al;
 }
 
+// 0x2720
+static void rect_expand()
+{
+  data_2697.h += 8;
+  data_2697.y -= 8;
+  data_2697.x--;
+  data_2697.w++;
+}
+
 // 0x2739
-static void rect_insets()
+static void rect_shrink()
 {
   data_2697.y += 8;
   data_2697.h -= 8;
@@ -1275,7 +1325,7 @@ static void draw_rectangle(void)
   data_268F.w = *cpu.pc++;
   data_268F.h = *cpu.pc++;
 
-  sub_3177();
+  draw_string();
   if (ui_drawn_yet != 0) {
     // call sub_2720
     printf("BP 0x25FC\n");
@@ -1304,7 +1354,7 @@ static void draw_rectangle(void)
   ui_draw_box_segment(0x85, &data_32BF, &data_2697);
 
   ui_drawn_yet = 0xFF;
-  rect_insets();
+  rect_shrink();
   draw_pattern(&data_2697);
   // Technically this is done in draw_pattern
   data_32BF.x = data_2697.x;
@@ -1357,6 +1407,7 @@ static void sub_1A40()
 // 0x483B
 static void op_7D(void)
 {
+  printf("op_7D\n");
   sub_1A40();
 }
 
@@ -1396,6 +1447,97 @@ static void op_86(void)
   uint8_t ah = (cpu.ax & 0xFF00) >> 8;
   word_3AE2 = (ah & byte_3AE1) | (cpu.ax & 0x00FF);
   //dump_hex(r->bytes, 0x80);
+}
+
+static void sub_2752(uint8_t al)
+{
+  uint8_t ah;
+  uint16_t si;
+
+  if (ui_drawn_yet == 0)
+    return;
+
+  ah = 0;
+  cpu.ax = al;
+  cpu.ax = cpu.ax << 2;
+  si = cpu.ax;
+
+  rect_expand();
+  printf("%s: 0x2764 unimplemented\n", __func__);
+  exit(1);
+}
+
+// 0x4B60
+static void sub_4B60()
+{
+  sub_2752(9);
+}
+
+// 0x4D5C
+static void sub_4D5C()
+{
+  if (timers.timer2 != 0)
+    return;
+
+  if (byte_4F2B == 0)
+    return;
+
+  printf("%s: 0x4D6A unimplemented\n", __func__);
+  exit(1);
+}
+
+// 0x28B0
+static void sub_28B0()
+{
+  uint8_t al, ah;
+
+  draw_string();
+
+  cpu.ax = *cpu.pc++;
+  cpu.ax += *cpu.pc++ << 8;
+
+  // 2AA7
+  word_2AA7 = cpu.ax;
+  ah = (cpu.ax & 0xFF00) >> 8;
+  ah = ah & 0x20;
+
+  timers.timer5 = ah;
+  // extract 0x2AA8
+  al = (word_2AA7 & 0xFF00) >> 8;
+  al = al & 0x10;
+  if (al != 0) {
+    al = *cpu.pc++;
+  }
+  byte_2AA9 = al;
+  word_2AA2 = cpu.pc - cpu.base_pc; // is this correct? (si)
+
+  word_2AA4 = cpu.pc;
+
+  if ((word_2AA7 & 0x80) != 0) {
+    printf("BP: sub_1F8F();\n");
+    exit(1);
+  }
+  if ((word_2AA7 & 0x8000) != 0) {
+    printf("BP: 28EB\n");
+    exit(1);
+  }
+
+  // 0x2942
+  sub_4D5C();
+  sub_4B60();
+
+}
+
+// 0x4977
+static void op_89(void)
+{
+  word_3ADB = cpu.pc - cpu.base_pc; // is this correct?
+  cpu.bx = word_3ADB;
+
+  sub_28B0();
+
+  cpu.ax = cpu.ax & 0x00FF;
+  word_3AE2 = cpu.ax;
 }
 
 // 0x4A67
@@ -1619,7 +1761,7 @@ static void append_string(unsigned char byte)
     printf("2697: 0x%04x\n", data_2697.y);
     printf("32BF: 0x%04x\n", data_32BF.x);
     printf("32BF: 0x%04x\n", data_32BF.y);
-    sub_3177();
+    draw_string();
   } else {
     cpu.ax = bx;
 
@@ -1713,6 +1855,7 @@ static void run_script(uint8_t script_index, uint16_t src_offset)
       printf("OpenDW has reached an unhandled op code and will terminate.\n");
       printf("  Opcode: 0x%02X (Addr: %s), Previous op: 0x%02X\n", op_code,
           targets[op_code].src_offset, prev_op);
+      exit(1);
       done = 1;
     }
   }
