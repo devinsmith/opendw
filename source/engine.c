@@ -45,6 +45,9 @@ uint8_t bit_buffer = 0;
 
 uint8_t byte_1CE4 = 0;
 
+// 0x246D
+uint16_t word_246D;
+
 uint8_t ui_drawn_yet = 0; // 0x268E
 struct ui_rect data_268F;
 
@@ -58,6 +61,11 @@ unsigned char *word_2AA4;
 // 0x2AA7
 uint16_t word_2AA7;
 uint8_t byte_2AA9;
+
+// 0x2D09
+uint16_t word_2D09; // timer ticks?
+
+uint8_t byte_3855 = 0;
 
 uint8_t byte_3AE1 = 0;
 uint16_t word_3AE2 = 0;
@@ -159,6 +167,7 @@ struct virtual_cpu {
 #define ZERO_FLAG_MASK 0x40
 
 struct virtual_cpu cpu;
+struct mouse_status mouse;
 
 static void run_script(uint8_t script_index, uint16_t src_offset);
 static uint8_t sub_1CF8();
@@ -485,6 +494,18 @@ struct op_call_table targets[] = {
   { NULL, "0x8BAC" },
   { NULL, "0xA0D8" },
   { NULL, "0x3AE4" }
+};
+
+
+// 0x2794-0x27CB
+static unsigned char data_2794[56] = {
+  0x00, 0xB8, 0x28, 0xC0, 0x00, 0x98, 0x01, 0xB8, // 0x2794-0x279B
+  0x27, 0x98, 0x28, 0xB8, 0x00, 0x90, 0x28, 0x98, // 0x279C-0x27A3
+  0x27, 0x00, 0x28, 0x90, 0x1B, 0x00, 0x27, 0x20, // 0x27A4-0x27AB
+  0x00, 0x00, 0x02, 0x90, 0x02, 0x00, 0x04, 0x08, // 0x27AC-0x27B3
+  0x14, 0x00, 0x16, 0x08, 0x16, 0x00, 0x1B, 0x90, // 0x27B4-0x27BB
+  0x02, 0x08, 0x16, 0x90, 0x1B, 0x08, 0x27, 0x78, // 0x27BC-0x27C3
+  0x04, 0x00, 0x14, 0x08, 0x01, 0x98, 0x27, 0xB8  // 0x27C4-0x27CB
 };
 
 static void push_word(uint16_t val)
@@ -1449,28 +1470,55 @@ static void op_86(void)
   //dump_hex(r->bytes, 0x80);
 }
 
-static void sub_2752(uint8_t al)
+// Uses carry flag as a boolean
+static int sub_2752(uint8_t input)
 {
-  uint8_t ah;
+  uint8_t al;
   uint16_t si;
 
   if (ui_drawn_yet == 0)
-    return;
+    return 0;
 
-  ah = 0;
-  cpu.ax = al;
+  // 0x2759
+  cpu.ax = input;
   cpu.ax = cpu.ax << 2;
   si = cpu.ax;
 
   rect_expand();
-  printf("%s: 0x2764 unimplemented\n", __func__);
-  exit(1);
+
+  // 0x2764
+  al = data_2794[si];
+  if (al > data_2697.w) {
+    rect_shrink();
+    return 0;
+  }
+  al = data_2794[si + 1];
+  if (al > data_2697.h) {
+    rect_shrink();
+    return 0;
+  }
+  al = data_2794[si + 2];
+  if (al < data_2697.x) {
+    rect_shrink();
+    return 0;
+  }
+  al = data_2794[si + 3];
+  if (al < data_2697.y) {
+    rect_shrink();
+    return 0;
+  }
+  rect_shrink();
+  return 1;
 }
 
 // 0x4B60
 static void sub_4B60()
 {
-  sub_2752(9);
+  if (sub_2752(9) == 1) {
+    return;
+  }
+  printf("%s: 0x4B68 unimplemented\n", __func__);
+  exit(1);
 }
 
 // 0x4D5C
@@ -1483,6 +1531,60 @@ static void sub_4D5C()
     return;
 
   printf("%s: 0x4D6A unimplemented\n", __func__);
+  exit(1);
+}
+
+// 0x1A72
+static void sub_1A72()
+{
+  if (sub_2752(0xB) == 1) {
+    return;
+  }
+  printf("%s: 0x1A79 unimplemented\n", __func__);
+  exit(1);
+
+}
+
+// 0x1F10
+static void sub_1F10()
+{
+  if (byte_3855 == 0) {
+    return;
+  }
+
+  printf("%s: 0x1F17 unimplemented\n", __func__);
+  exit(1);
+}
+
+// 0x2CF5
+// Get timer ticks?
+static void sub_2CF5()
+{
+  word_2D09 = 0x1234; // can we just use random?
+}
+
+// 0x3824
+static void sub_3824()
+{
+  // No support for reading mouse position at this point.
+  // This is determined by 0x3855.
+  cpu.ax = 0;
+
+  mouse.enabled = 0;
+  mouse.x = 0;
+  mouse.y = 0;
+  mouse.clicked = 0;
+}
+
+// 0x2AEE
+// Check if mouse is inbounds on a rectangle.
+static void sub_2AEE()
+{
+  word_246D = 2;
+  cpu.ax = mouse.x;
+  cpu.ax = cpu.ax << 3;
+
+  printf("%s: 0x2AEE unimplemented\n", __func__);
   exit(1);
 }
 
@@ -1525,12 +1627,23 @@ static void sub_28B0()
   // 0x2942
   sub_4D5C();
   sub_4B60();
+  sub_1A72();
+  printf("%s: 0x%04X\n", __func__, word_2AA7);
+  if ((word_2AA7 & 0x0080) == 0) {
+    sub_1F10();
+  }
+  sub_2CF5(); // timer
+  sub_3824(); // mouse ?
+  sub_2AEE();
+  printf("%s: 0x295E unimplemented\n", __func__);
+  exit(1);
 
 }
 
 // 0x4977
 static void op_89(void)
 {
+  printf("%s : 0x4977\n", __func__);
   word_3ADB = cpu.pc - cpu.base_pc; // is this correct?
   cpu.bx = word_3ADB;
 

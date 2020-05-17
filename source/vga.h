@@ -32,6 +32,14 @@ struct vga_driver {
   uint8_t* (*memory)();
 };
 
+struct mouse_status {
+  uint8_t clicked; // 0x3854
+  uint8_t enabled; // 0x3855 (might be enabled or num of buttons)
+
+  uint16_t x; // 0x3556
+  uint16_t y; // 0x3558
+};
+
 extern struct vga_driver *vga;
 
 #ifdef __cplusplus
