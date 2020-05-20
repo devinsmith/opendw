@@ -58,12 +58,15 @@ struct ui_rect data_32BF;
 
 uint16_t word_2AA2;
 unsigned char *word_2AA4;
+
+uint8_t byte_2AA6;
 // 0x2AA7
 uint16_t word_2AA7;
 uint8_t byte_2AA9;
 
 // 0x2D09
 uint16_t word_2D09; // timer ticks?
+uint16_t word_2DD9 = 0xFFFF;
 
 uint8_t byte_3855 = 0;
 
@@ -1577,15 +1580,76 @@ static void sub_3824()
 }
 
 // 0x2AEE
-// Check if mouse is inbounds on a rectangle.
-static void sub_2AEE()
+// Check if mouse is inbounds on a rectangle?
+static int sub_2AEE()
 {
   word_246D = 2;
   cpu.ax = mouse.x;
   cpu.ax = cpu.ax << 3;
 
-  printf("%s: 0x2AEE unimplemented\n", __func__);
+  if (cpu.ax > data_2697.x) {
+    printf("%s: 0x2BO2 unimplemented\n", __func__);
+    exit(1);
+  }
+
+  if ((word_2AA7 & 0x04) != 0) {
+    printf("%s: 0x2B35 unimplemented\n", __func__);
+    exit(1);
+  }
+  if ((word_2AA7 & 0x10) != 0) {
+    printf("%s: 0x2B43 unimplemented\n", __func__);
+    exit(1);
+  }
+  if ((word_2AA7 & 0x20) != 0) {
+    printf("%s: 0x2B88 unimplemented\n", __func__);
+    exit(1);
+  }
+
+  return 0;
+}
+
+// 0x3840
+static uint8_t sub_3840()
+{
+  return mouse.clicked & 0xC0;
+}
+
+// 0x2D0B
+static uint16_t sub_2D0B()
+{
+  cpu.bx = word_2DD9;
+  if (cpu.bx < 0x8000) {
+    printf("%s: 0x2D13 unimplemented\n", __func__);
+    exit(1);
+  }
+  // 0x2D31
+  uint16_t ax = vga->getkey();
+  if (ax == 0) {
+    return ax;
+  }
+  printf("%s: 0x2D37 unimplemented\n", __func__);
   exit(1);
+}
+
+// 0x2BD9
+static int sub_2BD9()
+{
+  sub_4D5C();
+  sub_4B60();
+  sub_1A72();
+  cpu.ax = timers.timer3; // 0x4C38
+  uint8_t al = cpu.ax & 0xFF;
+  al = al | timers.timer5; // 0x4C3C
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  if (cpu.ax != 0) {
+    return 0;
+  }
+  timers.timer3 = 0xB4;
+  al = game_state.unknown[5];
+  al++;
+  al = al & 0x1F;
+  game_state.unknown[5] = al;
+  return 1;
 }
 
 // 0x28B0
@@ -1629,15 +1693,52 @@ static void sub_28B0()
   sub_4B60();
   sub_1A72();
   printf("%s: 0x%04X\n", __func__, word_2AA7);
-  if ((word_2AA7 & 0x0080) == 0) {
-    sub_1F10();
-  }
-  sub_2CF5(); // timer
-  sub_3824(); // mouse ?
-  sub_2AEE();
-  printf("%s: 0x295E unimplemented\n", __func__);
-  exit(1);
+  // 0x294B
+  while (1) {
+    if ((word_2AA7 & 0x0080) == 0) {
+      sub_1F10();
+    }
+    sub_2CF5(); // timer
+    sub_3824(); // mouse ?
+    sub_2AEE(); // Mouse in bounds?
+    uint8_t clicked = sub_3840();
+    if (clicked == 0x80) {
+      printf("%s: 0x2965 unimplemented\n", __func__);
+      exit(1);
+    }
 
+    // 0x2985
+    if (sub_2D0B() != 0) {
+      printf("%s: 0x298A unimplemented\n", __func__);
+      exit(1);
+    }
+
+    // 0x29B1
+    if (sub_2BD9() == 0)
+      break;
+
+    al = 0x1;
+    byte_2AA6 = al;
+    if ((word_2AA7 & 0x40) != 0) {
+      printf("%s: 0x29C2 unimplemented\n", __func__);
+      exit(1);
+    }
+
+    cpu.pc -= 3;
+
+    uint8_t dl = byte_2AA6;
+    dl += 3;
+    al = *(cpu.pc + 3);
+    if (al == 0) {
+      printf("%s: 0x2A4C unimplemented\n", __func__);
+      exit(1);
+    }
+    if (al != 0xFF) {
+      // 0x29EF
+      printf("%s: 0x29EF unimplemented\n", __func__);
+      exit(1);
+    }
+  }
 }
 
 // 0x4977
