@@ -57,13 +57,20 @@ get_fb_mem()
   return framebuffer;
 }
 
+static uint16_t
+get_key()
+{
+  return 0;
+}
+
 struct vga_driver null_driver = {
   "null",
   display_start,
   display_end,
   display_update,
   waitkey,
-  get_fb_mem
+  get_fb_mem,
+  get_key
 };
 
 struct vga_driver *vga = &null_driver;

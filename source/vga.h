@@ -30,6 +30,7 @@ struct vga_driver {
   void (*update)();
   void (*waitkey)();
   uint8_t* (*memory)();
+  uint16_t (*getkey)();
 };
 
 struct mouse_status {

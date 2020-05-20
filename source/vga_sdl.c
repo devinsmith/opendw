@@ -141,13 +141,30 @@ get_fb_mem()
   return surface->pixels;
 }
 
+static uint16_t
+get_key()
+{
+  SDL_Event e;
+
+  while (SDL_PollEvent(&e)) {
+    if (e.type == SDL_KEYDOWN) {
+      const SDL_KeyboardEvent *ke = &e.key;
+      const SDL_Keysym *ksym = &ke->keysym;
+
+      return ksym->sym;
+    }
+  }
+  return 0;
+}
+
 struct vga_driver sdl_driver = {
   "SDL", // 2.0
   display_start,
   display_end,
   display_update,
   waitkey,
-  get_fb_mem
+  get_fb_mem,
+  get_key
 };
 
 struct vga_driver *vga = &sdl_driver;
