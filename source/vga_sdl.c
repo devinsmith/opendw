@@ -142,6 +142,17 @@ get_fb_mem()
 }
 
 static uint16_t
+shifted(const SDL_Keysym *key)
+{
+  if (key->sym >= 'a' && key->sym <= 'z') {
+    return key->sym - 0x20;
+  }
+
+  // Unhandled shift key.
+  return key->sym;
+}
+
+static uint16_t
 get_key()
 {
   SDL_Event e;
@@ -151,7 +162,30 @@ get_key()
       const SDL_KeyboardEvent *ke = &e.key;
       const SDL_Keysym *ksym = &ke->keysym;
 
-      return ksym->sym;
+      // Under DOS we capture both the key code and the scan code.
+      // in AX (AH/AL). Certain keys, like Ctrl, arrow keys, etc
+      // have an AL value of 0x00
+      //
+      // 0x2E7B (arrow keys)
+      if (ksym->sym == SDLK_LEFT)
+        return 0x88;
+      if (ksym->sym == SDLK_RIGHT)
+        return 0x95;
+      if (ksym->sym == SDLK_DOWN)
+        return 0x8A;
+      if (ksym->sym == SDLK_UP)
+        return 0x8B;
+
+      // Normal keys.
+      if ((ksym->sym & SDLK_SCANCODE_MASK) == 0) {
+        printf("sym: 0x%08X\n", ksym->sym);
+        printf("mod: 0x%04X\n", ksym->mod);
+        printf("scan: 0x%04X\n", ksym->scancode);
+        if (ksym->mod & KMOD_SHIFT) {
+          return shifted(ksym) | 0x80;
+        }
+        return (uint8_t)ksym->sym | 0x80;
+      }
     }
   }
   return 0;

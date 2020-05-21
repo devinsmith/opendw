@@ -66,9 +66,11 @@ uint8_t byte_2AA9;
 
 // 0x2D09
 uint16_t word_2D09; // timer ticks?
+uint16_t word_2DD7 = 0xFFFF;
 uint16_t word_2DD9 = 0xFFFF;
 
 uint8_t byte_3855 = 0;
+uint8_t byte_387F = 0;
 
 uint8_t byte_3AE1 = 0;
 uint16_t word_3AE2 = 0;
@@ -1321,6 +1323,7 @@ static void draw_string(void)
   // 0x318A
   uint8_t al = data_32BF.x;
   byte_3236 = al;
+  vga->update();
 }
 
 // 0x2720
@@ -1627,8 +1630,18 @@ static uint16_t sub_2D0B()
   if (ax == 0) {
     return ax;
   }
-  printf("%s: 0x2D37 unimplemented\n", __func__);
-  exit(1);
+  if (ax == 0x93) {
+    // Ctrl-S
+    printf("%s: 0x2D37 unimplemented\n", __func__);
+    exit(1);
+  }
+  // 0x2D4B
+  cpu.bx = word_2DD7;
+  if (cpu.bx < 0x8000) {
+    printf("%s: 0x2D53 unimplemented\n", __func__);
+    exit(1);
+  }
+  return ax;
 }
 
 // 0x2BD9
@@ -1656,11 +1669,14 @@ static int sub_2BD9()
 static void sub_28B0()
 {
   uint8_t al, ah;
+  uint8_t bl;
 
   draw_string();
 
   cpu.ax = *cpu.pc++;
   cpu.ax += *cpu.pc++ << 8;
+
+  bl = cpu.bx & 0xFF;
 
   // 2AA7
   word_2AA7 = cpu.ax;
@@ -1715,8 +1731,9 @@ static void sub_28B0()
 
     // 0x29B1
     if (sub_2BD9() == 0)
-      break;
+      continue;
 
+    // 0x29B6
     al = 0x1;
     byte_2AA6 = al;
     if ((word_2AA7 & 0x40) != 0) {
@@ -1724,19 +1741,54 @@ static void sub_28B0()
       exit(1);
     }
 
+    uint16_t di = word_2AA2;
+    di -= 3;
     cpu.pc -= 3;
 
     uint8_t dl = byte_2AA6;
-    dl += 3;
-    al = *(cpu.pc + 3);
-    if (al == 0) {
-      printf("%s: 0x2A4C unimplemented\n", __func__);
-      exit(1);
-    }
-    if (al != 0xFF) {
+    // 0x29DD
+    while (1) {
+      di += 3;
+      al = *(cpu.base_pc + di);
+      if (al == 0) {
+        printf("%s: 0x2A4C unimplemented\n", __func__);
+        exit(1);
+      }
+      if (al == 0xFF) {
+        break;
+      }
+
       // 0x29EF
-      printf("%s: 0x29EF unimplemented\n", __func__);
-      exit(1);
+      if (al == 0x01) {
+        bl = dl;
+        bl -= 0xB1;
+        if (bl < game_state.unknown[0x1F]) {
+          printf("%s: 0x29FE unimplemented\n", __func__);
+          exit(1);
+        }
+      }
+      // 0x2A15
+      else if (al == 0x02) {
+        printf("%s: 0x2A19 unimplemented\n", __func__);
+        exit(1);
+      }
+      // 0x2A20
+      else if (al != 0x80) {
+
+        if (al == 0x81) {
+          di++;
+        } else {
+          if ((al & 0x80) == 0) {
+            // 0x2A2F
+            printf("%s: 0x2A2F unimplemented\n", __func__);
+            exit(1);
+          }
+          if (al == byte_2AA6) {
+            printf("%s: 0x2A4C unimplemented\n", __func__);
+            exit(1);
+          }
+        }
+      }
     }
   }
 }
@@ -1990,9 +2042,6 @@ static void append_string(unsigned char byte)
       exit(1);
     }
   }
-  // 0x3236
-  // 0x269B
-
 }
 
 static void sub_316C()
