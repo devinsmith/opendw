@@ -63,6 +63,7 @@ uint8_t byte_2AA6;
 // 0x2AA7
 uint16_t word_2AA7;
 uint8_t byte_2AA9;
+uint8_t data_2AAA[0x19] = { 0 };
 
 // 0x2D09
 uint16_t word_2D09; // timer ticks?
@@ -1634,10 +1635,9 @@ static uint16_t sub_2D0B()
     }
     if (cpu.ax == 0x93) {
       // Ctrl-S
-      printf("%s: 0x2D42 unimplemented\n", __func__);
-      exit(1);
+      printf("xor byte_107, 0x40\n");
     }
-  } while (cpu.ax != 0x93);
+  } while (cpu.ax == 0x93);
 
   // 0x2D4B
   cpu.bx = word_2DD7;
@@ -1674,11 +1674,56 @@ static int sub_2BD9()
   return 1;
 }
 
+// 0x29B8
+static void sub_29B8(uint8_t al)
+{
+  byte_2AA6 = al;
+  if ((word_2AA7 & 0x40) != 0) {
+    printf("%s: 0x29C2 unimplemented\n", __func__);
+    exit(1);
+  }
+}
+
+// 0x2ADC
+static void sub_2ADC()
+{
+  if ((word_2AA7 & 0x1) != 0) {
+    return;
+  }
+  memset(&data_2AAA, 0, sizeof(data_2AAA));
+}
+
+// 0x2A4C
+static void sub_2A4C()
+{
+  uint8_t al;
+
+  cpu.di++;
+  printf("DI: 0x%04X\n", cpu.di);
+
+  cpu.bx = *(cpu.base_pc + cpu.di);
+  cpu.bx += *(cpu.base_pc + cpu.di + 1) << 8;
+
+  printf("%s: BX - 0x%04X\n", __func__, cpu.bx);
+  printf("%s: AX - 0x%04X\n", __func__, cpu.ax);
+  sub_2ADC();
+  al = cpu.ax & 0xFF;
+  if (al == 1) {
+    al = byte_2AA6;
+    printf("%s: AL - 0x%02X\n", __func__, al);
+
+    al -= 0xB1;
+    game_state.unknown[0x6] = al;
+    al = byte_2AA6;
+    cpu.ax = (cpu.ax & 0xFF00) | al;
+  }
+}
+
 // 0x28B0
 static void sub_28B0()
 {
   uint8_t al, ah;
-  uint8_t bl;
+  uint8_t bl, bh;
 
   draw_string();
 
@@ -1687,7 +1732,7 @@ static void sub_28B0()
 
   bl = cpu.bx & 0xFF;
 
-  // 2AA7
+  // 0x28BA
   word_2AA7 = cpu.ax;
   ah = (cpu.ax & 0xFF00) >> 8;
   ah = ah & 0x20;
@@ -1708,6 +1753,7 @@ static void sub_28B0()
     printf("BP: sub_1F8F();\n");
     exit(1);
   }
+  // 0x28E4
   if ((word_2AA7 & 0x8000) != 0) {
     printf("BP: 28EB\n");
     exit(1);
@@ -1733,35 +1779,51 @@ static void sub_28B0()
     }
 
     // 0x2985
-    if (sub_2D0B() != 0) {
-      printf("%s: 0x298A unimplemented\n", __func__);
-      exit(1);
+    al = sub_2D0B(); // key pressed?
+    if (al != 0) {
+      // A-Z letters.
+      if (al >= 0xE1 && al <= 0xFA) {
+        // 0x2992
+        if ((word_2AA7 & 0x2) == 0) {
+          al = al & 0xDF;
+        }
+      }
+
+      // 0x299B
+      // All other keys
+      printf("%s: word_2AA7: 0x%04X\n", __func__, word_2AA7);
+      if ((word_2AA7 & 0x8000) != 0) {
+        if ((word_2AA7 & 0x4000) == 0) {
+          if (al == 0xA0) {
+            al = 0x9B;
+          }
+        }
+      }
+    } else {
+      // 0x29B1
+      if (sub_2BD9() == 0)
+        continue;
+      // 0x29B6
+      al = 1;
     }
 
-    // 0x29B1
-    if (sub_2BD9() == 0)
-      continue;
+    // Not technically a subroutine.
+    sub_29B8(al);
 
-    // 0x29B6
-    al = 0x1;
-    byte_2AA6 = al;
-    if ((word_2AA7 & 0x40) != 0) {
-      printf("%s: 0x29C2 unimplemented\n", __func__);
-      exit(1);
-    }
-
-    uint16_t di = word_2AA2;
-    di -= 3;
+    // 0x29CC
+    cpu.di = word_2AA2;
+    cpu.di -= 3;
     cpu.pc -= 3;
 
     uint8_t dl = byte_2AA6;
     // 0x29DD
     while (1) {
-      di += 3;
-      al = *(cpu.base_pc + di);
+      cpu.di += 3;
+      al = *(cpu.base_pc + cpu.di);
+      cpu.ax = (cpu.ax & 0xFF00) | al;
       if (al == 0) {
-        printf("%s: 0x2A4C unimplemented\n", __func__);
-        exit(1);
+        sub_2A4C();
+        return;
       }
       if (al == 0xFF) {
         break;
@@ -1772,8 +1834,21 @@ static void sub_28B0()
         bl = dl;
         bl -= 0xB1;
         if (bl < game_state.unknown[0x1F]) {
-          printf("%s: 0x29FE unimplemented\n", __func__);
-          exit(1);
+          // 0x29FE
+          bh = 0;
+          cpu.bx = bl;
+          uint16_t si = cpu.bx;
+          cpu.bx = 0xC960;
+          bh = game_state.unknown[0xA + si];
+          cpu.bx += (bh << 8);
+          unsigned char *c960 = get_C960();
+          cpu.cx = c960[cpu.bx - 0xC960 + 0x4C];
+          cpu.cx = cpu.cx & byte_2AA9;
+          if (cpu.cx != 0)
+            continue;
+
+          sub_2A4C();
+          return;
         }
       }
       // 0x2A15
@@ -1785,7 +1860,7 @@ static void sub_28B0()
       else if (al != 0x80) {
 
         if (al == 0x81) {
-          di++;
+          cpu.di++;
         } else {
           if ((al & 0x80) == 0) {
             // 0x2A2F
@@ -1812,6 +1887,8 @@ static void op_89(void)
   sub_28B0();
 
   cpu.ax = cpu.ax & 0x00FF;
+  printf("%s: BX: 0x%04X\n", __func__, cpu.bx);
+  cpu.pc = cpu.base_pc + cpu.bx;
   word_3AE2 = cpu.ax;
 }
 
