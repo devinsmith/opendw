@@ -68,6 +68,7 @@ uint8_t byte_2AA9;
 uint16_t word_2D09; // timer ticks?
 uint16_t word_2DD7 = 0xFFFF;
 uint16_t word_2DD9 = 0xFFFF;
+uint8_t data_2DDB[160] = { 0 };
 
 uint8_t byte_3855 = 0;
 uint8_t byte_387F = 0;
@@ -1626,22 +1627,30 @@ static uint16_t sub_2D0B()
     exit(1);
   }
   // 0x2D31
-  uint16_t ax = vga->getkey();
-  if (ax == 0) {
-    return ax;
-  }
-  if (ax == 0x93) {
-    // Ctrl-S
-    printf("%s: 0x2D37 unimplemented\n", __func__);
-    exit(1);
-  }
+  do {
+    cpu.ax = vga->getkey();
+    if (cpu.ax == 0) {
+      return cpu.ax;
+    }
+    if (cpu.ax == 0x93) {
+      // Ctrl-S
+      printf("%s: 0x2D42 unimplemented\n", __func__);
+      exit(1);
+    }
+  } while (cpu.ax != 0x93);
+
   // 0x2D4B
   cpu.bx = word_2DD7;
-  if (cpu.bx < 0x8000) {
-    printf("%s: 0x2D53 unimplemented\n", __func__);
-    exit(1);
+  if (cpu.bx >= 0x8000) {
+    // cpu.bx is signed (negative value)
+    return cpu.ax;
   }
-  return ax;
+  // 0x2D53
+
+  printf("%s: 0x2D53 unimplemented\n", __func__);
+  exit(1);
+
+  return cpu.ax;
 }
 
 // 0x2BD9

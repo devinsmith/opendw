@@ -181,6 +181,11 @@ get_key()
         printf("sym: 0x%08X\n", ksym->sym);
         printf("mod: 0x%04X\n", ksym->mod);
         printf("scan: 0x%04X\n", ksym->scancode);
+        if (ksym->mod & KMOD_CTRL) {
+          if (ksym->sym == SDLK_s) {
+            return 0x13 | 0x80;
+          }
+        }
         if (ksym->mod & KMOD_SHIFT) {
           return shifted(ksym) | 0x80;
         }
