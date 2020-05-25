@@ -1776,7 +1776,7 @@ static void sub_28B0()
   // 0x28E4
   if ((word_2AA7 & 0x8000) != 0) {
     al = data_2697.h;
-    data_32BF.y = daat_2697.h;
+    data_32BF.y = data_2697.h;
     // 0x32BF, 0x32C1, 0x80
     byte_3236 = 0;
 
