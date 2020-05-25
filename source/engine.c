@@ -1349,6 +1349,8 @@ static void rect_shrink()
 // 0x25E0
 static void draw_rectangle(void)
 {
+  int identical = 1;
+
   data_268F.x = *cpu.pc++;
   data_268F.y = *cpu.pc++;
   data_268F.w = *cpu.pc++;
@@ -1356,32 +1358,50 @@ static void draw_rectangle(void)
 
   draw_string();
   if (ui_drawn_yet != 0) {
-    // call sub_2720
-    printf("BP 0x25FC\n");
-    exit(1);
+    rect_expand();
+    if (data_2697.x > data_268F.x) {
+      // 0x2632
+    }
+    // 2608
+    if (data_2697.y > data_268F.y) {
+      // 0x2632
+    }
+    if (data_2697.w < data_268F.w) {
+      // 0x2632
+    }
+    if (data_2697.h < data_268F.h) {
+      // 0x2632
+    }
+
+    // 2623
+    identical = memcmp(&data_268F, &data_2697, sizeof(data_268F));
   }
 
-  memcpy(&data_2697, &data_268F, sizeof(data_268F));
-  data_32BF.x = data_2697.x;
-  data_32BF.y = data_2697.y;
-
-  // 0x32BF, 0x32C1, 0x80
-  printf("sub_269F(%d, %d, 0x80)\n", data_32BF.x, data_32BF.y);
-  // 0x269F
-  ui_draw_box_segment(0x80, &data_32BF, &data_2697);
-
-  // loc_2668
-  // Draw left and right sides.
-  while (data_32BF.y < data_2697.h - 8) {
+  if (identical != 0) {
+    // 0x2638
+    memcpy(&data_2697, &data_268F, sizeof(data_268F));
     data_32BF.x = data_2697.x;
-    data_32BF.y += 8;
-    ui_draw_chr_piece(0x83, &data_32BF, &data_2697);
-    data_32BF.x = data_2697.w - 1;
-    ui_draw_chr_piece(0x84, &data_32BF, &data_2697);
-  }
-  data_32BF.x = data_2697.x;
-  ui_draw_box_segment(0x85, &data_32BF, &data_2697);
+    data_32BF.y = data_2697.y;
 
+    // 0x32BF, 0x32C1, 0x80
+    printf("sub_269F(%d, %d, 0x80)\n", data_32BF.x, data_32BF.y);
+    // 0x269F
+    ui_draw_box_segment(0x80, &data_32BF, &data_2697);
+
+    // loc_2668
+    // Draw left and right sides.
+    while (data_32BF.y < data_2697.h - 8) {
+      data_32BF.x = data_2697.x;
+      data_32BF.y += 8;
+      ui_draw_chr_piece(0x83, &data_32BF, &data_2697);
+      data_32BF.x = data_2697.w - 1;
+      ui_draw_chr_piece(0x84, &data_32BF, &data_2697);
+    }
+    data_32BF.x = data_2697.x;
+    ui_draw_box_segment(0x85, &data_32BF, &data_2697);
+  }
+
+  // 0x2683
   ui_drawn_yet = 0xFF;
   rect_shrink();
   draw_pattern(&data_2697);
@@ -1755,7 +1775,17 @@ static void sub_28B0()
   }
   // 0x28E4
   if ((word_2AA7 & 0x8000) != 0) {
-    printf("BP: 28EB\n");
+    al = data_2697.h;
+    data_32BF.y = daat_2697.h;
+    // 0x32BF, 0x32C1, 0x80
+    byte_3236 = 0;
+
+    bl = (word_2AA7 & 0xFF00) >> 8;
+    cpu.bx = (cpu.bx & 0xFF00) | bl;
+    cpu.bx = cpu.bx & 0x3;
+    al = data_2697.w;
+    al -= data_2697.x;
+    printf("%s: al = 0x%02X 32C1: 0x%02X BP: 2907\n", __func__, al, data_32BF.y);
     exit(1);
   }
 
