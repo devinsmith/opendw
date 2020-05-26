@@ -63,7 +63,7 @@ uint8_t byte_2AA6;
 // 0x2AA7
 uint16_t word_2AA7;
 uint8_t byte_2AA9;
-uint8_t data_2AAA[0x19] = { 0 };
+uint8_t data_2AAA[32] = { 0 };
 
 // 0x2D09
 uint16_t word_2D09; // timer ticks?
@@ -84,6 +84,7 @@ uint16_t word_3AEA = 0;
 uint16_t saved_stack = 0;
 
 uint16_t word_3ADB = 0;
+unsigned char *data_1CEF;
 
 /* 0x3ADD */
 const struct resource *running_script = NULL;
@@ -104,6 +105,7 @@ struct timer_ctx {
 
 struct timer_ctx timers;
 
+unsigned char *data_2A68 = NULL;
 unsigned char *data_D760 = NULL;
 
 // XXX:How big should these be???
@@ -183,7 +185,7 @@ static void sub_3150(unsigned char byte);
 static void sub_316C();
 static void append_string(unsigned char byte);
 static void sub_280E();
-static void sub_1C79(void);
+static void sub_1C79(unsigned char **src_ptr);
 
 // Decoded opcode calls, foward definition.
 static void op_00();
@@ -1423,7 +1425,7 @@ static void op_74(void)
 // 0x47EC
 static void op_78(void)
 {
-  sub_1C79();
+  sub_1C79(&cpu.pc);
 }
 
 static void sub_1A40()
@@ -1775,6 +1777,7 @@ static void sub_28B0()
   }
   // 0x28E4
   if ((word_2AA7 & 0x8000) != 0) {
+    // 0x28EB
     al = data_2697.h;
     data_32BF.y = data_2697.h;
     // 0x32BF, 0x32C1, 0x80
@@ -1785,8 +1788,31 @@ static void sub_28B0()
     cpu.bx = cpu.bx & 0x3;
     al = data_2697.w;
     al -= data_2697.x;
-    printf("%s: al = 0x%02X 32C1: 0x%02X BP: 2907\n", __func__, al, data_32BF.y);
-    exit(1);
+    al -= data_2A68[cpu.bx];
+    if (al <= 0) {
+      al = 0;
+    }
+    al = al >> 1;
+    al += data_2697.x;
+    data_32BF.x = al;
+    cpu.bx = cpu.bx << 1;
+    bl = cpu.bx & 0xFF;
+    // mov bx, [bx + 0x2A6C]
+    cpu.bx = data_2A68[bl + 4];
+    cpu.bx += data_2A68[bl + 5] << 8;
+
+    printf("%s: cpu.bx = 0x%04X\n", __func__, cpu.bx);
+    unsigned char *src_ptr = data_2A68 + (cpu.bx - 0x2A68);
+
+    sub_1C79(&src_ptr);
+    draw_string();
+
+    bl = data_32BF.y;
+    bl -= data_2697.y;
+    bl = bl >> 3;
+    al = 0xFF;
+    data_2AAA[bl] = 0xFF;
+    data_2AAA[bl + 25] = 0x9B;
   }
 
   // 0x2942
@@ -1979,13 +2005,13 @@ static void op_9A(void)
   }
 }
 
-static void sub_1C79(void)
+static void sub_1C79(unsigned char **src_ptr)
 {
   num_bits = 0;
 
   byte_1CE4 = 0;
   while (1) {
-    uint8_t ret = sub_1CF8(); // check for 0
+    uint8_t ret = sub_1CF8(src_ptr); // check for 0
     if (ret == 0) {
       // 1CE6
       return;
@@ -2026,7 +2052,7 @@ unsigned char alphabet[] = {
   0xaa, 0xbf, 0xbc, 0xbe, 0xba, 0xbb, 0xad, 0xa5
 };
 
-static uint8_t sub_1D86()
+static uint8_t sub_1D86(unsigned char **src_ptr)
 {
   uint8_t al, bl;
 
@@ -2042,10 +2068,10 @@ static uint8_t sub_1D86()
     if (dl < 0) {
       // 0x1DA5
       //
-      dl = *cpu.pc;
+      dl = **src_ptr;
       bit_buffer = dl;
       dl = 7;
-      cpu.pc++;
+      (*src_ptr)++;
     }
 
     int cf = 0;
@@ -2062,10 +2088,10 @@ static uint8_t sub_1D86()
   return al;
 }
 
-static uint8_t sub_1CF8()
+static uint8_t sub_1CF8(unsigned char **src_ptr)
 {
   while (1) {
-    uint8_t ret = sub_1D8A();
+    uint8_t ret = sub_1D8A(src_ptr);
     if (ret == 0)
       return 0;
 
@@ -2079,7 +2105,7 @@ static uint8_t sub_1CF8()
     }
 
     if (ret > 0x1E) {
-      ret = sub_1D86();
+      ret = sub_1D86(src_ptr);
       ret += 0x1E;
     }
 
@@ -2099,7 +2125,7 @@ static uint8_t sub_1CF8()
 
 // Extract 5 bits out of each byte.
 // bit_buffer contains leftover bit buffer.
-static uint8_t sub_1D8A()
+static uint8_t sub_1D8A(unsigned char **src_ptr)
 {
   int counter = 5;
   int al = 0;
@@ -2107,10 +2133,10 @@ static uint8_t sub_1D8A()
   while (counter > 0) {
     dl--;
     if (dl < 0) {
-      dl = *cpu.pc;
+      dl = **src_ptr;
       bit_buffer = dl;
       dl = 7;
-      cpu.pc++;
+      (*src_ptr)++;
     }
     // 0x1D96
     uint8_t tmp = bit_buffer;
@@ -2169,7 +2195,7 @@ static void sub_27E3()
 {
   word_3163 = ui_header_set_byte;
   ui_header_reset();
-  sub_1C79();
+  sub_1C79(&cpu.pc);
   sub_316C();
   sub_280E();
 }
@@ -2249,6 +2275,7 @@ void run_engine()
   ui_set_background(0x0000); // Not correct.
 
   // load unknown data from COM file.
+  data_2A68 = com_extract(0x2A68, 0x39);
   data_D760 = com_extract(0xD760, 0x700);
 
   // 0x1A6
