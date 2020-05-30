@@ -1915,17 +1915,20 @@ static void sub_28B0()
       // 0x2A20
       else if (al != 0x80) {
 
+        // 0x2A24
         if (al == 0x81) {
           cpu.di++;
         } else {
+          // 0x2A2B
           if ((al & 0x80) == 0) {
             // 0x2A2F
             printf("%s: 0x2A2F unimplemented\n", __func__);
             exit(1);
           }
           if (al == byte_2AA6) {
-            printf("%s: 0x2A4C unimplemented\n", __func__);
-            exit(1);
+            // 0x2A4C
+            sub_2A4C();
+            return;
           }
         }
       }
