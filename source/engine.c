@@ -1514,8 +1514,17 @@ static void op_7D(void)
 
 static void sub_1BE6()
 {
-  printf("%s unimplemented: 0x1BE6\n", __func__);
-  exit(1);
+  int counter;
+  counter = cpu.ax & 0xFF;
+
+  counter -= data_32BF.x;
+  if (counter <= 0)
+    return;
+
+  cpu.ax = 0xA0;
+  for (int i = 0; i < counter; i++) {
+    sub_3150(0xA0);
+  }
 }
 
 // 0x487F
@@ -1528,6 +1537,7 @@ static void op_80(void)
 
   draw_string();
   al += data_2697.x;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
 
   sub_1BE6();
 }
@@ -1828,6 +1838,9 @@ static void sub_28B0()
   word_2AA7 = cpu.ax;
   ah = (cpu.ax & 0xFF00) >> 8;
   ah = ah & 0x20;
+  al = cpu.ax * 0xFF;
+
+  cpu.ax = (ah << 8) | al;
 
   timers.timer5 = ah;
   // extract 0x2AA8
@@ -1849,7 +1862,8 @@ static void sub_28B0()
   if ((word_2AA7 & 0x8000) != 0) {
     // 0x28EB
     al = data_2697.h;
-    data_32BF.y = data_2697.h;
+    al -= 8;
+    data_32BF.y = al;
     // 0x32BF, 0x32C1, 0x80
     byte_3236 = 0;
 
