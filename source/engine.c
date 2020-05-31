@@ -222,6 +222,7 @@ static void op_52();
 static void op_53();
 static void op_54();
 static void op_56();
+static void op_58();
 static void op_5A();
 static void op_5C();
 static void op_5D();
@@ -229,9 +230,11 @@ static void op_5E();
 static void op_66();
 static void op_69();
 static void op_74();
+static void op_76();
 static void op_78();
 static void read_header_bytes(void); // 7B
 static void op_7D();
+static void op_80();
 static void op_83();
 static void op_84();
 static void op_85();
@@ -335,7 +338,7 @@ struct op_call_table targets[] = {
   { NULL, "0x41E5" },
   { op_56, "0x41FD" },
   { NULL, "0x4215" },
-  { NULL, "0x4239" },
+  { op_58, "0x4239" },
   { NULL, "0x41C8" },
   { op_5A, "0x3AEE" },
   { NULL, "0x427A" },
@@ -365,7 +368,7 @@ struct op_call_table targets[] = {
   { NULL, "0x47B7" },
   { op_74, "0x47C0" },
   { NULL, "0x47D1" },
-  { NULL, "0x47D9" },
+  { op_76, "0x47D9" },
   { NULL, "0x47E3" },
   { op_78, "0x47EC" },
   { NULL, "0x47FA" },
@@ -375,7 +378,7 @@ struct op_call_table targets[] = {
   { op_7D, "0x483B" },
   { NULL, "0x4845" },
   { NULL, "0x486D" },
-  { NULL, "0x487F" },
+  { op_80, "0x487F" },
   { NULL, "0x48C5" },
   { NULL, "0x48D2" },
   { op_83, "0x48EE" },
@@ -573,6 +576,7 @@ static void op_01()
   byte_3AE1 = ah;
 }
 
+// 0x4AA1
 static void populate_3ADD_and_3ADF(void)
 {
   running_script = resource_get_by_index(word_3AE8);
@@ -1137,6 +1141,46 @@ static void op_56(void)
   }
 }
 
+// 0x4239
+static void op_58(void)
+{
+  uint8_t al;
+
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+
+  // tag lookup item.
+  uint16_t tag_item = cpu.ax;
+
+  cpu.ax = *cpu.pc++;
+  cpu.ax += ((*cpu.pc++) << 8);
+  uint16_t src_offset = cpu.ax;
+
+  uint16_t si = cpu.pc - cpu.base_pc; // is this correct?
+  // push cs
+  // pop es
+  // dec sp
+  // mov bp, sp
+  al = word_3AE8;
+  push_byte(al);
+  // mov [bp], al
+  //
+  int found = find_index_by_tag(tag_item);
+  if (found != -1) {
+    printf("Found item put breakpoint: 0x4254\n");
+    exit(1);
+  } else {
+    const struct resource *r = resource_load(tag_item);
+    push_byte(0xff); // dl
+    al = r->index;
+    word_3AE8 = al;
+    word_3AEA = al;
+    populate_3ADD_and_3ADF();
+    cpu.pc = running_script->bytes + src_offset;
+    cpu.base_pc = running_script->bytes;
+  }
+}
+
 // 0x3AEE
 static void op_5A(void)
 {
@@ -1422,6 +1466,12 @@ static void op_74(void)
   draw_rectangle();
 }
 
+// 0x47D9
+static void op_76(void)
+{
+  draw_pattern(&data_2697);
+}
+
 // 0x47EC
 static void op_78(void)
 {
@@ -1460,6 +1510,26 @@ static void op_7D(void)
 {
   printf("op_7D\n");
   sub_1A40();
+}
+
+static void sub_1BE6()
+{
+  printf("%s unimplemented: 0x1BE6\n", __func__);
+  exit(1);
+}
+
+// 0x487F
+static void op_80(void)
+{
+  uint8_t al;
+
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+
+  draw_string();
+  al += data_2697.x;
+
+  sub_1BE6();
 }
 
 // 0x48EE

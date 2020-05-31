@@ -162,6 +162,7 @@ rm_exit(void)
   }
 }
 
+// Essentially 0x2EB0 but not exactly.
 struct resource* resource_load(enum resource_section sec)
 {
   if (sec >= RESOURCE_MAX) {
