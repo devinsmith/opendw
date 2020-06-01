@@ -49,6 +49,7 @@ void rm_exit(void);
 
 struct resource* resource_get_by_index(int index);
 void resource_index_release(int index);
+void resource_set_usage_type(int index, int usage_type);
 
 struct resource* resource_load(enum resource_section sec);
 

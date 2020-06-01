@@ -186,6 +186,7 @@ static void sub_316C();
 static void append_string(unsigned char byte);
 static void sub_280E();
 static void sub_1C79(unsigned char **src_ptr);
+static void sub_26B8(void);
 
 // Decoded opcode calls, foward definition.
 static void op_00();
@@ -223,6 +224,7 @@ static void op_53();
 static void op_54();
 static void op_56();
 static void op_58();
+static void op_59();
 static void op_5A();
 static void op_5C();
 static void op_5D();
@@ -230,6 +232,7 @@ static void op_5E();
 static void op_66();
 static void op_69();
 static void op_74();
+static void op_75();
 static void op_76();
 static void op_78();
 static void read_header_bytes(void); // 7B
@@ -339,7 +342,7 @@ struct op_call_table targets[] = {
   { op_56, "0x41FD" },
   { NULL, "0x4215" },
   { op_58, "0x4239" },
-  { NULL, "0x41C8" },
+  { op_59, "0x41C8" },
   { op_5A, "0x3AEE" },
   { NULL, "0x427A" },
   { op_5C, "0x4295" },
@@ -367,7 +370,7 @@ struct op_call_table targets[] = {
   { NULL, "0x46B6" },
   { NULL, "0x47B7" },
   { op_74, "0x47C0" },
-  { NULL, "0x47D1" },
+  { op_75, "0x47D1" },
   { op_76, "0x47D9" },
   { NULL, "0x47E3" },
   { op_78, "0x47EC" },
@@ -1181,6 +1184,30 @@ static void op_58(void)
   }
 }
 
+// 0x128D
+static void sub_128D(int index)
+{
+  resource_set_usage_type(index, 0x2);
+}
+
+// 0x41C8
+static void op_59(void)
+{
+  uint8_t al, ah;
+
+  ah = (cpu.ax & 0xFF00) >> 8;
+  if (ah != cpu.stack[cpu.sp]) {
+    // 0x41CF
+    al = word_3AE8;
+    sub_128D(al);
+  }
+  cpu.ax = pop_word();
+  printf("%s: 0x%02X\n", __func__, cpu.ax);
+  exit(1);
+  // mov bp, sp
+  // cmp [bp], ah
+}
+
 // 0x3AEE
 static void op_5A(void)
 {
@@ -1466,6 +1493,12 @@ static void op_74(void)
   draw_rectangle();
 }
 
+// 0x47D1
+static void op_75(void)
+{
+  sub_26B8();
+}
+
 // 0x47D9
 static void op_76(void)
 {
@@ -1578,6 +1611,22 @@ static void op_86(void)
   uint8_t ah = (cpu.ax & 0xFF00) >> 8;
   word_3AE2 = (ah & byte_3AE1) | (cpu.ax & 0x00FF);
   //dump_hex(r->bytes, 0x80);
+}
+
+// 0x26B8
+static void sub_26B8(void)
+{
+  draw_string();
+  if (ui_drawn_yet != 0) {
+    ui_draw();
+  }
+  ui_drawn_yet = 0;
+  data_2697.x = 1;
+  data_2697.y = 0x98;
+  data_2697.w = 0x27;
+  data_2697.h = 0xB8;
+  data_32BF.x = 1;
+  data_32BF.y = 0x98;
 }
 
 // Uses carry flag as a boolean

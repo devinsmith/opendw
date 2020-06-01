@@ -197,6 +197,18 @@ void resource_index_release(int index)
   allocations[index].bytes = NULL;
 }
 
+// 0x1297
+void resource_set_usage_type(int index, int usage_type)
+{
+  if (index == 0xFF)
+    return;
+
+  if (index < 2)
+    return;
+
+  allocations[index].usage_type = usage_type;
+}
+
 static struct resource *
 resource_load_cache_miss(enum resource_section sec)
 {
