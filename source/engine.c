@@ -132,7 +132,7 @@ struct game_state {
 static struct game_state game_state = {0};
 
 // Small stack, hopefully we don't use much of it.
-#define STACK_SIZE 16
+#define STACK_SIZE 32
 
 // virtual CPU
 struct virtual_cpu {
@@ -144,8 +144,8 @@ struct virtual_cpu {
   uint16_t di;
 
   // stack
-  uint16_t stack[STACK_SIZE]; // stacks;
-  uint16_t sp;
+  uint8_t stack[STACK_SIZE]; // stacks;
+  uint8_t sp;
 
   // program counter
   unsigned char *pc;
@@ -523,30 +523,24 @@ static unsigned char data_2794[56] = {
   0x04, 0x00, 0x14, 0x08, 0x01, 0x98, 0x27, 0xB8  // 0x27C4-0x27CB
 };
 
-static void push_word(uint16_t val)
+static void push_byte(uint8_t val)
 {
-  if (cpu.sp == 0) {
-    cpu.sp = STACK_SIZE;
-  }
-
   cpu.sp--;
+  if (cpu.sp == UINT8_MAX) {
+    cpu.sp = STACK_SIZE - 1;
+  }
   cpu.stack[cpu.sp] = val;
 }
 
-static void push_byte(uint8_t val)
+static void push_word(uint16_t val)
 {
-  if (cpu.sp == 0) {
-    cpu.sp = STACK_SIZE;
-  }
-  // we need to push a byte onto the stack.
-  cpu.sp--;
-  cpu.stack[cpu.sp] = val;
+  push_byte((val & 0xFF00) >> 8);
+  push_byte((val & 0xFF));
 }
 
 static uint8_t pop_byte()
 {
-  uint8_t val = cpu.stack[cpu.sp];
-  cpu.sp++;
+  uint8_t val = cpu.stack[cpu.sp++];
   if (cpu.sp >= STACK_SIZE)
     cpu.sp = 0;
 
@@ -555,10 +549,8 @@ static uint8_t pop_byte()
 
 static uint16_t pop_word()
 {
-  uint16_t val = cpu.stack[cpu.sp];
-  cpu.sp++;
-  if (cpu.sp >= STACK_SIZE)
-    cpu.sp = 0;
+  uint16_t val = pop_byte();
+  val += pop_byte() << 8;
 
   return val;
 }
