@@ -1152,6 +1152,7 @@ static void op_58(void)
   uint16_t src_offset = cpu.ax;
 
   uint16_t si = cpu.pc - cpu.base_pc; // is this correct?
+  push_word(si);
   // push cs
   // pop es
   // dec sp
