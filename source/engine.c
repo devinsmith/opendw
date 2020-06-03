@@ -1090,9 +1090,6 @@ static void op_52(void)
   printf("Existing address: 0x%04x\n", existing_address);
 
   cpu.pc = cpu.base_pc + new_address;
-
-  printf("%s: unimplemented BP 0x41B9\n", __func__);
-  exit(1);
 }
 
 // 0x41C0
@@ -1187,6 +1184,7 @@ static void sub_128D(int index)
 static void op_59(void)
 {
   uint8_t al, ah;
+  uint16_t si;
 
   ah = (cpu.ax & 0xFF00) >> 8;
   if (ah != cpu.stack[cpu.sp]) {
@@ -1195,10 +1193,13 @@ static void op_59(void)
     sub_128D(al);
   }
   cpu.ax = pop_word();
-  printf("%s: 0x%02X\n", __func__, cpu.ax);
-  exit(1);
-  // mov bp, sp
-  // cmp [bp], ah
+  ah = (cpu.ax & 0xFF00) >> 8;
+  word_3AE8 = ah;
+  word_3AEA = ah;
+  populate_3ADD_and_3ADF();
+  si = pop_word();
+  cpu.pc = running_script->bytes + si;
+  cpu.base_pc = running_script->bytes;
 }
 
 // 0x3AEE
