@@ -622,7 +622,7 @@ static void op_08(void)
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.bx = cpu.ax;
   al = word_3AE4;
-  game_state.unknown[cpu.bx] = al;
+  set_game_state(cpu.bx, al);
 }
 
 // 0x3B67
@@ -643,10 +643,11 @@ static void op_09(void)
 // 0x3B7A
 static void op_0A(void)
 {
-  uint8_t al, ah;
+  uint8_t al, ah, saved;
   static int runs = 1;
 
   al = *cpu.pc++;
+  saved = al;
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.bx = cpu.ax;
 
@@ -656,7 +657,8 @@ static void op_0A(void)
   ah = ah & byte_3AE1;
   cpu.ax = (ah << 8) | al;
   word_3AE2 = cpu.ax;
-  printf("OP_0A - AX: 0x%04X (run num: %d)\n", cpu.ax, runs);
+  printf("%s - AX: 0x%04X (run num: %d) 0x%02X\n", __func__, cpu.ax, runs,
+      saved);
   runs++;
 }
 
@@ -697,9 +699,9 @@ static void op_11(void)
   cpu.bx = cpu.ax;
   uint8_t ah = (cpu.ax & 0xFF00) >> 8;
   printf("op_11: 0x%04X ah: 0x%02X\n", cpu.bx, ah);
-  game_state.unknown[cpu.bx] = ah;
+  set_game_state(cpu.bx, ah);
   if (byte_3AE1 != ah) {
-    game_state.unknown[cpu.bx + 1] = ah;
+    set_game_state(cpu.bx + 1, ah);
   }
 }
 
@@ -710,9 +712,9 @@ static void op_12(void)
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.bx = cpu.ax;
   cpu.cx = word_3AE2;
-  game_state.unknown[cpu.bx] = (cpu.cx & 0xFF);
+  set_game_state(cpu.bx, (cpu.cx & 0xFF));
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
-    game_state.unknown[cpu.bx+1] = ((cpu.cx & 0xFF00) >> 8);
+    set_game_state(cpu.bx + 1, (cpu.cx & 0xFF00) >> 8);
   }
 }
 
@@ -725,9 +727,9 @@ static void op_13(void)
   cpu.cx = word_3AE2;
   cpu.bx += word_3AE4;
   printf("op_13: 0x%04X\n", cpu.bx);
-  game_state.unknown[cpu.bx] = (cpu.cx & 0x00FF);
+  set_game_state(cpu.bx, (cpu.cx & 0x00FF));
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
-    game_state.unknown[cpu.bx + 1] = ((cpu.cx & 0xFF00) >> 8);
+    set_game_state(cpu.bx + 1, (cpu.cx & 0xFF00) >> 8);
   }
 }
 
@@ -780,11 +782,11 @@ static void op_1A(void)
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.di = cpu.ax;
   al = *cpu.pc++;
-  game_state.unknown[cpu.di] = al;
+  set_game_state(cpu.di, al);
   cpu.ax = (cpu.ax & 0xFF00) | al;
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
     al = *cpu.pc++;
-    game_state.unknown[cpu.di + 1] = al;
+    set_game_state(cpu.di + 1, al);
     cpu.ax = (cpu.ax & 0xFF00) | al;
   }
 }
@@ -838,10 +840,10 @@ static void op_23(void)
   uint8_t al = *cpu.pc++;
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.di = cpu.ax;
-  game_state.unknown[cpu.di]++;
+  set_game_state(cpu.di, game_state.unknown[cpu.di] + 1);
   if (game_state.unknown[cpu.di] == 0) {
     if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
-      game_state.unknown[cpu.di+1]++;
+      set_game_state(cpu.di + 1, game_state.unknown[cpu.di + 1] + 1);
     }
   }
 }
@@ -859,9 +861,9 @@ static void op_26(void)
   uint8_t cl, ch;
   cl = cpu.cx & 0x00FF;
   ch = (cpu.cx & 0xFF00) >> 8;
-  game_state.unknown[cpu.di] = cl;
+  set_game_state(cpu.di, cl);
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
-    game_state.unknown[cpu.di + 1] = ch;
+    set_game_state(cpu.di + 1, ch);
   }
 }
 
@@ -2128,10 +2130,10 @@ static void op_9A(void)
   cpu.bx = cpu.ax;
   al = 0xFF;
   cpu.ax = (cpu.ax & 0xFF00) | al;
-  game_state.unknown[cpu.bx] = al;
+  set_game_state(cpu.bx, al);
   uint8_t ah = (cpu.ax & 0xFF00) >> 8;
   if (byte_3AE1 != ah) {
-    game_state.unknown[cpu.bx + 1] = al;
+    set_game_state(cpu.bx + 1, al);
   }
 }
 
@@ -2427,5 +2429,6 @@ void run_engine()
 
 void set_game_state(int offset, unsigned char value)
 {
+  printf("%s - [%d] = 0x%02X\n", __func__, offset, value);
   game_state.unknown[offset] = value;
 }
