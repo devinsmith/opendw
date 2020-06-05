@@ -34,7 +34,7 @@ struct ui_string_line {
   unsigned char bytes[40];
 };
 
-// 320C
+// 0x320C
 extern struct ui_string_line ui_string;
 
 struct ui_rect {
@@ -67,6 +67,7 @@ void ui_draw_box_segment(uint8_t chr, struct ui_point *pt, struct ui_rect *outer
 void ui_draw_chr_piece(uint8_t chr, struct ui_point *pt, struct ui_rect *outer);
 void draw_pattern(struct ui_rect *rect);
 void ui_set_background(uint16_t val);
+void ui_draw_string(void);
 
 void ui_set_byte_3236(uint8_t val);
 uint8_t ui_get_byte_3236();

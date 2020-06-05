@@ -116,9 +116,6 @@ struct len_bytes {
   uint8_t bytes[40];
 };
 
-// 0x320C
-struct len_bytes data_320C = { 0 };
-
 struct game_state {
   unsigned char unknown[256];
 };
@@ -1376,21 +1373,6 @@ static void op_69(void)
 
 }
 
-// 0x3177
-static void draw_string(void)
-{
-  uint16_t i;
-  for (i = 0; i < data_320C.len; i++) {
-    uint8_t al = data_320C.bytes[i];
-    ui_draw_chr_piece(al, &draw_point, &draw_rect);
-  }
-  data_320C.len = 0;
-
-  // 0x318A
-  ui_set_byte_3236(draw_point.x);
-  vga->update();
-}
-
 // 0x2720
 static void rect_expand()
 {
@@ -1419,7 +1401,7 @@ static void draw_rectangle(void)
   data_268F.w = *cpu.pc++;
   data_268F.h = *cpu.pc++;
 
-  draw_string();
+  ui_draw_string();
   if (ui_drawn_yet != 0) {
     rect_expand();
     if (draw_rect.x > data_268F.x) {
@@ -1472,7 +1454,7 @@ static void draw_rectangle(void)
   draw_point.x = draw_rect.x;
   ui_set_byte_3236(draw_rect.x);
   draw_point.y = draw_rect.y;
-  data_320C.len = 0;
+  ui_string.len = 0;
   vga->update();
 }
 
@@ -1558,7 +1540,7 @@ static void op_80(void)
   al = *cpu.pc++;
   cpu.ax = (cpu.ax & 0xFF00) | al;
 
-  draw_string();
+  ui_draw_string();
   al += draw_rect.x;
   cpu.ax = (cpu.ax & 0xFF00) | al;
 
@@ -1606,7 +1588,7 @@ static void op_86(void)
 // 0x26B8
 static void sub_26B8(void)
 {
-  draw_string();
+  ui_draw_string();
   if (ui_drawn_yet != 0) {
     ui_draw();
   }
@@ -1866,7 +1848,7 @@ static void sub_28B0()
   uint8_t al, ah;
   uint8_t bl, bh;
 
-  draw_string();
+  ui_draw_string();
 
   cpu.ax = *cpu.pc++;
   cpu.ax += *cpu.pc++ << 8;
@@ -1928,7 +1910,7 @@ static void sub_28B0()
     unsigned char *src_ptr = data_2A68 + (cpu.bx - 0x2A68);
 
     sub_1C79(&src_ptr);
-    draw_string();
+    ui_draw_string();
 
     bl = draw_point.y;
     bl -= draw_rect.y;
@@ -2285,17 +2267,17 @@ static uint8_t sub_1D8A(unsigned char **src_ptr)
 // append to string buffer.
 static void append_string(unsigned char byte)
 {
-  uint16_t bx = data_320C.len;
-  data_320C.bytes[bx] = byte;
-  data_320C.len++;
+  uint16_t bx = ui_string.len;
+  ui_string.bytes[bx] = byte;
+  ui_string.len++;
   printf("%s: 0x%02X %c\n", __func__, byte, byte & 0x7F);
   if (byte == 0x8D) { // new line.
-    printf("data len: %d\n", data_320C.len);
+    printf("data len: %d\n", ui_string.len);
     printf("2697: 0x%04x\n", draw_rect.x);
     printf("2697: 0x%04x\n", draw_rect.y);
     printf("32BF: 0x%04x\n", draw_point.x);
     printf("32BF: 0x%04x\n", draw_point.y);
-    draw_string();
+    ui_draw_string();
   } else {
     uint16_t ax;
     ax = bx;
@@ -2304,8 +2286,8 @@ static void append_string(unsigned char byte)
     ax += ui_get_byte_3236();
     if (ax > draw_rect.w) {
       printf("BP 0x31AE (not finished)\n");
-      data_320C.len--;
-      if (data_320C.len == 0) {
+      ui_string.len--;
+      if (ui_string.len == 0) {
 
       }
       exit(1);

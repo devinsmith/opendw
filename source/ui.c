@@ -49,6 +49,9 @@ static uint8_t byte_3236 = 0;
 // 0x32BF
 struct ui_point draw_point;
 
+// 0x320C
+struct ui_string_line ui_string = { 0 };
+
 // 0x2AAA
 uint8_t data_2AAA[0x19];
 
@@ -479,4 +482,19 @@ void ui_set_byte_3236(uint8_t val)
 uint8_t ui_get_byte_3236()
 {
   return byte_3236;
+}
+
+// 0x3177
+void ui_draw_string(void)
+{
+  uint16_t i;
+  for (i = 0; i < ui_string.len; i++) {
+    uint8_t al = ui_string.bytes[i];
+    ui_draw_chr_piece(al, &draw_point, &draw_rect);
+  }
+  ui_string.len = 0;
+
+  // 0x318A
+  byte_3236 = draw_point.x;
+  vga->update();
 }
