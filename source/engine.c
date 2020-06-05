@@ -51,9 +51,6 @@ uint16_t word_246D;
 uint8_t ui_drawn_yet = 0; // 0x268E
 struct ui_rect data_268F;
 
-uint8_t byte_3236 = 0;
-struct ui_rect data_32BF;
-
 uint16_t word_2AA2;
 unsigned char *word_2AA4;
 
@@ -1385,13 +1382,12 @@ static void draw_string(void)
   uint16_t i;
   for (i = 0; i < data_320C.len; i++) {
     uint8_t al = data_320C.bytes[i];
-    ui_draw_chr_piece(al, &data_32BF, &draw_rect);
+    ui_draw_chr_piece(al, &draw_point, &draw_rect);
   }
   data_320C.len = 0;
 
   // 0x318A
-  uint8_t al = data_32BF.x;
-  byte_3236 = al;
+  ui_set_byte_3236(draw_point.x);
   vga->update();
 }
 
@@ -1447,25 +1443,25 @@ static void draw_rectangle(void)
   if (identical != 0) {
     // 0x2638
     memcpy(&draw_rect, &data_268F, sizeof(data_268F));
-    data_32BF.x = draw_rect.x;
-    data_32BF.y = draw_rect.y;
+    draw_point.x = draw_rect.x;
+    draw_point.y = draw_rect.y;
 
     // 0x32BF, 0x32C1, 0x80
-    printf("sub_269F(%d, %d, 0x80)\n", data_32BF.x, data_32BF.y);
+    printf("sub_269F(%d, %d, 0x80)\n", draw_point.x, draw_point.y);
     // 0x269F
-    ui_draw_box_segment(0x80, &data_32BF, &draw_rect);
+    ui_draw_box_segment(0x80, &draw_point, &draw_rect);
 
     // loc_2668
     // Draw left and right sides.
-    while (data_32BF.y < draw_rect.h - 8) {
-      data_32BF.x = draw_rect.x;
-      data_32BF.y += 8;
-      ui_draw_chr_piece(0x83, &data_32BF, &draw_rect);
-      data_32BF.x = draw_rect.w - 1;
-      ui_draw_chr_piece(0x84, &data_32BF, &draw_rect);
+    while (draw_point.y < draw_rect.h - 8) {
+      draw_point.x = draw_rect.x;
+      draw_point.y += 8;
+      ui_draw_chr_piece(0x83, &draw_point, &draw_rect);
+      draw_point.x = draw_rect.w - 1;
+      ui_draw_chr_piece(0x84, &draw_point, &draw_rect);
     }
-    data_32BF.x = draw_rect.x;
-    ui_draw_box_segment(0x85, &data_32BF, &draw_rect);
+    draw_point.x = draw_rect.x;
+    ui_draw_box_segment(0x85, &draw_point, &draw_rect);
   }
 
   // 0x2683
@@ -1473,9 +1469,9 @@ static void draw_rectangle(void)
   rect_shrink();
   draw_pattern(&draw_rect);
   // Technically this is done in draw_pattern
-  data_32BF.x = draw_rect.x;
-  byte_3236 = draw_rect.x;
-  data_32BF.y = draw_rect.y;
+  draw_point.x = draw_rect.x;
+  ui_set_byte_3236(draw_rect.x);
+  draw_point.y = draw_rect.y;
   data_320C.len = 0;
   vga->update();
 }
@@ -1544,7 +1540,7 @@ static void sub_1BE6()
   int counter;
   counter = cpu.ax & 0xFF;
 
-  counter -= data_32BF.x;
+  counter -= draw_point.x;
   if (counter <= 0)
     return;
 
@@ -1619,8 +1615,8 @@ static void sub_26B8(void)
   draw_rect.y = 0x98;
   draw_rect.w = 0x27;
   draw_rect.h = 0xB8;
-  data_32BF.x = 1;
-  data_32BF.y = 0x98;
+  draw_point.x = 1;
+  draw_point.y = 0x98;
 }
 
 // Uses carry flag as a boolean
@@ -1906,9 +1902,9 @@ static void sub_28B0()
     // 0x28EB
     al = draw_rect.h;
     al -= 8;
-    data_32BF.y = al;
+    draw_point.y = al;
     // 0x32BF, 0x32C1, 0x80
-    byte_3236 = 0;
+    ui_set_byte_3236(0);
 
     bl = (word_2AA7 & 0xFF00) >> 8;
     cpu.bx = (cpu.bx & 0xFF00) | bl;
@@ -1921,7 +1917,7 @@ static void sub_28B0()
     }
     al = al >> 1;
     al += draw_rect.x;
-    data_32BF.x = al;
+    draw_point.x = al;
     cpu.bx = cpu.bx << 1;
     bl = cpu.bx & 0xFF;
     // mov bx, [bx + 0x2A6C]
@@ -1934,7 +1930,7 @@ static void sub_28B0()
     sub_1C79(&src_ptr);
     draw_string();
 
-    bl = data_32BF.y;
+    bl = draw_point.y;
     bl -= draw_rect.y;
     bl = bl >> 3;
     al = 0xFF;
@@ -2297,15 +2293,15 @@ static void append_string(unsigned char byte)
     printf("data len: %d\n", data_320C.len);
     printf("2697: 0x%04x\n", draw_rect.x);
     printf("2697: 0x%04x\n", draw_rect.y);
-    printf("32BF: 0x%04x\n", data_32BF.x);
-    printf("32BF: 0x%04x\n", data_32BF.y);
+    printf("32BF: 0x%04x\n", draw_point.x);
+    printf("32BF: 0x%04x\n", draw_point.y);
     draw_string();
   } else {
     uint16_t ax;
     ax = bx;
 
     // Validate that string doesn't run past rectangle.
-    ax += byte_3236;
+    ax += ui_get_byte_3236();
     if (ax > draw_rect.w) {
       printf("BP 0x31AE (not finished)\n");
       data_320C.len--;

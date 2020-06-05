@@ -45,6 +45,9 @@ struct pic_data {
 
 // 0x2697
 struct ui_rect draw_rect;
+static uint8_t byte_3236 = 0;
+// 0x32BF
+struct ui_point draw_point;
 
 // 0x2AAA
 uint8_t data_2AAA[0x19];
@@ -403,10 +406,10 @@ void ui_header_set_byte(unsigned char byte)
 }
 
 // 0x3237
-void ui_draw_chr_piece(uint8_t chr, struct ui_rect *rect, struct ui_rect *other)
+void ui_draw_chr_piece(uint8_t chr, struct ui_point *pt, struct ui_rect *other)
 {
   if ((chr & 0x80) == 0) {
-    int16_t bx = (int16_t)rect->y;
+    int16_t bx = (int16_t)pt->y;
     bx -= other->y;
     if (bx > 0) {
       bx = bx >> 3;
@@ -416,33 +419,33 @@ void ui_draw_chr_piece(uint8_t chr, struct ui_rect *rect, struct ui_rect *other)
     }
   }
   if (chr == 0x8D) {
-    rect->x = other->x;
-    uint8_t al = rect->y;
+    pt->x = other->x;
+    uint8_t al = pt->y;
     al += 8;
     if (al > other->h) {
       printf("BP CS:3275\n");
       exit(1);
     }
-    rect->y = al;
+    pt->y = al;
     return;
   }
-  draw_character(rect->x, rect->y, get_chr(chr));
-  rect->x++;
+  draw_character(pt->x, pt->y, get_chr(chr));
+  pt->x++;
 }
 
 // 0x269F
-void ui_draw_box_segment(uint8_t chr, struct ui_rect *rect, struct ui_rect *outer)
+void ui_draw_box_segment(uint8_t chr, struct ui_point *pt, struct ui_rect *outer)
 {
   // Draw corner box.
-  ui_draw_chr_piece(chr, rect, outer);
+  ui_draw_chr_piece(chr, pt, outer);
   chr++;
 
-  while (rect->x < outer->w - 1) {
-    ui_draw_chr_piece(chr, rect, outer);
+  while (pt->x < outer->w - 1) {
+    ui_draw_chr_piece(chr, pt, outer);
   }
 
   chr++;
-  ui_draw_chr_piece(chr, rect, outer);
+  ui_draw_chr_piece(chr, pt, outer);
 
   vga->update();
 }
@@ -466,4 +469,14 @@ void ui_set_background(uint16_t val)
 static void reset_ui_background()
 {
   ui_set_background(prev_bg_index);
+}
+
+void ui_set_byte_3236(uint8_t val)
+{
+  byte_3236 = val;
+}
+
+uint8_t ui_get_byte_3236()
+{
+  return byte_3236;
 }

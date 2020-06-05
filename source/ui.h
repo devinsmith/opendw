@@ -44,8 +44,15 @@ struct ui_rect {
   uint16_t h;
 };
 
+struct ui_point {
+  uint16_t x;
+  uint16_t y;
+};
+
 // 2697
 extern struct ui_rect draw_rect;
+// 32BF
+extern struct ui_point draw_point;
 
 void ui_load();
 void draw_viewport();
@@ -56,10 +63,13 @@ void ui_header_reset();
 void ui_header_draw();
 void ui_header_set_byte(unsigned char byte);
 
-void ui_draw_box_segment(uint8_t chr, struct ui_rect *rect, struct ui_rect *outer);
-void ui_draw_chr_piece(uint8_t chr, struct ui_rect *rect, struct ui_rect *outer);
+void ui_draw_box_segment(uint8_t chr, struct ui_point *pt, struct ui_rect *outer);
+void ui_draw_chr_piece(uint8_t chr, struct ui_point *pt, struct ui_rect *outer);
 void draw_pattern(struct ui_rect *rect);
 void ui_set_background(uint16_t val);
+
+void ui_set_byte_3236(uint8_t val);
+uint8_t ui_get_byte_3236();
 
 #ifdef __cplusplus
 }
