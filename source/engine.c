@@ -51,8 +51,6 @@ uint16_t word_246D;
 uint8_t ui_drawn_yet = 0; // 0x268E
 struct ui_rect data_268F;
 
-// 0x2697
-struct ui_rect data_2697;
 uint8_t byte_3236 = 0;
 struct ui_rect data_32BF;
 
@@ -1387,7 +1385,7 @@ static void draw_string(void)
   uint16_t i;
   for (i = 0; i < data_320C.len; i++) {
     uint8_t al = data_320C.bytes[i];
-    ui_draw_chr_piece(al, &data_32BF, &data_2697);
+    ui_draw_chr_piece(al, &data_32BF, &draw_rect);
   }
   data_320C.len = 0;
 
@@ -1400,19 +1398,19 @@ static void draw_string(void)
 // 0x2720
 static void rect_expand()
 {
-  data_2697.h += 8;
-  data_2697.y -= 8;
-  data_2697.x--;
-  data_2697.w++;
+  draw_rect.h += 8;
+  draw_rect.y -= 8;
+  draw_rect.x--;
+  draw_rect.w++;
 }
 
 // 0x2739
 static void rect_shrink()
 {
-  data_2697.y += 8;
-  data_2697.h -= 8;
-  data_2697.x++;
-  data_2697.w--;
+  draw_rect.y += 8;
+  draw_rect.h -= 8;
+  draw_rect.x++;
+  draw_rect.w--;
 }
 
 // 0x25E0
@@ -1428,56 +1426,56 @@ static void draw_rectangle(void)
   draw_string();
   if (ui_drawn_yet != 0) {
     rect_expand();
-    if (data_2697.x > data_268F.x) {
+    if (draw_rect.x > data_268F.x) {
       // 0x2632
     }
     // 2608
-    if (data_2697.y > data_268F.y) {
+    if (draw_rect.y > data_268F.y) {
       // 0x2632
     }
-    if (data_2697.w < data_268F.w) {
+    if (draw_rect.w < data_268F.w) {
       // 0x2632
     }
-    if (data_2697.h < data_268F.h) {
+    if (draw_rect.h < data_268F.h) {
       // 0x2632
     }
 
     // 2623
-    identical = memcmp(&data_268F, &data_2697, sizeof(data_268F));
+    identical = memcmp(&data_268F, &draw_rect, sizeof(data_268F));
   }
 
   if (identical != 0) {
     // 0x2638
-    memcpy(&data_2697, &data_268F, sizeof(data_268F));
-    data_32BF.x = data_2697.x;
-    data_32BF.y = data_2697.y;
+    memcpy(&draw_rect, &data_268F, sizeof(data_268F));
+    data_32BF.x = draw_rect.x;
+    data_32BF.y = draw_rect.y;
 
     // 0x32BF, 0x32C1, 0x80
     printf("sub_269F(%d, %d, 0x80)\n", data_32BF.x, data_32BF.y);
     // 0x269F
-    ui_draw_box_segment(0x80, &data_32BF, &data_2697);
+    ui_draw_box_segment(0x80, &data_32BF, &draw_rect);
 
     // loc_2668
     // Draw left and right sides.
-    while (data_32BF.y < data_2697.h - 8) {
-      data_32BF.x = data_2697.x;
+    while (data_32BF.y < draw_rect.h - 8) {
+      data_32BF.x = draw_rect.x;
       data_32BF.y += 8;
-      ui_draw_chr_piece(0x83, &data_32BF, &data_2697);
-      data_32BF.x = data_2697.w - 1;
-      ui_draw_chr_piece(0x84, &data_32BF, &data_2697);
+      ui_draw_chr_piece(0x83, &data_32BF, &draw_rect);
+      data_32BF.x = draw_rect.w - 1;
+      ui_draw_chr_piece(0x84, &data_32BF, &draw_rect);
     }
-    data_32BF.x = data_2697.x;
-    ui_draw_box_segment(0x85, &data_32BF, &data_2697);
+    data_32BF.x = draw_rect.x;
+    ui_draw_box_segment(0x85, &data_32BF, &draw_rect);
   }
 
   // 0x2683
   ui_drawn_yet = 0xFF;
   rect_shrink();
-  draw_pattern(&data_2697);
+  draw_pattern(&draw_rect);
   // Technically this is done in draw_pattern
-  data_32BF.x = data_2697.x;
-  byte_3236 = data_2697.x;
-  data_32BF.y = data_2697.y;
+  data_32BF.x = draw_rect.x;
+  byte_3236 = draw_rect.x;
+  data_32BF.y = draw_rect.y;
   data_320C.len = 0;
   vga->update();
 }
@@ -1498,7 +1496,7 @@ static void op_75(void)
 // 0x47D9
 static void op_76(void)
 {
-  draw_pattern(&data_2697);
+  draw_pattern(&draw_rect);
 }
 
 // 0x47EC
@@ -1565,7 +1563,7 @@ static void op_80(void)
   cpu.ax = (cpu.ax & 0xFF00) | al;
 
   draw_string();
-  al += data_2697.x;
+  al += draw_rect.x;
   cpu.ax = (cpu.ax & 0xFF00) | al;
 
   sub_1BE6();
@@ -1617,10 +1615,10 @@ static void sub_26B8(void)
     ui_draw();
   }
   ui_drawn_yet = 0;
-  data_2697.x = 1;
-  data_2697.y = 0x98;
-  data_2697.w = 0x27;
-  data_2697.h = 0xB8;
+  draw_rect.x = 1;
+  draw_rect.y = 0x98;
+  draw_rect.w = 0x27;
+  draw_rect.h = 0xB8;
   data_32BF.x = 1;
   data_32BF.y = 0x98;
 }
@@ -1643,22 +1641,22 @@ static int sub_2752(uint8_t input)
 
   // 0x2764
   al = data_2794[si];
-  if (al > data_2697.w) {
+  if (al > draw_rect.w) {
     rect_shrink();
     return 0;
   }
   al = data_2794[si + 1];
-  if (al > data_2697.h) {
+  if (al > draw_rect.h) {
     rect_shrink();
     return 0;
   }
   al = data_2794[si + 2];
-  if (al < data_2697.x) {
+  if (al < draw_rect.x) {
     rect_shrink();
     return 0;
   }
   al = data_2794[si + 3];
-  if (al < data_2697.y) {
+  if (al < draw_rect.y) {
     rect_shrink();
     return 0;
   }
@@ -1739,7 +1737,7 @@ static int sub_2AEE()
   cpu.ax = mouse.x;
   cpu.ax = cpu.ax << 3;
 
-  if (cpu.ax > data_2697.x) {
+  if (cpu.ax > draw_rect.x) {
     printf("%s: 0x2BO2 unimplemented\n", __func__);
     exit(1);
   }
@@ -1906,7 +1904,7 @@ static void sub_28B0()
   // 0x28E4
   if ((word_2AA7 & 0x8000) != 0) {
     // 0x28EB
-    al = data_2697.h;
+    al = draw_rect.h;
     al -= 8;
     data_32BF.y = al;
     // 0x32BF, 0x32C1, 0x80
@@ -1915,14 +1913,14 @@ static void sub_28B0()
     bl = (word_2AA7 & 0xFF00) >> 8;
     cpu.bx = (cpu.bx & 0xFF00) | bl;
     cpu.bx = cpu.bx & 0x3;
-    al = data_2697.w;
-    al -= data_2697.x;
+    al = draw_rect.w;
+    al -= draw_rect.x;
     al -= data_2A68[cpu.bx];
     if (al <= 0) {
       al = 0;
     }
     al = al >> 1;
-    al += data_2697.x;
+    al += draw_rect.x;
     data_32BF.x = al;
     cpu.bx = cpu.bx << 1;
     bl = cpu.bx & 0xFF;
@@ -1937,7 +1935,7 @@ static void sub_28B0()
     draw_string();
 
     bl = data_32BF.y;
-    bl -= data_2697.y;
+    bl -= draw_rect.y;
     bl = bl >> 3;
     al = 0xFF;
     data_2AAA[bl] = 0xFF;
@@ -2297,17 +2295,18 @@ static void append_string(unsigned char byte)
   printf("%s: 0x%02X %c\n", __func__, byte, byte & 0x7F);
   if (byte == 0x8D) { // new line.
     printf("data len: %d\n", data_320C.len);
-    printf("2697: 0x%04x\n", data_2697.x);
-    printf("2697: 0x%04x\n", data_2697.y);
+    printf("2697: 0x%04x\n", draw_rect.x);
+    printf("2697: 0x%04x\n", draw_rect.y);
     printf("32BF: 0x%04x\n", data_32BF.x);
     printf("32BF: 0x%04x\n", data_32BF.y);
     draw_string();
   } else {
-    cpu.ax = bx;
+    uint16_t ax;
+    ax = bx;
 
     // Validate that string doesn't run past rectangle.
-    cpu.ax += byte_3236;
-    if (cpu.ax > data_2697.w) {
+    ax += byte_3236;
+    if (ax > draw_rect.w) {
       printf("BP 0x31AE (not finished)\n");
       data_320C.len--;
       if (data_320C.len == 0) {

@@ -170,6 +170,12 @@ main(int argc, char *argv[])
   run_title();
   ui_load();
   draw_viewport();
+
+  draw_rect.x = 1;
+  draw_rect.y = 8;
+  draw_rect.w = 39;
+  draw_rect.h = 184;
+
   ui_draw();
 
   // Wait for key, temporary.

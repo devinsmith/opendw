@@ -43,6 +43,9 @@ struct pic_data {
   unsigned char *data;
 };
 
+// 0x2697
+struct ui_rect draw_rect;
+
 // 0x2AAA
 uint8_t data_2AAA[0x19];
 

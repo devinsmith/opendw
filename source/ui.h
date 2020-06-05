@@ -28,12 +28,24 @@ struct ui_header {
   unsigned char data[16]; // 0x288B
 };
 
+// data_320C
+struct ui_string_line {
+  int len;
+  unsigned char bytes[40];
+};
+
+// 320C
+extern struct ui_string_line ui_string;
+
 struct ui_rect {
   uint16_t x;
   uint16_t y;
   uint16_t w;
   uint16_t h;
 };
+
+// 2697
+extern struct ui_rect draw_rect;
 
 void ui_load();
 void draw_viewport();
