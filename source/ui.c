@@ -44,6 +44,7 @@ struct pic_data {
 };
 
 // 0x2697
+uint8_t ui_drawn_yet = 0; // 0x268E
 struct ui_rect draw_rect;
 static uint8_t byte_3236 = 0;
 // 0x32BF
@@ -293,6 +294,22 @@ void draw_pattern(struct ui_rect *rect)
     }
     starting_line++;
   }
+}
+
+// 0x26B8
+void ui_draw_full(void)
+{
+  ui_draw_string();
+  if (ui_drawn_yet != 0) {
+    ui_draw();
+  }
+  ui_drawn_yet = 0;
+  draw_rect.x = 1;
+  draw_rect.y = 0x98;
+  draw_rect.w = 0x27;
+  draw_rect.h = 0xB8;
+  draw_point.x = 1;
+  draw_point.y = 0x98;
 }
 
 /* 0x26E9 */

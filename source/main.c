@@ -175,8 +175,9 @@ main(int argc, char *argv[])
   draw_rect.y = 8;
   draw_rect.w = 39;
   draw_rect.h = 184;
+  ui_drawn_yet = 0xFF;
 
-  ui_draw();
+  ui_draw_full();
 
   // Wait for key, temporary.
   vga->waitkey();

@@ -48,7 +48,6 @@ uint8_t byte_1CE4 = 0;
 // 0x246D
 uint16_t word_246D;
 
-uint8_t ui_drawn_yet = 0; // 0x268E
 struct ui_rect data_268F;
 
 uint16_t word_2AA2;
@@ -178,7 +177,6 @@ static void sub_316C();
 static void append_string(unsigned char byte);
 static void sub_280E();
 static void sub_1C79(unsigned char **src_ptr);
-static void sub_26B8(void);
 
 // Decoded opcode calls, foward definition.
 static void op_00();
@@ -1468,7 +1466,7 @@ static void op_74(void)
 // 0x47D1
 static void op_75(void)
 {
-  sub_26B8();
+  ui_draw_full();
 }
 
 // 0x47D9
@@ -1583,22 +1581,6 @@ static void op_86(void)
   uint8_t ah = (cpu.ax & 0xFF00) >> 8;
   word_3AE2 = (ah & byte_3AE1) | (cpu.ax & 0x00FF);
   //dump_hex(r->bytes, 0x80);
-}
-
-// 0x26B8
-static void sub_26B8(void)
-{
-  ui_draw_string();
-  if (ui_drawn_yet != 0) {
-    ui_draw();
-  }
-  ui_drawn_yet = 0;
-  draw_rect.x = 1;
-  draw_rect.y = 0x98;
-  draw_rect.w = 0x27;
-  draw_rect.h = 0xB8;
-  draw_point.x = 1;
-  draw_point.y = 0x98;
 }
 
 // Uses carry flag as a boolean

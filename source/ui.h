@@ -49,6 +49,7 @@ struct ui_point {
   uint16_t y;
 };
 
+extern uint8_t ui_drawn_yet; // 0x268E
 // 2697
 extern struct ui_rect draw_rect;
 // 32BF
@@ -57,6 +58,7 @@ extern struct ui_point draw_point;
 void ui_load();
 void draw_viewport();
 void ui_draw();
+void ui_draw_full();
 void ui_clean();
 
 void ui_header_reset();
