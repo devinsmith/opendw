@@ -315,6 +315,8 @@ void ui_draw_full(void)
 /* 0x26E9 */
 void ui_draw()
 {
+  ui_drawn_yet = 0;
+
   for (size_t ui_idx = 0; ui_idx < 10; ui_idx++) {
     draw_ui_piece(&ui_pieces[ui_idx]);
   }
@@ -514,4 +516,22 @@ void ui_draw_string(void)
   // 0x318A
   byte_3236 = draw_point.x;
   vga->update();
+}
+
+// 0x2720
+void ui_rect_expand()
+{
+  draw_rect.h += 8;
+  draw_rect.y -= 8;
+  draw_rect.x--;
+  draw_rect.w++;
+}
+
+// 0x2739
+void ui_rect_shrink()
+{
+  draw_rect.y += 8;
+  draw_rect.h -= 8;
+  draw_rect.x++;
+  draw_rect.w--;
 }

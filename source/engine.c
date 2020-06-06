@@ -1371,24 +1371,6 @@ static void op_69(void)
 
 }
 
-// 0x2720
-static void rect_expand()
-{
-  draw_rect.h += 8;
-  draw_rect.y -= 8;
-  draw_rect.x--;
-  draw_rect.w++;
-}
-
-// 0x2739
-static void rect_shrink()
-{
-  draw_rect.y += 8;
-  draw_rect.h -= 8;
-  draw_rect.x++;
-  draw_rect.w--;
-}
-
 // 0x25E0
 static void draw_rectangle(void)
 {
@@ -1401,7 +1383,7 @@ static void draw_rectangle(void)
 
   ui_draw_string();
   if (ui_drawn_yet != 0) {
-    rect_expand();
+    ui_rect_expand();
     if (draw_rect.x > data_268F.x) {
       // 0x2632
     }
@@ -1446,7 +1428,7 @@ static void draw_rectangle(void)
 
   // 0x2683
   ui_drawn_yet = 0xFF;
-  rect_shrink();
+  ui_rect_shrink();
   draw_pattern(&draw_rect);
   // Technically this is done in draw_pattern
   draw_point.x = draw_rect.x;
@@ -1597,30 +1579,30 @@ static int sub_2752(uint8_t input)
   cpu.ax = cpu.ax << 2;
   si = cpu.ax;
 
-  rect_expand();
+  ui_rect_expand();
 
   // 0x2764
   al = data_2794[si];
   if (al > draw_rect.w) {
-    rect_shrink();
+    ui_rect_shrink();
     return 0;
   }
   al = data_2794[si + 1];
   if (al > draw_rect.h) {
-    rect_shrink();
+    ui_rect_shrink();
     return 0;
   }
   al = data_2794[si + 2];
   if (al < draw_rect.x) {
-    rect_shrink();
+    ui_rect_shrink();
     return 0;
   }
   al = data_2794[si + 3];
   if (al < draw_rect.y) {
-    rect_shrink();
+    ui_rect_shrink();
     return 0;
   }
-  rect_shrink();
+  ui_rect_shrink();
   return 1;
 }
 

@@ -71,6 +71,9 @@ void draw_pattern(struct ui_rect *rect);
 void ui_set_background(uint16_t val);
 void ui_draw_string(void);
 
+void ui_rect_expand();
+void ui_rect_shrink();
+
 void ui_set_byte_3236(uint8_t val);
 uint8_t ui_get_byte_3236();
 
