@@ -1400,7 +1400,7 @@ static void draw_rectangle(void)
     // 0x32BF, 0x32C1, 0x80
     printf("sub_269F(%d, %d, 0x80)\n", draw_point.x, draw_point.y);
     // 0x269F
-    ui_draw_box_segment(0x80, &draw_point, &draw_rect);
+    ui_draw_box_segment(0x80, &draw_point);
 
     // loc_2668
     // Draw left and right sides.
@@ -1412,7 +1412,7 @@ static void draw_rectangle(void)
       ui_draw_chr_piece(0x84, &draw_point, &draw_rect);
     }
     draw_point.x = draw_rect.x;
-    ui_draw_box_segment(0x85, &draw_point, &draw_rect);
+    ui_draw_box_segment(0x85, &draw_point);
   }
 
   // 0x2683
@@ -2216,6 +2216,11 @@ static void append_string(unsigned char byte)
   }
 }
 
+static void sub_3165()
+{
+//  word_3163 = append_string;
+}
+
 static void sub_316C()
 {
   word_3163 = append_string;
@@ -2330,3 +2335,26 @@ void set_game_state(int offset, unsigned char value)
   printf("%s - [%d] = 0x%02X\n", __func__, offset, value);
   game_state.unknown[offset] = value;
 }
+
+// 0x1A68
+void reset_game_state()
+{
+  uint8_t al, ah;
+
+  memset(game_state.unknown + 0x18, 0, 7);
+  if (sub_2752(0xB) == 1) {
+    return;
+  }
+
+  al = draw_point.x;
+  ah = draw_point.y;
+  cpu.ax = (ah << 8) | al;
+  push_word(cpu.ax);
+  cpu.ax = (ah << 8) | game_state.unknown[6];
+  push_word(cpu.ax);
+
+  printf("%s 0x1A85\n", __func__);
+  exit(1);
+
+}
+

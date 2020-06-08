@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "engine.h"
 #include "offsets.h"
 #include "resource.h"
 #include "tables.h"
@@ -44,6 +45,14 @@ struct pic_data {
 };
 
 uint8_t ui_drawn_yet = 0; // 0x268E
+
+static void draw_indexed_picture9();
+
+void (*ui_draw_funcs[4])() = {
+  draw_indexed_picture9,
+  draw_viewport,
+  reset_game_state
+};
 
 // 0x2697
 struct ui_rect draw_rect;
@@ -153,6 +162,7 @@ static void process_quadrant(const struct viewport_data *d, unsigned char *data)
   }
 }
 
+// 0x1060
 void draw_viewport()
 {
   int rows = 0x88;
@@ -194,7 +204,7 @@ void draw_viewport()
   free(data);
 }
 
-/* 0x3679 */
+/* 0x35A0 -> 0x3679 */
 void draw_ui_piece(const struct pic_data *pic)
 {
   uint16_t starting_off = get_line_offset(pic->y_pos);
@@ -325,14 +335,31 @@ void ui_draw_full(void)
   draw_point.y = 0x98;
 }
 
+// 0x4C22
+void draw_indexed_picture9()
+{
+  draw_ui_piece(&ui_pieces[9]);
+
+  // 4C31 = 0
+  // 4C33 = 0
+}
+
 /* 0x26E9 */
 void ui_draw()
 {
   ui_drawn_yet = 0;
 
-  for (size_t ui_idx = 0; ui_idx < 10; ui_idx++) {
-    draw_ui_piece(&ui_pieces[ui_idx]);
+  for (int counter = 0; counter < 12; counter++) {
+    if (ui_adjust_rect(counter) == 1) {
+      if (counter >= 9) {
+        int fidx = counter - 9;
+        ui_draw_funcs[fidx]();
+      } else {
+        draw_ui_piece(&ui_pieces[counter]);
+      }
+    }
   }
+
   /* Draw solid colors */
   /* Not the most ideal piece of code, but this is what dragon.com does. */
   /* clear out for character list */
@@ -469,8 +496,10 @@ void ui_draw_chr_piece(uint8_t chr, struct ui_point *pt, struct ui_rect *other)
 }
 
 // 0x269F
-void ui_draw_box_segment(uint8_t chr, struct ui_point *pt, struct ui_rect *outer)
+void ui_draw_box_segment(uint8_t chr, struct ui_point *pt)
 {
+  struct ui_rect *outer = &draw_rect;
+
   // Draw corner box.
   ui_draw_chr_piece(chr, pt, outer);
   chr++;

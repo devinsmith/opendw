@@ -22,6 +22,7 @@ extern "C" {
 #endif
 
 void set_game_state(int offset, unsigned char value);
+void reset_game_state();
 void run_engine();
 
 #ifdef __cplusplus
