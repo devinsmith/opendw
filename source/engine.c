@@ -1400,7 +1400,7 @@ static void draw_rectangle(void)
     // 0x32BF, 0x32C1, 0x80
     printf("sub_269F(%d, %d, 0x80)\n", draw_point.x, draw_point.y);
     // 0x269F
-    ui_draw_box_segment(0x80, &draw_point);
+    ui_draw_box_segment(0x80);
 
     // loc_2668
     // Draw left and right sides.
@@ -1412,7 +1412,7 @@ static void draw_rectangle(void)
       ui_draw_chr_piece(0x84, &draw_point, &draw_rect);
     }
     draw_point.x = draw_rect.x;
-    ui_draw_box_segment(0x85, &draw_point);
+    ui_draw_box_segment(0x85);
   }
 
   // 0x2683

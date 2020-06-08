@@ -65,7 +65,7 @@ void ui_header_reset();
 void ui_header_draw();
 void ui_header_set_byte(unsigned char byte);
 
-void ui_draw_box_segment(uint8_t chr, struct ui_point *pt);
+void ui_draw_box_segment(uint8_t chr);
 void ui_draw_chr_piece(uint8_t chr, struct ui_point *pt, struct ui_rect *outer);
 void draw_pattern(struct ui_rect *rect);
 void ui_set_background(uint16_t val);

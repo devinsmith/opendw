@@ -496,9 +496,10 @@ void ui_draw_chr_piece(uint8_t chr, struct ui_point *pt, struct ui_rect *other)
 }
 
 // 0x269F
-void ui_draw_box_segment(uint8_t chr, struct ui_point *pt)
+void ui_draw_box_segment(uint8_t chr)
 {
   struct ui_rect *outer = &draw_rect;
+  struct ui_point *pt = &draw_point;
 
   // Draw corner box.
   ui_draw_chr_piece(chr, pt, outer);
