@@ -43,6 +43,9 @@ uint8_t num_bits = 0;
 // Will contain actual remaining bits.
 uint8_t bit_buffer = 0;
 
+uint8_t byte_1BE5 = 0;
+
+uint16_t word_1C63 = 0;
 uint8_t byte_1CE4 = 0;
 
 // 0x246D
@@ -64,6 +67,10 @@ uint16_t word_2D09; // timer ticks?
 uint16_t word_2DD7 = 0xFFFF;
 uint16_t word_2DD9 = 0xFFFF;
 uint8_t data_2DDB[160] = { 0 };
+
+uint16_t word_36C0;
+uint16_t word_36C2;
+uint16_t word_36C4;
 
 uint8_t byte_3855 = 0;
 uint8_t byte_387F = 0;
@@ -1407,9 +1414,9 @@ static void draw_rectangle(void)
     while (draw_point.y < draw_rect.h - 8) {
       draw_point.x = draw_rect.x;
       draw_point.y += 8;
-      ui_draw_chr_piece(0x83, &draw_point, &draw_rect);
+      ui_draw_chr_piece(0x83);
       draw_point.x = draw_rect.w - 1;
-      ui_draw_chr_piece(0x84, &draw_point, &draw_rect);
+      ui_draw_chr_piece(0x84);
     }
     draw_point.x = draw_rect.x;
     ui_draw_box_segment(0x85);
@@ -2218,7 +2225,7 @@ static void append_string(unsigned char byte)
 
 static void sub_3165()
 {
-//  word_3163 = append_string;
+  word_3163 = ui_draw_chr_piece;
 }
 
 static void sub_316C()
@@ -2336,10 +2343,65 @@ void set_game_state(int offset, unsigned char value)
   game_state.unknown[offset] = value;
 }
 
+// 0x1ABD
+// input will be 0x01 or 0x10
+static void sub_1ABD(uint8_t val)
+{
+  uint8_t al, ah, bl;
+  uint16_t fill_color;
+
+  cpu.ax = (cpu.ax & 0xFF00) | val;
+  cpu.bx = cpu.ax;
+  bl = cpu.bx & 0xFF;
+  bl = bl & 0xF; // make sure it's not higher than 0xF.
+  byte_1BE5 = bl; // color.
+
+  ui_set_background(cpu.ax);
+  bl = game_state.unknown[0x6];
+  al = bl;
+  al = al << 4;
+  al += 0x20;
+  draw_point.y = al;
+  draw_point.x = 0x1B;
+  cpu.bx = bl; // xor bh, bh
+  cpu.ax = 0xC960;
+  ah = (cpu.ax & 0xFF00) >> 8;
+
+  ah += game_state.unknown[cpu.bx + 0xA]; // Character selector ?
+  cpu.ax = (ah << 8) | (cpu.ax & 0xFF);
+  word_1C63 = cpu.ax;
+  al = game_state.unknown[6];
+  if (al >= game_state.unknown[31]) {
+    // 1AF6
+    al = byte_1BE5;
+    fill_color = al; // color ?
+    al = draw_point.y;
+    cpu.ax = al;
+    word_36C4 = cpu.ax; // line number
+    word_36C0 = 0x36; // starting point
+    word_36C2 = 0x4E; // ending point
+
+    while (1) {
+      ui_draw_solid_color(fill_color, word_36C0, word_36C2, word_36C4);
+      word_36C4++;
+
+      if ((word_36C4 & 0x0F) == 0) {
+        break;
+      }
+    }
+    reset_ui_background();
+    return;
+  }
+  // 1B22
+  printf("%s 0x1B22 unimplemented\n", __func__);
+  exit(1);
+}
+
 // 0x1A68
 void reset_game_state()
 {
   uint8_t al, ah;
+  uint8_t val;
 
   memset(game_state.unknown + 0x18, 0, 7);
   if (sub_2752(0xB) == 1) {
@@ -2353,8 +2415,31 @@ void reset_game_state()
   cpu.ax = (ah << 8) | game_state.unknown[6];
   push_word(cpu.ax);
 
-  printf("%s 0x1A85\n", __func__);
-  exit(1);
+  sub_3165();
+  int counter = 6;
+  while (counter >= 0) {
+    al = game_state.unknown[0x18 + counter];
+    if (al < 0x80) {
+      set_game_state(6, counter & 0xFF);
+      ah = 0;
+      // si = ax
 
+      if (al == 0) {
+        val = 0x10;
+      } else {
+        val = 0x01;
+      }
+      al = val;
+      sub_1ABD(al);
+      set_game_state(0x18 + counter, 0xFF);
+    }
+    counter--;
+  }
+  cpu.ax = pop_word();
+  set_game_state(6, cpu.ax & 0xFF);
+  cpu.ax = pop_word();
+  draw_point.y = (cpu.ax & 0xFF00) >> 8;
+  draw_point.x = cpu.ax & 0xFF;
+  sub_316C();
 }
 

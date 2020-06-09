@@ -47,11 +47,14 @@ struct pic_data {
 uint8_t ui_drawn_yet = 0; // 0x268E
 
 static void draw_indexed_picture9();
+static void sub_27CC();
 
-void (*ui_draw_funcs[4])() = {
+void (*ui_draw_funcs[5])() = {
   draw_indexed_picture9,
   draw_viewport,
-  reset_game_state
+  reset_game_state,
+  ui_header_draw,
+  sub_27CC
 };
 
 // 0x2697
@@ -126,8 +129,6 @@ static uint8_t curr_bg_index = 0;
 static uint16_t current_background = 0xFFFF;
 // 0x359C
 static uint16_t backgrounds[2] = { 0xFFFF, 0x0000 };
-
-static void reset_ui_background();
 
 /* D88 */
 static void process_quadrant(const struct viewport_data *d, unsigned char *data)
@@ -234,9 +235,18 @@ void draw_ui_piece(const struct pic_data *pic)
 }
 
 /* 0x36C8 */
-static void draw_solid_color(uint8_t color, uint8_t line_num,
-    uint16_t inset, uint16_t count)
+//void ui_draw_solid_color(uint8_t color, uint8_t line_num,
+//    uint16_t inset, uint16_t count)
+void ui_draw_solid_color(uint8_t color, uint16_t inset,
+    uint16_t count, uint16_t line_num)
 {
+  // early exit.
+  if (count <= inset) {
+    return;
+  }
+  count -= inset;
+  count = count << 1;
+
   uint16_t fb_off = get_line_offset(line_num);
   inset = inset << 2;
   fb_off += inset;
@@ -246,7 +256,6 @@ static void draw_solid_color(uint8_t color, uint8_t line_num,
     framebuffer[fb_off++] = color;
     framebuffer[fb_off++] = color;
   }
-  //display_update();
 }
 
 // 0x3351 (sort of).
@@ -282,6 +291,15 @@ static void draw_character(int x, int y, const unsigned char *chdata)
 static void zero_out_2AAA()
 {
   memset(data_2AAA, 0, sizeof(data_2AAA));
+}
+
+static void sub_27CC()
+{
+  draw_rect.x = 1;
+  draw_rect.y = 0x98;
+  draw_rect.w = 0x27;
+  draw_rect.h = 0xB8;
+  draw_pattern(&draw_rect);
 }
 
 // 0x3380
@@ -349,7 +367,7 @@ void ui_draw()
 {
   ui_drawn_yet = 0;
 
-  for (int counter = 0; counter < 12; counter++) {
+  for (int counter = 0; counter < 14; counter++) {
     if (ui_adjust_rect(counter) == 1) {
       if (counter >= 9) {
         int fidx = counter - 9;
@@ -359,31 +377,7 @@ void ui_draw()
       }
     }
   }
-
-  /* Draw solid colors */
-  /* Not the most ideal piece of code, but this is what dragon.com does. */
-  /* clear out for character list */
-  for (uint8_t i = 0x20; i < 0x90; i++) {
-    draw_solid_color(COLOR_BLACK, i, 0x36, 0x30);
-  }
   vga->update();
-
-  // Draw upper header.
-  //
-  // The header is drawn so that there are an appropriate number of
-  // bricks around it.
-  ui_header_draw();
-
-  // 0x3380
-  //
-  struct ui_rect r;
-  r.x = 1;
-  r.y = 0x98;
-  r.w = 0x27;
-  r.h = 0xB8;
-  draw_pattern(&r);
-  vga->update();
-
 }
 
 // 0x2824
@@ -468,11 +462,11 @@ void ui_header_set_byte(unsigned char byte)
 }
 
 // 0x3237
-void ui_draw_chr_piece(uint8_t chr, struct ui_point *pt, struct ui_rect *other)
+void ui_draw_chr_piece(uint8_t chr)
 {
   if ((chr & 0x80) == 0) {
-    int16_t bx = (int16_t)pt->y;
-    bx -= other->y;
+    int16_t bx = (int16_t)draw_point.y;
+    bx -= draw_rect.y;
     if (bx > 0) {
       bx = bx >> 3;
 
@@ -481,36 +475,33 @@ void ui_draw_chr_piece(uint8_t chr, struct ui_point *pt, struct ui_rect *other)
     }
   }
   if (chr == 0x8D) {
-    pt->x = other->x;
-    uint8_t al = pt->y;
+    draw_point.x = draw_rect.x;
+    uint8_t al = draw_point.y;
     al += 8;
-    if (al > other->h) {
+    if (al > draw_rect.h) {
       printf("BP CS:3275\n");
       exit(1);
     }
-    pt->y = al;
+    draw_point.y = al;
     return;
   }
-  draw_character(pt->x, pt->y, get_chr(chr));
-  pt->x++;
+  draw_character(draw_point.x, draw_point.y, get_chr(chr));
+  draw_point.x++;
 }
 
 // 0x269F
 void ui_draw_box_segment(uint8_t chr)
 {
-  struct ui_rect *outer = &draw_rect;
-  struct ui_point *pt = &draw_point;
-
   // Draw corner box.
-  ui_draw_chr_piece(chr, pt, outer);
+  ui_draw_chr_piece(chr);
   chr++;
 
-  while (pt->x < outer->w - 1) {
-    ui_draw_chr_piece(chr, pt, outer);
+  while (draw_point.x < draw_rect.w - 1) {
+    ui_draw_chr_piece(chr);
   }
 
   chr++;
-  ui_draw_chr_piece(chr, pt, outer);
+  ui_draw_chr_piece(chr);
 
   vga->update();
 }
@@ -531,7 +522,7 @@ void ui_set_background(uint16_t val)
 }
 
 // 0x3575
-static void reset_ui_background()
+void reset_ui_background()
 {
   ui_set_background(prev_bg_index);
 }
@@ -552,7 +543,7 @@ void ui_draw_string(void)
   uint16_t i;
   for (i = 0; i < ui_string.len; i++) {
     uint8_t al = ui_string.bytes[i];
-    ui_draw_chr_piece(al, &draw_point, &draw_rect);
+    ui_draw_chr_piece(al);
   }
   ui_string.len = 0;
 

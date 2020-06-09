@@ -66,10 +66,13 @@ void ui_header_draw();
 void ui_header_set_byte(unsigned char byte);
 
 void ui_draw_box_segment(uint8_t chr);
-void ui_draw_chr_piece(uint8_t chr, struct ui_point *pt, struct ui_rect *outer);
+void ui_draw_chr_piece(uint8_t chr);
 void draw_pattern(struct ui_rect *rect);
 void ui_set_background(uint16_t val);
 void ui_draw_string(void);
+void ui_draw_solid_color(uint8_t color, uint16_t line_num,
+    uint16_t inset, uint16_t count);
+void reset_ui_background();
 
 void ui_rect_expand();
 void ui_rect_shrink();
