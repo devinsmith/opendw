@@ -28,6 +28,7 @@ void unload_chr_table();
 const unsigned char *get_chr(int chr_num);
 uint8_t get_and_table(uint8_t offset);
 uint8_t get_or_table(uint8_t offset);
+uint8_t get_1BC1_table(uint8_t offset);
 uint16_t get_line_offset(uint8_t offset);
 uint16_t get_unknown_4456(uint8_t index);
 

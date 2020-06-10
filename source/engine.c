@@ -33,6 +33,12 @@
  *
  * Lots of global variables here until we can figure out how they are used. */
 
+uint16_t word_11C0 = 0;
+uint16_t word_11C2 = 0;
+uint16_t word_11C4 = 0;
+uint16_t word_11C6 = 0;
+uint16_t word_11C8 = 0;
+
 uint8_t byte_1CE1 = 0;
 uint8_t byte_1CE2 = 0;
 
@@ -184,6 +190,7 @@ static void sub_316C();
 static void append_string(unsigned char byte);
 static void sub_280E();
 static void sub_1C79(unsigned char **src_ptr);
+static void sub_1BF8(uint8_t color, uint8_t y_adjust);
 
 // Decoded opcode calls, foward definition.
 static void op_00();
@@ -2349,6 +2356,7 @@ static void sub_1ABD(uint8_t val)
 {
   uint8_t al, ah, bl;
   uint16_t fill_color;
+  int si;
 
   cpu.ax = (cpu.ax & 0xFF00) | val;
   cpu.bx = cpu.ax;
@@ -2393,7 +2401,55 @@ static void sub_1ABD(uint8_t val)
     return;
   }
   // 1B22
-  printf("%s 0x1B22 unimplemented\n", __func__);
+  al = 0xC;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  unsigned char *c960 = get_C960();
+  unsigned char *di = c960 + (word_1C63 - 0xC960);
+  di--;
+
+  // 1B29
+  do {
+    di++;
+    cpu.ax--;
+  } while ((*di & 0x80) == 0x80);
+
+  // 1B30
+  al = cpu.ax & 0xFF;
+  uint8_t carry = al & 0x1;
+  al = al >> 1;
+  al = al + 0x1B + carry; // adc al, 0x1B
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  sub_1BE6();
+  sub_1A40();
+  al = 0x27;
+  sub_1BE6();
+  di = c960 + (word_1C63 - 0xC960);
+  al = di[0x4C];
+
+  si = 3;
+
+  // 1B4A
+  int found = 0;
+  while (si >= 0) {
+    uint8_t si_val = get_1BC1_table(si);
+    if ((si_val & al) != 0) {
+      found = 1;
+      break; // 1B95
+    }
+    si--;
+  }
+  if (found == 0) {
+    // 1B53 (not found)
+    uint8_t dl = 2;
+    cpu.bx = 0x14;
+    al = 8;
+    cpu.ax = (cpu.ax & 0xFF00) | al;
+    sub_1BF8(2, al);
+
+  }
+  // 1B95
+
+  printf("%s 0x1B4A %d %d unimplemented\n", __func__, si, found);
   exit(1);
 }
 
@@ -2441,5 +2497,56 @@ void reset_game_state()
   draw_point.y = (cpu.ax & 0xFF00) >> 8;
   draw_point.x = cpu.ax & 0xFF;
   sub_316C();
+}
+
+static int sub_1C57()
+{
+  uint16_t di = word_1C63;
+  unsigned char *c960 = get_C960();
+
+  cpu.ax = c960[di - 0xC960 + cpu.bx];
+  cpu.ax += (c960[di - 0xC960 + 1 + cpu.bx]) << 8;
+
+  word_11C0 = cpu.ax;
+  return cpu.ax;
+}
+
+static void sub_11A0()
+{
+  uint32_t result;
+
+  word_11C4 = 0;
+  cpu.ax = word_11C2;
+  result = cpu.ax * word_11C0;
+  word_11C6 = result & 0xFFFF;
+  word_11C8 = (result & 0xFFFF0000) >> 16;
+  // What is the point of this? multiplying by 0 ??
+  cpu.ax = word_11C4;
+  result = cpu.ax * word_11C0;
+  word_11C8 += result & 0xFFFF;
+}
+
+static void sub_1BF8(uint8_t color, uint8_t y_adjust)
+{
+  uint16_t fill_color;
+
+  fill_color = color;
+  draw_point.y += y_adjust;
+  cpu.ax = draw_point.y;
+  word_36C4 = cpu.ax; // line number
+  if (sub_1C57() != 0) {
+    cpu.bx += 2;
+    push_word(cpu.bx);
+    word_11C2 = 0x17;
+    sub_11A0();
+    cpu.bx = pop_word();
+    if (sub_1C57() != 0) {
+      printf("%s: 0x1C1C unimplemented\n", __func__);
+      exit(1);
+    }
+  }
+  // 1C23
+  printf("%s: 0x1C23 unimplemented\n", __func__);
+  exit(1);
 }
 
