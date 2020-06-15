@@ -157,7 +157,7 @@ get_key()
 {
   SDL_Event e;
 
-  while (SDL_PollEvent(&e)) {
+  while (SDL_WaitEventTimeout(&e, 2000)) {
     if (e.type == SDL_KEYDOWN) {
       const SDL_KeyboardEvent *ke = &e.key;
       const SDL_Keysym *ksym = &ke->keysym;
