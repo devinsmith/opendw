@@ -39,6 +39,10 @@ uint16_t word_11C4 = 0;
 uint16_t word_11C6 = 0;
 uint16_t word_11C8 = 0;
 
+uint16_t word_11CA = 0;
+uint16_t word_11CC = 0;
+
+
 uint8_t byte_1CE1 = 0;
 uint8_t byte_1CE2 = 0;
 
@@ -2526,6 +2530,59 @@ static void sub_11A0()
   word_11C8 += result & 0xFFFF;
 }
 
+static void sub_11CE()
+{
+  int carry = 0;
+
+  word_11CA = 0;
+  word_11CC = 0;
+  cpu.cx = 0x19; // 31 times.
+
+  // 11DD
+  for (uint16_t i = 0; i < cpu.cx; i++) {
+    carry = word_11C6 & 0x8000 ? 1 : 0;
+    word_11C6 = word_11C6 << 1;
+
+    // rcl word_11C8, 1
+    word_11C8 = (word_11C8 << 1) + carry;
+    carry = word_11C8 & 0x8000 ? 1 : 0;
+
+    word_11CA = (word_11CA << 1) + carry;
+    carry = word_11CA & 0x8000 ? 1 : 0;
+
+    word_11CC = (word_11CC << 1) + carry;
+    carry = word_11CA & 0x8000 ? 1 : 0;
+
+    cpu.ax = word_11CA;
+    uint16_t old16 = cpu.ax;
+    cpu.ax -= word_11C0;
+    if (cpu.ax > old16) {
+      carry = 1;
+    }
+    cpu.bx = word_11CC;
+    old16 = cpu.bx;
+    cpu.bx -= carry;
+
+    if (cpu.bx > old16) {
+      carry = 1;
+    }
+
+    if (carry != 1) {
+      word_11CA = cpu.ax;
+      word_11CC = cpu.bx;
+      word_11C6++;
+    }
+  }
+}
+
+static void sub_1C49(uint16_t fill_color)
+{
+  word_36C4++;
+  ui_draw_solid_color(fill_color, word_36C0, word_36C2, word_36C4);
+  word_36C4--;
+  ui_draw_solid_color(fill_color, word_36C0, word_36C2, word_36C4);
+}
+
 static void sub_1BF8(uint8_t color, uint8_t y_adjust)
 {
   uint16_t fill_color;
@@ -2541,12 +2598,24 @@ static void sub_1BF8(uint8_t color, uint8_t y_adjust)
     sub_11A0();
     cpu.bx = pop_word();
     if (sub_1C57() != 0) {
-      printf("%s: 0x1C1C unimplemented\n", __func__);
-      exit(1);
+      sub_11CE();
+      cpu.ax = word_11C6;
+      cpu.ax++;
     }
   }
-  // 1C23
-  printf("%s: 0x1C23 unimplemented\n", __func__);
-  exit(1);
+  cpu.ax += 0x36;
+  word_36C2 = cpu.ax;
+  word_36C0 = 0x36;
+  sub_1C49(fill_color);
+  cpu.ax = word_36C2;
+  if (cpu.ax == 0x4E) {
+    return;
+  }
+
+  // 1C3A
+  word_36C0 = cpu.ax;
+  word_36C2 = 0x4E;
+  fill_color = byte_1BE5; // color.
+  sub_1C49(fill_color);
 }
 
