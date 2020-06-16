@@ -71,6 +71,11 @@ static unsigned char data_2794[56] = {
   0x04, 0x00, 0x14, 0x08, 0x01, 0x98, 0x27, 0xB8  // 0x27C4-0x27CB
 };
 
+// 0x3797
+static unsigned char color_data[] = {
+  0x00, 0xFF, 0xCC, 0xAA, 0x99
+};
+
 static uint8_t byte_3236 = 0;
 // 0x32BF
 struct ui_point draw_point;
@@ -235,9 +240,7 @@ void draw_ui_piece(const struct pic_data *pic)
 }
 
 /* 0x36C8 */
-//void ui_draw_solid_color(uint8_t color, uint8_t line_num,
-//    uint16_t inset, uint16_t count)
-void ui_draw_solid_color(uint8_t color, uint16_t inset,
+void ui_draw_solid_color(uint8_t color_idx, uint16_t inset,
     uint16_t count, uint16_t line_num)
 {
   // early exit.
@@ -246,6 +249,10 @@ void ui_draw_solid_color(uint8_t color, uint16_t inset,
   }
   count -= inset;
   count = count << 1;
+
+  // bx = color
+  uint8_t color = color_data[color_idx];
+  color = color & 0x0F;
 
   uint16_t fb_off = get_line_offset(line_num);
   inset = inset << 2;
