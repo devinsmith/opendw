@@ -1,2 +1,2 @@
 Menu navigation.
-Find place to put sleep. sub_2D0B eats way to much CPU.
+ui_draw_full does not draw correctly.

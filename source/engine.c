@@ -2532,32 +2532,41 @@ static void sub_11A0()
 
 static void sub_11CE()
 {
+  int old_carry = 0;
   int carry = 0;
 
   word_11CA = 0;
   word_11CC = 0;
-  cpu.cx = 0x19; // 31 times.
+  cpu.cx = 0x20; // 32 times.
 
   // 11DD
   for (uint16_t i = 0; i < cpu.cx; i++) {
     carry = word_11C6 & 0x8000 ? 1 : 0;
     word_11C6 = word_11C6 << 1;
+    old_carry = carry;
 
     // rcl word_11C8, 1
-    word_11C8 = (word_11C8 << 1) + carry;
     carry = word_11C8 & 0x8000 ? 1 : 0;
+    word_11C8 = (word_11C8 << 1) + old_carry;
+    old_carry = carry;
 
-    word_11CA = (word_11CA << 1) + carry;
     carry = word_11CA & 0x8000 ? 1 : 0;
+    word_11CA = (word_11CA << 1) + old_carry;
+    old_carry = carry;
 
-    word_11CC = (word_11CC << 1) + carry;
-    carry = word_11CA & 0x8000 ? 1 : 0;
+    carry = word_11CC & 0x8000 ? 1 : 0;
+    word_11CC = (word_11CC << 1) + old_carry;
+    old_carry = carry;
+
+    printf("%s: 0x%04X 0x%04X 0x%04X 0x%04X\n", __func__, word_11C6, word_11C8, word_11CA, word_11CC);
 
     cpu.ax = word_11CA;
     uint16_t old16 = cpu.ax;
     cpu.ax -= word_11C0;
     if (cpu.ax > old16) {
       carry = 1;
+    } else {
+      carry = 0;
     }
     cpu.bx = word_11CC;
     old16 = cpu.bx;
@@ -2565,6 +2574,8 @@ static void sub_11CE()
 
     if (cpu.bx > old16) {
       carry = 1;
+    } else {
+      carry = 0;
     }
 
     if (carry != 1) {
