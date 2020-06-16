@@ -2359,7 +2359,7 @@ void set_game_state(int offset, unsigned char value)
 static void sub_1ABD(uint8_t val)
 {
   uint8_t al, ah, bl;
-  uint16_t fill_color;
+  uint16_t fill_color; // 3713
   int si;
 
   cpu.ax = (cpu.ax & 0xFF00) | val;
@@ -2444,16 +2444,35 @@ static void sub_1ABD(uint8_t val)
   }
   if (found == 0) {
     // 1B53 (not found)
-    uint8_t dl = 2;
+    uint8_t dl = 2; // health
     cpu.bx = 0x14;
     al = 8;
     cpu.ax = (cpu.ax & 0xFF00) | al;
-    sub_1BF8(2, al);
-
+    sub_1BF8(dl, al);
+    // 0x1B5D
+    dl = 3; // magic
+    cpu.bx = 0x18;
+    al = 0x0B;
+    cpu.ax = (cpu.ax & 0xFF00) | al;
+    sub_1BF8(dl, al);
+    dl = 4; // stamina
+    cpu.bx = 0x1C;
+    al = 0x0E;
+    sub_1BF8(dl, al);
+    al = byte_1BE5;
+    fill_color = al;
+    word_36C4--;
+    word_36C0 = 0x36;
+    word_36C2 = 0x4E;
+    // 0x1B87
+    ui_draw_solid_color(fill_color, word_36C0, word_36C2, word_36C4);
+    word_36C4 -= 3;
+    ui_draw_solid_color(fill_color, word_36C0, word_36C2, word_36C4);
+    reset_ui_background();
+    return;
   }
   // 1B95
-
-  printf("%s 0x1B4A %d %d unimplemented\n", __func__, si, found);
+  printf("%s 0x1B95 %d %d unimplemented\n", __func__, si, found);
   exit(1);
 }
 
