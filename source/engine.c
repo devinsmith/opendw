@@ -2622,8 +2622,7 @@ static void sub_1BF8(uint8_t color, uint8_t y_adjust)
   uint16_t fill_color;
 
   fill_color = color;
-  draw_point.y += y_adjust;
-  cpu.ax = draw_point.y;
+  cpu.ax = draw_point.y + y_adjust;
   word_36C4 = cpu.ax; // line number
   if (sub_1C57() != 0) {
     cpu.bx += 2;
