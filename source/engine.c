@@ -2429,6 +2429,7 @@ static void sub_1ABD(uint8_t val)
   sub_1BE6();
   write_character_name();
   al = 0x27;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
   sub_1BE6();
   di = c960 + (word_1C63 - 0xC960);
   al = di[0x4C];
