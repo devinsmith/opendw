@@ -1470,7 +1470,9 @@ static void op_78(void)
   sub_1C79(&cpu.pc);
 }
 
-static void sub_1A40()
+// 0x1A40
+// Write character name
+static void write_character_name()
 {
   uint8_t al, ah;
 
@@ -1501,7 +1503,7 @@ static void sub_1A40()
 static void op_7D(void)
 {
   printf("op_7D\n");
-  sub_1A40();
+  write_character_name();
 }
 
 static void sub_1BE6()
@@ -1702,6 +1704,7 @@ static uint16_t sub_2D0B()
   } while (cpu.ax == 0x93);
 
   // 0x2D4B
+  // We have a key now.
   cpu.bx = word_2DD7;
   if (cpu.bx >= 0x8000) {
     // cpu.bx is signed (negative value)
@@ -2424,7 +2427,7 @@ static void sub_1ABD(uint8_t val)
   al = al + 0x1B + carry; // adc al, 0x1B
   cpu.ax = (cpu.ax & 0xFF00) | al;
   sub_1BE6();
-  sub_1A40();
+  write_character_name();
   al = 0x27;
   sub_1BE6();
   di = c960 + (word_1C63 - 0xC960);
