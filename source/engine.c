@@ -80,7 +80,7 @@ uint8_t data_2DDB[160] = { 0 };
 
 uint16_t word_36C0;
 uint16_t word_36C2;
-uint16_t word_36C4;
+uint16_t g_linenum; // 36C4
 
 uint8_t byte_3855 = 0;
 uint8_t byte_387F = 0;
@@ -2392,15 +2392,15 @@ static void sub_1ABD(uint8_t val)
     fill_color = al; // color ?
     al = draw_point.y;
     cpu.ax = al;
-    word_36C4 = cpu.ax; // line number
+    g_linenum = cpu.ax; // line number
     word_36C0 = 0x36; // starting point
     word_36C2 = 0x4E; // ending point
 
     while (1) {
-      ui_draw_solid_color(fill_color, word_36C0, word_36C2, word_36C4);
-      word_36C4++;
+      ui_draw_solid_color(fill_color, word_36C0, word_36C2, g_linenum);
+      g_linenum++;
 
-      if ((word_36C4 & 0x0F) == 0) {
+      if ((g_linenum & 0x0F) == 0) {
         break;
       }
     }
@@ -2454,24 +2454,24 @@ static void sub_1ABD(uint8_t val)
     cpu.ax = (cpu.ax & 0xFF00) | al;
     sub_1BF8(dl, al);
     // 0x1B5D
-    dl = 3; // magic
+    dl = 3; // stun
     cpu.bx = 0x18;
     al = 0x0B;
     cpu.ax = (cpu.ax & 0xFF00) | al;
     sub_1BF8(dl, al);
-    dl = 4; // stamina
+    dl = 4; // magic
     cpu.bx = 0x1C;
     al = 0x0E;
     sub_1BF8(dl, al);
     al = byte_1BE5;
     fill_color = al;
-    word_36C4--;
+    g_linenum--;
     word_36C0 = 0x36;
     word_36C2 = 0x4E;
     // 0x1B87
-    ui_draw_solid_color(fill_color, word_36C0, word_36C2, word_36C4);
-    word_36C4 -= 3;
-    ui_draw_solid_color(fill_color, word_36C0, word_36C2, word_36C4);
+    ui_draw_solid_color(fill_color, word_36C0, word_36C2, g_linenum);
+    g_linenum -= 3;
+    ui_draw_solid_color(fill_color, word_36C0, word_36C2, g_linenum);
     reset_ui_background();
     return;
   }
@@ -2611,10 +2611,10 @@ static void sub_11CE()
 
 static void sub_1C49(uint16_t fill_color)
 {
-  word_36C4++;
-  ui_draw_solid_color(fill_color, word_36C0, word_36C2, word_36C4);
-  word_36C4--;
-  ui_draw_solid_color(fill_color, word_36C0, word_36C2, word_36C4);
+  g_linenum++;
+  ui_draw_solid_color(fill_color, word_36C0, word_36C2, g_linenum);
+  g_linenum--;
+  ui_draw_solid_color(fill_color, word_36C0, word_36C2, g_linenum);
 }
 
 static void sub_1BF8(uint8_t color, uint8_t y_adjust)
@@ -2623,7 +2623,7 @@ static void sub_1BF8(uint8_t color, uint8_t y_adjust)
 
   fill_color = color;
   cpu.ax = draw_point.y + y_adjust;
-  word_36C4 = cpu.ax; // line number
+  g_linenum = cpu.ax; // line number
   if (sub_1C57() != 0) {
     cpu.bx += 2;
     push_word(cpu.bx);
