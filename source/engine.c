@@ -1382,6 +1382,7 @@ static void op_69(void)
 static void draw_rectangle(void)
 {
   int identical = 1;
+  int needs_resize = 0;
 
   data_268F.x = *cpu.pc++;
   data_268F.y = *cpu.pc++;
@@ -1391,22 +1392,22 @@ static void draw_rectangle(void)
   ui_draw_string();
   if (ui_drawn_yet != 0) {
     ui_rect_expand();
-    if (draw_rect.x > data_268F.x) {
+    if (draw_rect.x < data_268F.x ||
+        draw_rect.y > data_268F.y ||
+        draw_rect.w < data_268F.w ||
+        draw_rect.h > data_268F.h) {
+      needs_resize = 1;
+      identical = 1;
       // 0x2632
+    } else {
+      // 2623
+      identical = memcmp(&data_268F, &draw_rect, sizeof(data_268F));
     }
-    // 2608
-    if (draw_rect.y > data_268F.y) {
-      // 0x2632
-    }
-    if (draw_rect.w < data_268F.w) {
-      // 0x2632
-    }
-    if (draw_rect.h < data_268F.h) {
-      // 0x2632
-    }
-
-    // 2623
-    identical = memcmp(&data_268F, &draw_rect, sizeof(data_268F));
+  }
+  // 0x2632
+  if (needs_resize) {
+    ui_rect_shrink();
+    ui_draw();
   }
 
   if (identical != 0) {
