@@ -251,6 +251,7 @@ static void op_84();
 static void op_85();
 static void op_86();
 static void op_89();
+static void op_8D();
 static void op_93();
 static void op_99();
 static void op_9A();
@@ -402,7 +403,7 @@ struct op_call_table targets[] = {
   { NULL, "0x498E" },
   { NULL, "0x499B" },
   { NULL, "0x49A5" },
-  { NULL, "0x49D3" },
+  { op_8D, "0x49D3" },
   { NULL, "0x0000" },
   { NULL, "0x49DD" },
   { NULL, "0x49E7" },
@@ -1438,11 +1439,6 @@ static void draw_rectangle(void)
   ui_drawn_yet = 0xFF;
   ui_rect_shrink();
   draw_pattern(&draw_rect);
-  // Technically this is done in draw_pattern
-  draw_point.x = draw_rect.x;
-  ui_set_byte_3236(draw_rect.x);
-  draw_point.y = draw_rect.y;
-  ui_string.len = 0;
   vga->update();
 }
 
@@ -1780,9 +1776,9 @@ static void sub_2A4C()
 
     al -= 0xB1;
     game_state.unknown[0x6] = al;
-    al = byte_2AA6;
-    cpu.ax = (cpu.ax & 0xFF00) | al;
   }
+  al = byte_2AA6;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
 }
 
 // 0x28B0
@@ -1999,6 +1995,22 @@ static void op_89(void)
   word_3AE2 = cpu.ax;
 }
 
+// 0x1E49
+static void sub_1E49()
+{
+  ui_draw_string();
+
+  printf("%s : 0x1E4C unimplemented\n", __func__);
+  exit(1);
+}
+
+// 0x49D3
+static void op_8D()
+{
+  printf("%s : 0x49D3\n", __func__);
+  sub_1E49();
+}
+
 // 0x4A67
 static void op_93(void)
 {
@@ -2207,12 +2219,17 @@ static uint8_t sub_1D8A(unsigned char **src_ptr)
 }
 
 // 0x3191
-// append to string buffer.
+// Append's a byte to string buffer. This may break a long string up into
+// multiple lines.
 static void append_string(unsigned char byte)
 {
-  uint16_t bx = ui_string.len;
+  uint8_t al;
+  uint16_t ax, bx, len, dx;
+
+  bx = ui_string.len;
   ui_string.bytes[bx] = byte;
   ui_string.len++;
+
   printf("%s: 0x%02X %c\n", __func__, byte, byte & 0x7F);
   if (byte == 0x8D) { // new line.
     printf("data len: %d\n", ui_string.len);
@@ -2221,21 +2238,74 @@ static void append_string(unsigned char byte)
     printf("32BF: 0x%04x\n", draw_point.x);
     printf("32BF: 0x%04x\n", draw_point.y);
     ui_draw_string();
-  } else {
-    uint16_t ax;
-    ax = bx;
+    return;
+  }
 
-    // Validate that string doesn't run past rectangle.
-    ax += ui_get_byte_3236();
-    if (ax > draw_rect.w) {
-      printf("BP 0x31AE (not finished)\n");
-      ui_string.len--;
-      if (ui_string.len == 0) {
+  ax = bx;
 
+  // Validate that string doesn't run past rectangle.
+  ax += ui_get_byte_3236();
+  if (ax < draw_rect.w)
+    return;
+
+  // String does run past rectangle, so break apart at space.
+  // 0x31AE
+  ui_string.len--;
+  if (ui_string.len != 0) {
+    len = bx;
+
+    // 0x31B6
+    while (len > 0) {
+      al = ui_string.bytes[len];
+      // search for previous space character.
+      if (al == 0xA0) {
+        bx = len;
+        printf("%s: 0x31D2 %02d\n", __func__, len);
+        if (len != 0) {
+          // mov si, 320E
+          uint16_t si = 0;
+
+          // redraw only up to space (line break)
+          while (len > 0) {
+            // lodsb  al = ds:si [si++]
+            al = ui_string.bytes[si++];
+            ui_draw_chr_piece(al);
+            len--;
+          }
+        }
+        // 31E2
+        ui_string.len++;
+        len = 0;
+
+        // 0x31E8
+        bx++;
+        while (bx < ui_string.len) {
+
+          // 0x31EF
+          // move string up.
+          al = ui_string.bytes[bx];
+          ui_string.bytes[len] = al;
+          len++;
+          bx++;
+        }
+        // 0x31FA
+        dx = len;
+        break;
       }
-      exit(1);
+      len--;
     }
   }
+  if (len == 0) {
+    // 31C1 - length is 0.
+    dx = 1;
+    printf("%s: 0x31C1 unimplemented\n", __func__);
+    exit(1);
+  }
+  // 0x31FC
+  ui_string.len = dx;
+  al = 0x8D;
+  ui_draw_chr_piece(al);
+  ui_set_byte_3236(draw_point.x);
 }
 
 static void sub_3165()

@@ -342,6 +342,11 @@ void draw_pattern(struct ui_rect *rect)
     }
     starting_line++;
   }
+
+  draw_point.x = draw_rect.x;
+  byte_3236 = draw_rect.x;
+  draw_point.y = draw_rect.y;
+  ui_string.len = 0;
 }
 
 // 0x26B8
