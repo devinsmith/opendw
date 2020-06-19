@@ -58,6 +58,9 @@ uint8_t byte_1BE5 = 0;
 uint16_t word_1C63 = 0;
 uint8_t byte_1CE4 = 0;
 
+uint8_t byte_1F07 = 0;
+uint8_t byte_1F08 = 0;
+
 // 0x246D
 uint16_t word_246D;
 
@@ -83,6 +86,7 @@ uint16_t word_36C2;
 uint16_t g_linenum; // 36C4
 
 uint8_t byte_3855 = 0;
+uint16_t word_3856 = 0;
 uint8_t byte_387F = 0;
 
 uint8_t byte_3AE1 = 0;
@@ -154,6 +158,8 @@ struct virtual_cpu {
   // stack
   uint8_t stack[STACK_SIZE]; // stacks;
   uint8_t sp;
+
+  uint8_t cf;
 
   // program counter
   unsigned char *pc;
@@ -1863,7 +1869,7 @@ static void sub_28B0()
   sub_4D5C();
   sub_4B60();
   sub_1A72();
-  printf("%s: 0x%04X\n", __func__, word_2AA7);
+  printf("%s: word_2AA7: 0x%04X\n", __func__, word_2AA7);
   // 0x294B
   while (1) {
     if ((word_2AA7 & 0x0080) == 0) {
@@ -1995,12 +2001,70 @@ static void op_89(void)
   word_3AE2 = cpu.ax;
 }
 
+// 0x1EBF
+static void sub_1EBF()
+{
+  int zf = 0;
+  uint8_t al;
+
+  uint16_t flags = 0;
+  flags |= zf << 6;
+  flags |= 1 << 1; // Always 1, reserved.
+  flags |= cpu.cf << 0;
+  push_word(flags);
+
+  al = draw_rect.w;
+  al -= draw_rect.x;
+
+  al = al - (2 + cpu.cf);
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  push_word(cpu.ax);
+
+  if (al >= 0x10) {
+    al = 0x10;
+  }
+  byte_1F08 = al;
+  cpu.ax = pop_word();
+  al = cpu.ax & 0xFF;
+  al -= byte_1F08;
+  al = al >> 1;
+  al += draw_rect.x;
+  draw_point.x = al;
+  al = 0xBA;
+  ui_draw_chr_piece(al);
+  if (byte_1F07 != 0) {
+    // 0x1EED
+    cpu.bx = 0;
+    printf("%s : 0x1EEF unimplemented\n", __func__);
+    exit(1);
+  }
+  // 0x1EFD
+  flags = pop_word();
+  al = 0xA0; // Space
+  if (cpu.cf == 0) {
+    al = 0xFE;
+  }
+  ui_draw_chr_piece(al);
+}
+
+// 0x1EBB
+static void sub_1EBB()
+{
+  // clc
+  cpu.cf = 0;
+  sub_1EBF();
+}
+
 // 0x1E49
 static void sub_1E49()
 {
   ui_draw_string();
+  byte_1F07 = 0;
+  sub_1EBB();
+  cpu.bx = 0x1EB9; // function pointer.
+  sub_28B0();
 
-  printf("%s : 0x1E4C unimplemented\n", __func__);
+  printf("%s : 0x1E5C (0x%04X) unimplemented\n", __func__, cpu.ax);
   exit(1);
 }
 

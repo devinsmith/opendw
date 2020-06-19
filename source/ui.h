@@ -38,10 +38,10 @@ struct ui_string_line {
 extern struct ui_string_line ui_string;
 
 struct ui_rect {
-  uint16_t x;
-  uint16_t y;
-  uint16_t w;
-  uint16_t h;
+  uint16_t x; // 0x2697
+  uint16_t y; // 0x2699
+  uint16_t w; // 0x269B
+  uint16_t h; // 0x269D
 };
 
 struct ui_point {
