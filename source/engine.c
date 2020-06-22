@@ -1142,7 +1142,8 @@ static void op_56(void)
 // 0x4239
 static void op_58(void)
 {
-  uint8_t al;
+  uint8_t al, dl;
+  const struct resource *r;
 
   al = *cpu.pc++;
   cpu.ax = (cpu.ax & 0xFF00) | al;
@@ -1166,18 +1167,28 @@ static void op_58(void)
   //
   int found = find_index_by_tag(tag_item);
   if (found != -1) {
-    printf("Found item put breakpoint: 0x4254\n");
-    exit(1);
+    // 0x4254
+    r = resource_get_by_index(found);
+    if (r->usage_type == 2) {
+      dl = 0xFF;
+    } else {
+      // 0x4259
+      // xor dl, dl
+      // jmp 4268
+      dl = 0;
+    }
   } else {
-    const struct resource *r = resource_load(tag_item);
-    push_byte(0xff); // dl
-    al = r->index;
-    word_3AE8 = al;
-    word_3AEA = al;
-    populate_3ADD_and_3ADF();
-    cpu.pc = running_script->bytes + src_offset;
-    cpu.base_pc = running_script->bytes;
+    r = resource_load(tag_item);
+    dl = 0xFF;
   }
+  // 0x4268
+  push_byte(dl); // dl
+  al = r->index;
+  word_3AE8 = al;
+  word_3AEA = al;
+  populate_3ADD_and_3ADF();
+  cpu.pc = running_script->bytes + src_offset;
+  cpu.base_pc = running_script->bytes;
 }
 
 // 0x128D
