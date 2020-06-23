@@ -58,6 +58,9 @@ uint8_t byte_1BE5 = 0;
 uint16_t word_1C63 = 0;
 uint8_t byte_1CE4 = 0;
 
+// 0x1EB9, unknown length (game script)
+unsigned char data_1EB9[] = { 0xC2, 0x00 };
+
 uint8_t byte_1F07 = 0;
 uint8_t byte_1F08 = 0;
 
@@ -65,6 +68,7 @@ uint8_t byte_1F08 = 0;
 uint16_t word_246D;
 
 struct ui_rect data_268F;
+uint8_t byte_2476;
 
 uint16_t word_2AA2;
 unsigned char *word_2AA4;
@@ -1753,16 +1757,6 @@ static int sub_2BD9()
   return 1;
 }
 
-// 0x29B8
-static void sub_29B8(uint8_t al)
-{
-  byte_2AA6 = al;
-  if ((word_2AA7 & 0x40) != 0) {
-    printf("%s: 0x29C2 unimplemented\n", __func__);
-    exit(1);
-  }
-}
-
 // 0x2ADC
 static void sub_2ADC()
 {
@@ -1798,16 +1792,29 @@ static void sub_2A4C()
   cpu.ax = (cpu.ax & 0xFF00) | al;
 }
 
+// 0x1F8F
+static void sub_1F8F()
+{
+  if (byte_2476 == 0)
+    return;
+
+  printf("%s: 0x1F96 unimplemented\n", __func__);
+  exit(1);
+}
+
 // 0x28B0
-static void sub_28B0()
+// Should we take BX as an argument.
+static void sub_28B0(unsigned char **src_ptr)
 {
   uint8_t al, ah;
   uint8_t bl, bh;
 
   ui_draw_string();
 
-  cpu.ax = *cpu.pc++;
-  cpu.ax += *cpu.pc++ << 8;
+  cpu.ax = **src_ptr;
+  (*src_ptr)++;
+  cpu.ax += **src_ptr << 8;
+  (*src_ptr)++;
 
   bl = cpu.bx & 0xFF;
 
@@ -1832,8 +1839,7 @@ static void sub_28B0()
   word_2AA4 = cpu.pc;
 
   if ((word_2AA7 & 0x80) != 0) {
-    printf("BP: sub_1F8F();\n");
-    exit(1);
+    sub_1F8F();
   }
   // 0x28E4
   if ((word_2AA7 & 0x8000) != 0) {
@@ -1924,8 +1930,13 @@ static void sub_28B0()
       al = 1;
     }
 
-    // Not technically a subroutine.
-    sub_29B8(al);
+    // 29B8
+    byte_2AA6 = al;
+    if ((word_2AA7 & 0x40) != 0) {
+      sub_2ADC();
+      cpu.bx = word_2AA2;
+      return;
+    }
 
     // 0x29CC
     cpu.di = word_2AA2;
@@ -2004,7 +2015,7 @@ static void op_89(void)
   word_3ADB = cpu.pc - cpu.base_pc; // is this correct?
   cpu.bx = word_3ADB;
 
-  sub_28B0();
+  sub_28B0(&cpu.pc);
 
   cpu.ax = cpu.ax & 0x00FF;
   printf("%s: BX: 0x%04X\n", __func__, cpu.bx);
@@ -2072,8 +2083,11 @@ static void sub_1E49()
   ui_draw_string();
   byte_1F07 = 0;
   sub_1EBB();
+
+  // 0x1E54
   cpu.bx = 0x1EB9; // function pointer.
-  sub_28B0();
+  unsigned char *ptr = data_1EB9 + 0;
+  sub_28B0(&ptr);
 
   printf("%s : 0x1E5C (0x%04X) unimplemented\n", __func__, cpu.ax);
   exit(1);
@@ -2470,6 +2484,8 @@ static void run_script(uint8_t script_index, uint16_t src_offset)
 
 void run_engine()
 {
+  timers.timer3 = 1;
+
   game_state.unknown[8] = 0xFF;
   memset(&cpu, 0, sizeof(struct virtual_cpu));
   cpu.sp = STACK_SIZE; // stack grows downward...
