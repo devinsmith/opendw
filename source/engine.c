@@ -127,9 +127,6 @@ struct timer_ctx timers;
 unsigned char *data_2A68 = NULL;
 unsigned char *data_D760 = NULL;
 
-// 0x3296 (unknown size)
-unsigned char data_3926[32];
-
 // XXX:How big should these be???
 // It looks like they can be 0x0E00 bytes, but we round up to 4096.
 unsigned char data_CA4C[4096] = { 0 };
@@ -143,7 +140,9 @@ struct len_bytes {
   uint8_t bytes[40];
 };
 
+// We should break this apart.
 struct game_state {
+  // 0xC6 - 0x?? - New character name.
   unsigned char unknown[256];
 };
 
@@ -216,9 +215,11 @@ static void op_03();
 static void op_04();
 static void op_05();
 static void op_06();
+static void op_07();
 static void op_08();
 static void op_09();
 static void op_0A();
+static void op_0B();
 static void op_0F();
 static void op_11();
 static void op_12();
@@ -282,11 +283,11 @@ struct op_call_table targets[] = {
   { op_04, "0x3B2A" },
   { op_05, "0x3B3D" },
   { op_06, "0x3B4A" },
-  { NULL, "0x3B52" },
+  { op_07, "0x3B52" },
   { op_08, "0x3B59" },
   { op_09, "0x3B67" },
   { op_0A, "0x3B7A" },
-  { NULL, "0x3B8C" },
+  { op_0B, "0x3B8C" },
   { NULL, "0x3BA2" },
   { NULL, "0x3BB7" },
   { NULL, "0x3BD0" },
@@ -626,6 +627,13 @@ static void op_06()
   word_3AE4 = al;
 }
 
+// 0x3B52
+static void op_07()
+{
+  // Pretty much always 0.
+  word_3AE4 = (cpu.ax & 0xFF00) >> 8;
+}
+
 // 0x3B59
 static void op_08(void)
 {
@@ -671,6 +679,22 @@ static void op_0A(void)
   printf("%s - AX: 0x%04X (run num: %d) 0x%02X\n", __func__, cpu.ax, runs,
       saved);
   runs++;
+}
+
+// 0x3B8C
+static void op_0B()
+{
+  uint8_t ah, al;
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.ax += word_3AE4;
+  cpu.bx = cpu.ax;
+  al = game_state.unknown[cpu.bx];
+  ah = game_state.unknown[cpu.bx + 1];
+
+  ah = ah & byte_3AE1;
+  cpu.ax = ah << 8 | al;
+  word_3AE2 = cpu.ax;
 }
 
 // 0x3BED
@@ -2061,7 +2085,7 @@ static void sub_1EBF()
     // 0x1EED
     cpu.bx = 0;
     while (cpu.bx < byte_1F07) {
-      al = data_3926[cpu.bx];
+      al = game_state.unknown[cpu.bx + 0xC6];
       ui_draw_chr_piece(al);
       cpu.bx++;
     }
@@ -2080,6 +2104,13 @@ static void sub_1EBB()
 {
   // clc
   cpu.cf = 0;
+  sub_1EBF();
+}
+
+// 0x1EBE
+static void sub_1EBE()
+{
+  cpu.cf = 1;
   sub_1EBF();
 }
 
@@ -2120,10 +2151,9 @@ static void sub_1E49()
       continue;
     } else if (al == 0x8D) { // Enter key
       // jmp 1E99
-      printf("%s : 0x1E99 (0x%04X) unimplemented\n", __func__, cpu.ax);
       break;
     } else if (al == 0x9B) { // escape.
-      printf("%s : 0x1E93 (0x%04X) unimplemented\n", __func__, cpu.ax);
+      byte_1F07 = 0;
       break;
       // jmp 1E93
     } else if (bl >= byte_1F08) {
@@ -2137,14 +2167,18 @@ static void sub_1E49()
         continue;
         // 1E54
     } else {
-      data_3926[cpu.bx] = al;
+      set_game_state(0xC6 + cpu.bx, al);
       byte_1F07++;
       sub_1EBB();
     }
   }
-  // 1E86
-  printf("%s : 0x1E93 (0x%04X) unimplemented\n", __func__, cpu.ax);
-  exit(1);
+  // 1E99
+  al = 0;
+  set_game_state(0xC6 + cpu.bx, al);
+  sub_1EBE();
+  al = 0x8D;
+  sub_3150(al);
+  return;
 }
 
 // 0x49D3
