@@ -127,6 +127,9 @@ struct timer_ctx timers;
 unsigned char *data_2A68 = NULL;
 unsigned char *data_D760 = NULL;
 
+// 0x3296 (unknown size)
+unsigned char data_3926[32];
+
 // XXX:How big should these be???
 // It looks like they can be 0x0E00 bytes, but we round up to 4096.
 unsigned char data_CA4C[4096] = { 0 };
@@ -2057,8 +2060,11 @@ static void sub_1EBF()
   if (byte_1F07 != 0) {
     // 0x1EED
     cpu.bx = 0;
-    printf("%s : 0x1EEF unimplemented\n", __func__);
-    exit(1);
+    while (cpu.bx < byte_1F07) {
+      al = data_3926[cpu.bx];
+      ui_draw_chr_piece(al);
+      cpu.bx++;
+    }
   }
   // 0x1EFD
   flags = pop_word();
@@ -2080,16 +2086,64 @@ static void sub_1EBB()
 // 0x1E49
 static void sub_1E49()
 {
+  uint8_t al, bl;
+
   ui_draw_string();
   byte_1F07 = 0;
   sub_1EBB();
 
   // 0x1E54
-  cpu.bx = 0x1EB9; // function pointer.
-  unsigned char *ptr = data_1EB9 + 0;
-  sub_28B0(&ptr);
+  while (1) {
+    cpu.bx = 0x1EB9; // function pointer.
+    unsigned char *ptr = data_1EB9 + 0;
+    sub_28B0(&ptr);
 
-  printf("%s : 0x1E5C (0x%04X) unimplemented\n", __func__, cpu.ax);
+    // Checking for keys.
+    al = cpu.ax & 0xFF;
+
+    // Filter out invalid keys.
+    if (al == 0xAF || al == 0xDC) {
+      // Dragon wars doesn't like '/' or '\' characters.
+      continue;
+    }
+
+    // 0x1E64
+    bl = byte_1F07;
+    cpu.bx = bl;
+    if (al == 0x88) { // Backspace
+      if (cpu.bx == 0) {
+        continue;
+      }
+      byte_1F07--;
+      sub_1EBB();
+      ui_draw_chr_piece(0xA0);
+      continue;
+    } else if (al == 0x8D) { // Enter key
+      // jmp 1E99
+      printf("%s : 0x1E99 (0x%04X) unimplemented\n", __func__, cpu.ax);
+      break;
+    } else if (al == 0x9B) { // escape.
+      printf("%s : 0x1E93 (0x%04X) unimplemented\n", __func__, cpu.ax);
+      break;
+      // jmp 1E93
+    } else if (bl >= byte_1F08) {
+      continue;
+    } else if (al < 0xA0) {
+      continue;
+    }
+    if (al == 0xA0) {
+      // 0x1E82
+      if (cpu.bx == 0)
+        continue;
+        // 1E54
+    } else {
+      data_3926[cpu.bx] = al;
+      byte_1F07++;
+      sub_1EBB();
+    }
+  }
+  // 1E86
+  printf("%s : 0x1E93 (0x%04X) unimplemented\n", __func__, cpu.ax);
   exit(1);
 }
 
