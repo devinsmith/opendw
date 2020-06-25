@@ -231,6 +231,7 @@ static void op_1C();
 static void op_1D();
 static void op_23();
 static void op_26();
+static void op_28();
 static void op_30();
 static void op_3E();
 static void op_40();
@@ -317,7 +318,7 @@ struct op_call_table targets[] = {
   { NULL, "0x3DE5" },
   { op_26, "0x3DEC" },
   { NULL, "0x3E06" },
-  { NULL, "0x3E14" },
+  { op_28, "0x3E14" },
   { NULL, "0x3E1B" },
   { NULL, "0x3E36" },
   { NULL, "0x3E45" },
@@ -901,6 +902,14 @@ static void op_26(void)
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
     set_game_state(cpu.di + 1, ch);
   }
+}
+
+// 0x3E14
+static void op_28()
+{
+  uint8_t byte_3AE4 = (word_3AE4 & 0x00FF);
+  byte_3AE4--;
+  word_3AE4 = (word_3AE4 & 0xFF00) | byte_3AE4;
 }
 
 // 0x3E9D
