@@ -267,6 +267,7 @@ static void op_86();
 static void op_89();
 static void op_8D();
 static void op_93();
+static void op_98();
 static void op_99();
 static void op_9A();
 
@@ -428,7 +429,7 @@ struct op_call_table targets[] = {
   { NULL, "0x4894" },
   { NULL, "0x48B5" },
   { NULL, "0x42FB" },
-  { NULL, "0x4348" },
+  { op_98, "0x4348" },
   { op_99, "0x40E7" },
   { op_9A, "0x3C42" },
   { NULL, "0x416B" },
@@ -2196,6 +2197,35 @@ static void op_93(void)
   cpu.ax = (cpu.ax & 0xFF00) | al;
 
   push_byte(al);
+}
+
+// 0x4348
+static void op_98()
+{
+  uint8_t al;
+  uint16_t dl;
+
+  al = game_state.unknown[6];
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  dl = cpu.ax;
+  set_game_state(dl + 0x18, (cpu.ax & 0xFF00) >> 8);
+  cpu.bx = 0xC960;
+
+  uint8_t bh = (cpu.bx & 0xFF00) >> 8;
+  bh += game_state.unknown[cpu.di + 0xA]; // Character selector ?
+  cpu.bx = bh << 8 | (cpu.bx & 0xFF);
+
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx += cpu.ax;
+  cpu.bx += word_3AE4;
+  cpu.cx = word_3AE2;
+
+  unsigned char *c960 = get_C960();
+  c960[cpu.bx - 0xC960] = cpu.cx & 0xFF;
+  if (byte_3AE1 != (cpu.ax & 0xFF00) >> 8) {
+    c960[cpu.bx - 0xC960 + 1] = (cpu.cx & 0xFF00) >> 8;
+  }
 }
 
 // 0x40E7
