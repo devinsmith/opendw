@@ -233,6 +233,7 @@ static void op_23();
 static void op_26();
 static void op_28();
 static void op_30();
+static void op_38();
 static void op_3E();
 static void op_40();
 static void op_41();
@@ -242,6 +243,7 @@ static void op_45();
 static void loop(); // 49
 static void op_4A();
 static void op_4B();
+static void op_4C();
 static void op_52();
 static void op_53();
 static void op_54();
@@ -335,7 +337,7 @@ struct op_call_table targets[] = {
   { NULL, "0x3F66" },
   { NULL, "0x3F8C" },
   { NULL, "0x3FAD" },
-  { NULL, "0x3FBC" },
+  { op_38, "0x3FBC" },
   { NULL, "0x3FD4" },
   { NULL, "0x3FEA" },
   { NULL, "0x4002" },
@@ -355,7 +357,7 @@ struct op_call_table targets[] = {
   { loop, "0x4106" },
   { op_4A, "0x4113" },
   { op_4B, "0x4122" },
-  { NULL, "0x412A" },
+  { op_4C, "0x412A" },
   { NULL, "0x4132" },
   { NULL, "0x414B" },
   { NULL, "0x4155" },
@@ -914,7 +916,7 @@ static void op_28()
 }
 
 // 0x3E9D
-static void op_30(void)
+static void op_30()
 {
   uint8_t ah, al;
 
@@ -943,6 +945,24 @@ static void op_30(void)
   word_3AE6 = (word_3AE6 & 0xFF00) | (((word_3AE6 & 0xFF) << 1) | cf);
 
   return;
+}
+
+// 0x3FBC
+static void op_38()
+{
+  uint8_t al, ah;
+
+  ah = ((cpu.ax & 0xFF00) >> 8);
+  if (byte_3AE1 != ah) {
+    al = *cpu.pc++;
+    ah = *cpu.pc++;
+    cpu.ax = (ah << 8) | al;
+    word_3AE2 = word_3AE2 & cpu.ax;
+  } else {
+    al = *cpu.pc++;
+    cpu.ax = (cpu.ax & 0xFF00) | al;
+    word_3AE2 = word_3AE2 & al;
+  }
 }
 
 // 0x4051
@@ -1125,6 +1145,12 @@ static void op_4B(void)
   word_3AE6 |= 0x0001;
 }
 
+// 0x412A
+static void op_4C()
+{
+  word_3AE6 &= 0xFFFE;
+}
+
 // 0x41B9
 static void op_52(void)
 {
@@ -1161,7 +1187,7 @@ static void op_54()
 {
   // RET function.
   uint16_t si = pop_word();
-  printf("SI: %04X\n", si);
+  printf("%s SI: %04X\n", __func__, si);
   cpu.pc = cpu.base_pc + si;
 }
 
@@ -2244,12 +2270,11 @@ static void op_97()
 static void op_98()
 {
   uint8_t al;
-  uint16_t dl;
 
   al = game_state.unknown[6];
   cpu.ax = (cpu.ax & 0xFF00) | al;
-  dl = cpu.ax;
-  set_game_state(dl + 0x18, (cpu.ax & 0xFF00) >> 8);
+  cpu.di = cpu.ax;
+  set_game_state(cpu.di + 0x18, (cpu.ax & 0xFF00) >> 8);
   cpu.bx = 0xC960;
 
   uint8_t bh = (cpu.bx & 0xFF00) >> 8;
