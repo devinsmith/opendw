@@ -58,8 +58,11 @@ uint8_t byte_1BE5 = 0;
 uint16_t word_1C63 = 0;
 uint8_t byte_1CE4 = 0;
 
-// 0x1EB9, unknown length (game script)
+// 0x1EB9, 2 bytes, since there's a function at 0x1EBB
 unsigned char data_1EB9[] = { 0xC2, 0x00 };
+
+// 0x2C0E
+unsigned char data_2C0E[] = { 0x04, 0x82, 0x9B, 0x00, 0x00, 0xFF };
 
 uint8_t byte_1F07 = 0;
 uint8_t byte_1F08 = 0;
@@ -165,7 +168,9 @@ struct virtual_cpu {
   uint8_t stack[STACK_SIZE]; // stacks;
   uint8_t sp;
 
+  // flags
   uint8_t cf;
+  uint8_t zf;
 
   // program counter
   unsigned char *pc;
@@ -230,11 +235,13 @@ static void op_1A();
 static void op_1C();
 static void op_1D();
 static void op_23();
+static void op_25();
 static void op_26();
 static void op_28();
 static void op_30();
 static void op_38();
 static void op_3E();
+static void op_3F();
 static void op_40();
 static void op_41();
 static void op_42();
@@ -247,6 +254,7 @@ static void op_4C();
 static void op_52();
 static void op_53();
 static void op_54();
+static void op_55();
 static void op_56();
 static void op_58();
 static void op_59();
@@ -268,6 +276,7 @@ static void op_83();
 static void op_84();
 static void op_85();
 static void op_86();
+static void op_88();
 static void op_89();
 static void op_8D();
 static void op_93();
@@ -319,7 +328,7 @@ struct op_call_table targets[] = {
   { NULL, "0x3DB7" },
   { op_23, "0x3DC0" },
   { NULL, "0x3DD7" },
-  { NULL, "0x3DE5" },
+  { op_25, "0x3DE5" },
   { op_26, "0x3DEC" },
   { NULL, "0x3E06" },
   { op_28, "0x3E14" },
@@ -345,7 +354,7 @@ struct op_call_table targets[] = {
   { NULL, "0x4018" },
   { NULL, "0x4030" },
   { op_3E, "0x4051" },
-  { NULL, "0x4067" },
+  { op_3F, "0x4067" },
   { op_40, "0x4074" },
   { op_41, "0x407C" },
   { op_42, "0x4085" },
@@ -367,7 +376,7 @@ struct op_call_table targets[] = {
   { op_52, "0x41B9" },
   { op_53, "0x41C0" },
   { op_54, "0x41E1" },
-  { NULL, "0x41E5" },
+  { op_55, "0x41E5" },
   { op_56, "0x41FD" },
   { NULL, "0x4215" },
   { op_58, "0x4239" },
@@ -418,7 +427,7 @@ struct op_call_table targets[] = {
   { op_85, "0x4920" },
   { op_86, "0x493E" },
   { NULL, "0x4955" },
-  { NULL, "0x496D" },
+  { op_88, "0x496D" },
   { op_89, "0x4977" },
   { NULL, "0x498E" },
   { NULL, "0x499B" },
@@ -889,6 +898,14 @@ static void op_23(void)
   }
 }
 
+// 0x3DE5
+static void op_25()
+{
+  uint8_t byte_3AE4 = (word_3AE4 & 0x00FF);
+  byte_3AE4++;
+  word_3AE4 = (word_3AE4 & 0xFF00) | byte_3AE4;
+}
+
 // 0x3DEC
 static void op_26(void)
 {
@@ -970,26 +987,24 @@ static void op_38()
 static void op_3E(void)
 {
   uint8_t ah, al;
-  int cf = 0;
-  int zf = 0;
   cpu.bx = word_3AE2;
   ah = ((cpu.ax & 0xFF00) >> 8);
   if (byte_3AE1 != ah) {
     al = *cpu.pc++;
     ah = *cpu.pc++;
     cpu.ax = (ah << 8) | al;
-    cf = (cpu.bx - cpu.ax) < 0;
-    zf = (cpu.bx - cpu.ax) == 0 ? 1 : 0;
+    cpu.cf = (cpu.bx - cpu.ax) < 0;
+    cpu.zf = (cpu.bx - cpu.ax) == 0 ? 1 : 0;
   } else {
     uint8_t bl = cpu.bx & 0x00FF;
     al = *cpu.pc++;
     cpu.ax = (cpu.ax & 0xFF00) | al;
-    cf = (bl - al) < 0;
-    zf = (bl - al) == 0 ? 1 : 0;
+    cpu.cf = (bl - al) < 0;
+    cpu.zf = (bl - al) == 0 ? 1 : 0;
   }
 
   // loc_4042
-  cf = !cf;
+  cpu.cf = !cpu.cf;
   // pushf
   // pop word [3AE6]
   // We should copy:
@@ -998,9 +1013,37 @@ static void op_3E(void)
 
   // XXX: Not correct, but maybe it's all we care about?
   word_3AE6 = 0;
-  word_3AE6 |= zf << 6;
+  word_3AE6 |= cpu.zf << 6;
   word_3AE6 |= 1 << 1; // Always 1, reserved.
-  word_3AE6 |= cf << 0;
+  word_3AE6 |= cpu.cf << 0;
+}
+
+// 0x4067
+static void op_3F()
+{
+  uint8_t al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
+  al = word_3AE4;
+
+  // cmp and set flags.
+  // I think these are the only flags that matter.
+  cpu.zf = al == game_state.unknown[cpu.bx];
+  cpu.cf = al < game_state.unknown[cpu.bx];
+
+  // loc_4042
+  cpu.cf = !cpu.cf;
+  // pushf
+  // pop word [3AE6]
+  // We should copy:
+  //    Carry flag, parity flag, adjust flag, zero flag
+  //    sign flag, trap flag, interupt enable flag, direction, overflow.
+
+  // XXX: Not correct, but maybe it's all we care about?
+  word_3AE6 = 0;
+  word_3AE6 |= cpu.zf << 6;
+  word_3AE6 |= 1 << 1; // Always 1, reserved.
+  word_3AE6 |= cpu.cf << 0;
 }
 
 // 0x4074
@@ -1190,6 +1233,19 @@ static void op_54()
   uint16_t si = pop_word();
   printf("%s SI: %04X\n", __func__, si);
   cpu.pc = cpu.base_pc + si;
+}
+
+// 0x41E5
+static void op_55()
+{
+  uint8_t ah;
+
+  cpu.cx = pop_word();
+  word_3AE2 = (cpu.cx & 0xFF);
+  ah = (cpu.ax & 0xFF00) >> 8;
+  if (ah != byte_3AE1) {
+    word_3AE2 = cpu.cx;
+  }
 }
 
 // 0x41FD
@@ -1753,8 +1809,10 @@ static int sub_2AEE()
   }
 
   if ((word_2AA7 & 0x04) != 0) {
-    printf("%s: 0x2B35 unimplemented\n", __func__);
-    exit(1);
+    cpu.ax = cpu.ax & 0xFF00;
+    word_246D = 0;
+    cpu.cf = 1;
+    return 1;
   }
   if ((word_2AA7 & 0x10) != 0) {
     printf("%s: 0x2B43 unimplemented\n", __func__);
@@ -1877,7 +1935,7 @@ static void sub_1F8F()
 
 // 0x28B0
 // Should we take BX as an argument.
-static void sub_28B0(unsigned char **src_ptr)
+static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
 {
   uint8_t al, ah;
   uint8_t bl, bh;
@@ -1895,7 +1953,7 @@ static void sub_28B0(unsigned char **src_ptr)
   word_2AA7 = cpu.ax;
   ah = (cpu.ax & 0xFF00) >> 8;
   ah = ah & 0x20;
-  al = cpu.ax * 0xFF;
+  al = cpu.ax & 0xFF;
 
   cpu.ax = (ah << 8) | al;
 
@@ -1904,12 +1962,13 @@ static void sub_28B0(unsigned char **src_ptr)
   al = (word_2AA7 & 0xFF00) >> 8;
   al = al & 0x10;
   if (al != 0) {
-    al = *cpu.pc++;
+    al = **src_ptr;
+    (*src_ptr)++;
   }
   byte_2AA9 = al;
-  word_2AA2 = cpu.pc - cpu.base_pc; // is this correct? (si)
+  word_2AA2 = *src_ptr - base; // is this correct? (si)
 
-  word_2AA4 = cpu.pc;
+  word_2AA4 = *src_ptr;
 
   if ((word_2AA7 & 0x80) != 0) {
     sub_1F8F();
@@ -2014,13 +2073,13 @@ static void sub_28B0(unsigned char **src_ptr)
     // 0x29CC
     cpu.di = word_2AA2;
     cpu.di -= 3;
-    cpu.pc -= 3;
+    *src_ptr -= 3;
 
     uint8_t dl = byte_2AA6;
     // 0x29DD
     while (1) {
       cpu.di += 3;
-      al = *(cpu.base_pc + cpu.di);
+      al = *(base + cpu.di);
       cpu.ax = (cpu.ax & 0xFF00) | al;
       if (al == 0) {
         sub_2A4C();
@@ -2081,6 +2140,22 @@ static void sub_28B0(unsigned char **src_ptr)
   }
 }
 
+// 0x2C00
+// Takes a pointer?
+static void sub_2C00()
+{
+  cpu.bx = 0x2C0E; // function pointer.
+  unsigned char *ptr = data_2C0E + 0;
+  sub_28B0(&ptr, data_2C0E);
+  draw_pattern(&draw_rect);
+}
+
+// 0x496D
+static void op_88()
+{
+  sub_2C00();
+}
+
 // 0x4977
 static void op_89(void)
 {
@@ -2088,7 +2163,7 @@ static void op_89(void)
   word_3ADB = cpu.pc - cpu.base_pc; // is this correct?
   cpu.bx = word_3ADB;
 
-  sub_28B0(&cpu.pc);
+  sub_28B0(&cpu.pc, cpu.base_pc);
 
   cpu.ax = cpu.ax & 0x00FF;
   printf("%s: BX: 0x%04X\n", __func__, cpu.bx);
@@ -2173,7 +2248,7 @@ static void sub_1E49()
   while (1) {
     cpu.bx = 0x1EB9; // function pointer.
     unsigned char *ptr = data_1EB9 + 0;
-    sub_28B0(&ptr);
+    sub_28B0(&ptr, data_1EB9);
 
     // Checking for keys.
     al = cpu.ax & 0xFF;
