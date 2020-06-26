@@ -259,6 +259,7 @@ static void op_69();
 static void op_74();
 static void op_75();
 static void op_76();
+static void op_77();
 static void op_78();
 static void read_header_bytes(void); // 7B
 static void op_7D();
@@ -400,7 +401,7 @@ struct op_call_table targets[] = {
   { op_74, "0x47C0" },
   { op_75, "0x47D1" },
   { op_76, "0x47D9" },
-  { NULL, "0x47E3" },
+  { op_77, "0x47E3" },
   { op_78, "0x47EC" },
   { NULL, "0x47FA" },
   { NULL, "0x4801" },
@@ -1544,6 +1545,14 @@ static void op_75(void)
 static void op_76(void)
 {
   draw_pattern(&draw_rect);
+  sub_1C79(&cpu.pc);
+}
+
+// 0x47E3
+static void op_77()
+{
+  draw_pattern(&draw_rect);
+  sub_1C79(&cpu.pc);
 }
 
 // 0x47EC
@@ -2568,11 +2577,11 @@ static void append_string(unsigned char byte)
       len--;
     }
   }
-  if (len == 0) {
+  else {
     // 31C1 - length is 0.
+    ui_draw_string();
+    ui_string.bytes[0] = ui_string.bytes[bx];
     dx = 1;
-    printf("%s: 0x31C1 unimplemented\n", __func__);
-    exit(1);
   }
   // 0x31FC
   ui_string.len = dx;
