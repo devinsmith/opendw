@@ -225,20 +225,28 @@ static void op_08();
 static void op_09();
 static void op_0A();
 static void op_0B();
+static void op_0D();
 static void op_0F();
 static void op_11();
 static void op_12();
 static void op_13();
 static void op_14();
+static void op_15();
 static void op_17();
+static void op_19();
 static void op_1A();
 static void op_1C();
 static void op_1D();
+static void op_21();
+static void op_22();
 static void op_23();
 static void op_25();
 static void op_26();
 static void op_28();
+static void op_2B();
+static void op_2F();
 static void op_30();
+static void op_32();
 static void op_38();
 static void op_3E();
 static void op_3F();
@@ -269,9 +277,11 @@ static void op_75();
 static void op_76();
 static void op_77();
 static void op_78();
+static void op_7A();
 static void read_header_bytes(void); // 7B
 static void op_7D();
 static void op_80();
+static void op_81();
 static void op_83();
 static void op_84();
 static void op_85();
@@ -280,6 +290,8 @@ static void op_88();
 static void op_89();
 static void op_8D();
 static void op_93();
+static void op_94();
+static void op_95();
 static void op_97();
 static void op_98();
 static void op_99();
@@ -304,7 +316,7 @@ struct op_call_table targets[] = {
   { op_0A, "0x3B7A" },
   { op_0B, "0x3B8C" },
   { NULL, "0x3BA2" },
-  { NULL, "0x3BB7" },
+  { op_0D, "0x3BB7" },
   { NULL, "0x3BD0" },
   { op_0F, "0x3BED" },
   { NULL, "0x3C10" },
@@ -312,11 +324,11 @@ struct op_call_table targets[] = {
   { op_12, "0x3C59" },
   { op_13, "0x3C72" },
   { op_14, "0x3C8F" },
-  { NULL, "0x3CAB" },
+  { op_15, "0x3CAB" },
   { NULL, "0x3CCB" },
   { op_17, "0x3CEF" },
   { NULL, "0x3D19" },
-  { NULL, "0x3D3D" },
+  { op_19, "0x3D3D" },
   { op_1A, "0x3D5A" },
   { NULL, "0x3D73" },
   { op_1C, "0x3D92" },
@@ -324,8 +336,8 @@ struct op_call_table targets[] = {
   { NULL, "0x01B2" },
   { NULL, "0x4AF6" },
   { NULL, "0x0000" },
-  { NULL, "0x3DAE" },
-  { NULL, "0x3DB7" },
+  { op_21, "0x3DAE" },
+  { op_22, "0x3DB7" },
   { op_23, "0x3DC0" },
   { NULL, "0x3DD7" },
   { op_25, "0x3DE5" },
@@ -334,14 +346,14 @@ struct op_call_table targets[] = {
   { op_28, "0x3E14" },
   { NULL, "0x3E1B" },
   { NULL, "0x3E36" },
-  { NULL, "0x3E45" },
+  { op_2B, "0x3E45" },
   { NULL, "0x3E4C" },
   { NULL, "0x3E67" },
   { NULL, "0x3E6E" },
-  { NULL, "0x3E75" },
+  { op_2F, "0x3E75" },
   { op_30, "0x3E9D" },
   { NULL, "0x3EC1" },
-  { NULL, "0x3EEB" },
+  { op_32, "0x3EEB" },
   { NULL, "0x3F11" },
   { NULL, "0x3F4D" },
   { NULL, "0x3F66" },
@@ -413,14 +425,14 @@ struct op_call_table targets[] = {
   { op_77, "0x47E3" },
   { op_78, "0x47EC" },
   { NULL, "0x47FA" },
-  { NULL, "0x4801" },
+  { op_7A, "0x4801" },
   { read_header_bytes, "0x482D" },
   { NULL, "0x4817" },
   { op_7D, "0x483B" },
   { NULL, "0x4845" },
   { NULL, "0x486D" },
   { op_80, "0x487F" },
-  { NULL, "0x48C5" },
+  { op_81, "0x48C5" },
   { NULL, "0x48D2" },
   { op_83, "0x48EE" },
   { op_84, "0x4907" },
@@ -439,8 +451,8 @@ struct op_call_table targets[] = {
   { NULL, "0x49F3" },
   { NULL, "0x49FD" },
   { op_93, "0x4A67" },
-  { NULL, "0x4A6D" },
-  { NULL, "0x4894" },
+  { op_94, "0x4A6D" },
+  { op_95, "0x4894" },
   { NULL, "0x48B5" },
   { op_97, "0x42FB" },
   { op_98, "0x4348" },
@@ -712,6 +724,29 @@ static void op_0B()
   word_3AE2 = cpu.ax;
 }
 
+// 0x3BB7
+static void op_0D()
+{
+  uint8_t al, ah;
+
+  // es:lodsw
+  cpu.ax = *cpu.pc++;
+  cpu.ax += ((*cpu.pc++) << 8);
+
+  cpu.ax += word_3AE4;
+  cpu.bx = cpu.ax;
+
+  unsigned char *dest = word_3ADF->bytes;
+  cpu.ax = dest[cpu.bx];
+  cpu.ax += (dest[cpu.bx + 1] << 8);
+
+  ah = (cpu.ax & 0xFF00) >> 8;
+  ah = ah & byte_3AE1;
+  al = cpu.ax & 0xFF;
+  cpu.ax = (ah << 8) | al;
+  word_3AE2 = cpu.ax;
+}
+
 // 0x3BED
 static void op_0F(void)
 {
@@ -803,6 +838,25 @@ static void op_14(void)
   }
 }
 
+// 0x3CAB
+static void op_15()
+{
+  uint8_t save_ah = (cpu.ax & 0xFF00) >> 8;
+
+  cpu.ax = *cpu.pc++;
+  cpu.ax += ((*cpu.pc++) << 8);
+  cpu.bx = cpu.ax;
+
+  // es:cx
+  unsigned char *dest = word_3ADF->bytes;
+  cpu.cx = word_3AE2;
+  cpu.di = word_3AE4;
+  dest[cpu.bx + cpu.di] = cpu.cx & 0xFF;
+  if (byte_3AE1 != save_ah) {
+    dest[cpu.bx + cpu.di + 1] = (cpu.cx & 0xFF00) >> 8;
+  }
+}
+
 // 0x3CEF
 static void op_17(void)
 {
@@ -825,6 +879,24 @@ static void op_17(void)
   }
 }
 
+// 0x3D3D
+static void op_19()
+{
+  uint8_t al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.di = cpu.ax;
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
+
+  cpu.cx = game_state.unknown[cpu.di];
+  cpu.cx += (game_state.unknown[cpu.di + 1] << 8);
+  set_game_state(cpu.bx, cpu.cx & 0xFF);
+  if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
+    set_game_state(cpu.bx + 1, (cpu.cx & 0xFF00) >> 8);
+  }
+}
+
 // 0x3D5A
 static void op_1A(void)
 {
@@ -844,7 +916,7 @@ static void op_1A(void)
 // 0x3D92
 static void op_1C()
 {
-  uint16_t save_ah = (cpu.ax & 0xFF00) >> 8;
+  uint8_t save_ah = (cpu.ax & 0xFF00) >> 8;
 
   cpu.ax = *cpu.pc++;
   cpu.ax += ((*cpu.pc++) << 8);
@@ -880,6 +952,22 @@ static void op_1D(void)
   }
   // repe movsw (move word ds:si to es:di (si, di += 2), repeat 0x380 times.
   memcpy(src + src_offset, dest + dest_offset, 0x700);
+}
+
+// 0x3DAE
+// Set byte variable.
+static void op_21()
+{
+  uint8_t byte_3AE4 = (word_3AE2 & 0x00FF);
+  word_3AE4 = (word_3AE4 & 0xFF00) | byte_3AE4;
+}
+
+// 0x3DB7
+// Set word variable.
+static void op_22()
+{
+  cpu.ax = word_3AE4;
+  word_3AE2 = cpu.ax;
 }
 
 // 0x3DC0
@@ -933,6 +1021,42 @@ static void op_28()
   word_3AE4 = (word_3AE4 & 0xFF00) | byte_3AE4;
 }
 
+// 0x3E45
+static void op_2B()
+{
+  uint8_t byte_3AE4 = (word_3AE4 & 0x00FF);
+  byte_3AE4 = byte_3AE4 << 1;
+  word_3AE4 = (word_3AE4 & 0xFF00) | byte_3AE4;
+}
+
+// 0x3E75
+static void op_2F()
+{
+  uint8_t al;
+
+  // shr byte [word_3AE6], 1
+  cpu.cf = word_3AE6 & CARRY_FLAG_MASK;
+  word_3AE6 = word_3AE6 >> 1;
+
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
+  cpu.cx = game_state.unknown[cpu.bx];
+  cpu.cx += (game_state.unknown[cpu.bx + 1] << 8);
+  if (byte_3AE1 != (cpu.ax >> 8)) {
+    uint16_t tmp = word_3AE2 + cpu.cx;
+    cpu.cf = tmp << 16;
+    word_3AE2 = tmp;
+  } else {
+    uint8_t byte_3AE2 = word_3AE2 & 0xFF;
+    uint8_t tmp = byte_3AE2 + (cpu.cx & 0xFF);
+    cpu.cf = tmp << 8;
+    word_3AE2 = (word_3AE2 & 0xFF00) | tmp;
+  }
+
+  word_3AE6 = (word_3AE6 & 0xFF00) | (((word_3AE6 & 0xFF) << 1) | cpu.cf);
+}
+
 // 0x3E9D
 static void op_30()
 {
@@ -963,6 +1087,45 @@ static void op_30()
   word_3AE6 = (word_3AE6 & 0xFF00) | (((word_3AE6 & 0xFF) << 1) | cf);
 
   return;
+}
+
+// 0x3EEB
+static void op_32()
+{
+  uint8_t ah, al;
+  unsigned int tmp;
+
+  // shr byte [word_3AE6], 1
+  cpu.cf = word_3AE6 & CARRY_FLAG_MASK;
+  word_3AE6 = (word_3AE6 & 0xFF00) | ((word_3AE6 & 0xFF) >> 1);
+
+  ah = ((cpu.ax & 0xFF00) >> 8);
+  if (byte_3AE1 != ah) {
+      // es:lodsw
+      uint16_t ax = *cpu.pc++;
+      ax += *cpu.pc++ << 8;
+      cpu.ax = ax;
+
+      tmp = word_3AE2 - cpu.ax;
+      cpu.cf = (tmp & 0x10000) == 0x10000;
+
+      word_3AE2 -= ax;
+      cpu.cf = !cpu.cf;
+      // rcl byte [3AE6], 1
+      word_3AE6 = (word_3AE6 & 0xFF00) | (((word_3AE6 & 0xFF) << 1) | cpu.cf);
+  } else {
+    al = *cpu.pc++;
+    cpu.ax = (cpu.ax & 0xFF00) | al;
+    uint8_t byte_3AE2 = word_3AE2 & 0xFF;
+    tmp = byte_3AE2 - al;
+    cpu.cf = (tmp & 0x100) == 0x100;
+    cpu.cf = !cpu.cf;
+    byte_3AE2 -= al;
+    word_3AE2 = (word_3AE2 & 0xFF00) | byte_3AE2;
+    // rcl byte [3AE6], 1
+    word_3AE6 = (word_3AE6 & 0xFF00) | (((word_3AE6 & 0xFF) << 1) | cpu.cf);
+  }
+
 }
 
 // 0x3FBC
@@ -1617,6 +1780,13 @@ static void op_78(void)
   sub_1C79(&cpu.pc);
 }
 
+// 0x4801
+static void op_7A()
+{
+  unsigned char *src_ptr= word_3ADF->bytes + word_3AE2;
+  sub_1C79(&src_ptr);
+}
+
 // 0x1A40
 // Write character name
 static void write_character_name()
@@ -1681,6 +1851,20 @@ static void op_80(void)
   cpu.ax = (cpu.ax & 0xFF00) | al;
 
   sub_1BE6();
+}
+
+// 0x1DBB
+static void sub_1DBB()
+{
+  printf("%s: 0x1DBB unimplemented\n", __func__);
+  exit(1);
+}
+
+// 0x48C5
+static void op_81()
+{
+  cpu.ax = word_3AE2;
+  sub_1DBB();
 }
 
 // 0x48EE
@@ -2317,6 +2501,34 @@ static void op_93(void)
   cpu.ax = (cpu.ax & 0xFF00) | al;
 
   push_byte(al);
+}
+
+// 0x4A6D
+static void op_94(void)
+{
+  uint8_t al = pop_byte();
+  uint8_t byte_3AE4 = al;
+
+  word_3AE4 = (word_3AE4 & 0xFF00) | byte_3AE4;
+}
+
+// 0x4894
+static void op_95()
+{
+  uint8_t byte_3AE4 = (word_3AE4 & 0x00FF);
+  uint8_t al;
+
+  ui_draw_string();
+
+  al = byte_3AE4;
+  al += draw_rect.y;
+  draw_point.y = al;
+
+
+  al = word_3AE2;
+  al += draw_rect.x;
+  draw_point.x = al;
+  ui_set_byte_3236(al);
 }
 
 // 0x42FB

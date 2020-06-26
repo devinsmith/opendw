@@ -45,8 +45,8 @@ struct ui_rect {
 };
 
 struct ui_point {
-  uint16_t x;
-  uint16_t y;
+  uint16_t x; // 0x32BF
+  uint16_t y; // 0x32C1
 };
 
 extern uint8_t ui_drawn_yet; // 0x268E
