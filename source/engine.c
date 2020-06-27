@@ -57,6 +57,12 @@ uint8_t byte_1BE5 = 0;
 
 uint16_t word_1C63 = 0;
 uint8_t byte_1CE4 = 0;
+uint8_t byte_1E1F = 0;
+uint8_t byte_1E20 = 0;
+
+// This is an unknown size, currently guessing at
+// 0x1E21 - 0x1F0F
+unsigned char *data_1E21;
 
 // 0x1EB9, 2 bytes, since there's a function at 0x1EBB
 unsigned char data_1EB9[] = { 0xC2, 0x00 };
@@ -1854,17 +1860,91 @@ static void op_80(void)
 }
 
 // 0x1DBB
-static void sub_1DBB()
+// also called by 0x1DB9 (with high val of 0)
+static void sub_1DBB(uint16_t val)
 {
-  printf("%s: 0x1DBB unimplemented\n", __func__);
-  exit(1);
+  uint8_t al, bl, dl;
+  unsigned int tmp;
+
+  word_11C6 = val;
+  dl = 4;
+  word_11C8 = 0;
+
+  // 1DC8 : mov dl, 9
+
+  // 0x1DCA
+  bl = dl;
+  cpu.bx = bl;
+  byte_1E20 = 0;
+  int counter = cpu.bx << 1;
+
+  // 1DD4 (loop)
+  while (counter > 0) {
+    dl = 0xB0;
+
+    while (1) {
+      // 1DD6
+      cpu.ax = word_11C6;
+      uint16_t data_val = data_1E21[counter];
+      data_val += (data_1E21[counter + 1] << 8);
+      tmp = cpu.ax - data_val;
+      cpu.cf = (tmp & 0x10000) == 0x10000;
+
+      cpu.ax = tmp & 0xFFFF;
+      cpu.cx = cpu.ax;
+      cpu.ax = word_11C8;
+
+      data_val = data_1E21[counter + 0x14];
+      data_val += data_1E21[counter + 0x15] << 8;
+      tmp = cpu.ax - data_val - cpu.cf;
+      cpu.cf = (tmp & 0x10000) == 0x10000;
+      cpu.ax = tmp & 0xFFFF;
+
+      if (cpu.cf == 0) {
+        // 0x1DE8
+        word_11C8 = cpu.ax;
+        word_11C6 = cpu.cx;
+        dl++;
+      } else {
+        // 0x1DF3
+        break;
+      }
+    }
+
+    int skip_1E10 = 0;
+
+    // 0x1DF3
+    if (counter != 0) {
+      // 0x1DF7
+      if (dl != 0xB0) {
+        byte_1E20 = dl;
+      }
+      // 0x1E00
+      if (byte_1E20 == 0) {
+        if (byte_1E1F != 0) {
+          dl = 0xA0;
+        } else {
+          skip_1E10 = 1;
+        }
+      }
+    }
+    // 0x1E10
+    if (skip_1E10 == 0) {
+      al = dl;
+      sub_3150(al);
+    }
+    // 0x1E15
+    counter = counter - 2;
+  }
+  byte_1E1F = 0;
+  cpu.bx = 0;
 }
 
 // 0x48C5
 static void op_81()
 {
   cpu.ax = word_3AE2;
-  sub_1DBB();
+  sub_1DBB(cpu.ax);
 }
 
 // 0x48EE
@@ -2975,6 +3055,7 @@ void run_engine()
   // load unknown data from COM file.
   data_2A68 = com_extract(0x2A68, 0x39);
   data_D760 = com_extract(0xD760, 0x700);
+  data_1E21 = com_extract(0x1E21, 0xEF);
 
   // 0x1A6
   // Loads into 0x1887:0000
