@@ -298,6 +298,7 @@ static void op_8D();
 static void op_93();
 static void op_94();
 static void op_95();
+static void op_96();
 static void op_97();
 static void op_98();
 static void op_99();
@@ -459,7 +460,7 @@ struct op_call_table targets[] = {
   { op_93, "0x4A67" },
   { op_94, "0x4A6D" },
   { op_95, "0x4894" },
-  { NULL, "0x48B5" },
+  { op_96, "0x48B5" },
   { op_97, "0x42FB" },
   { op_98, "0x4348" },
   { op_99, "0x40E7" },
@@ -603,6 +604,7 @@ static uint16_t pop_word()
 // 0x3B18
 static void op_00()
 {
+  printf("%s - setting 3AE1 to 0xFF\n", __func__);
   byte_3AE1 = 0xFF;
 }
 
@@ -1424,9 +1426,7 @@ static void op_56(void)
 
   uint8_t ah = (cpu.ax & 0xFF00) >> 8;
   if (byte_3AE1 != ah) {
-    printf("op_56 not done, exiting here\n");
-    cpu.stack[cpu.sp++] = cpu.cx;
-    exit(1);
+    push_word(cpu.cx);
   } else {
     // store cl into stack.
     push_byte(cpu.cx & 0xFF);
@@ -1595,6 +1595,7 @@ static void op_5D(void)
 }
 
 // 0x4322
+// Set properties of character (value is in word_3AE2).
 static void op_5E(void)
 {
   uint8_t al = game_state.unknown[6];
@@ -1948,6 +1949,8 @@ static void op_81()
 }
 
 // 0x48EE
+// Writes word_3AE2 out to screen.
+// Could be 1 byte or 2 bytes depending on whether byte_3AE1 is set.
 static void op_83(void)
 {
   uint8_t al;
@@ -2167,7 +2170,7 @@ static void sub_2A4C()
   uint8_t al;
 
   cpu.di++;
-  printf("DI: 0x%04X\n", cpu.di);
+  printf("%s DI: 0x%04X\n", __func__, cpu.di);
 
   cpu.bx = *(cpu.base_pc + cpu.di);
   cpu.bx += *(cpu.base_pc + cpu.di + 1) << 8;
@@ -2429,6 +2432,7 @@ static void op_89(void)
 
   sub_28B0(&cpu.pc, cpu.base_pc);
 
+  // 0x4984
   cpu.ax = cpu.ax & 0x00FF;
   printf("%s: BX: 0x%04X\n", __func__, cpu.bx);
   cpu.pc = cpu.base_pc + cpu.bx;
@@ -2584,6 +2588,7 @@ static void op_93(void)
 }
 
 // 0x4A6D
+// Who pushes ?
 static void op_94(void)
 {
   uint8_t al = pop_byte();
@@ -2609,6 +2614,17 @@ static void op_95()
   al += draw_rect.x;
   draw_point.x = al;
   ui_set_byte_3236(al);
+}
+
+// 0x48B5
+static void op_96()
+{
+  uint8_t al;
+
+  ui_draw_string();
+  al = draw_rect.w;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  sub_1BE6();
 }
 
 // 0x42FB

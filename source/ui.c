@@ -316,9 +316,9 @@ void draw_pattern(struct ui_rect *rect)
   int dx = rect->w - rect->x;
   int starting_line = rect->y;
   zero_out_2AAA();
-  printf("Number of lines: %d\n", num_lines);
-  printf("Line: %d\n", starting_line);
-  printf("DX: 0x%04x\n", dx);
+//  printf("Number of lines: %d\n", num_lines);
+//  printf("Line: %d\n", starting_line);
+//  printf("DX: 0x%04x\n", dx);
 
   uint16_t ax = 0xFFFF; // word_359A (color)
 
