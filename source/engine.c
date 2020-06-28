@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "engine.h"
+#include "player.h"
 #include "resource.h"
 #include "tables.h"
 #include "ui.h"
@@ -274,7 +275,7 @@ static void op_58();
 static void op_59();
 static void op_5A();
 static void op_5C();
-static void op_5D();
+static void get_character_data();
 static void op_5E();
 static void op_66();
 static void op_69();
@@ -403,7 +404,7 @@ struct op_call_table targets[] = {
   { op_5A, "0x3AEE" },
   { NULL, "0x427A" },
   { op_5C, "0x4295" },
-  { op_5D, "0x42D8" },
+  { get_character_data, "0x42D8" },
   { op_5E, "0x4322" },
   { NULL, "0x4372" },
   { NULL, "0x438B" },
@@ -1568,23 +1569,28 @@ static void op_5C(void)
   cpu.pc = save_pc;
 }
 
-// 0x42D8
-static void op_5D(void)
+// 0x42D8 (5D)
+// Loads word_3AE2 with character data.
+static void get_character_data(void)
 {
+  int chr_idx;
+
   uint8_t al = game_state.unknown[6];
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.di = cpu.ax;
   cpu.bx = 0xC960;
 
   uint8_t bh = (cpu.bx & 0xFF00) >> 8;
-  bh += game_state.unknown[cpu.di + 0xA]; // Character selector ?
+  chr_idx = game_state.unknown[cpu.di + 0xA]; // Character selector ?
+  bh += chr_idx;
   cpu.bx = bh << 8 | (cpu.bx & 0xFF);
 
   al = *cpu.pc++; // Character offset
+  printf("%s - Player number: %d 0x%02X\n", __func__, chr_idx, al);
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.bx += cpu.ax;
 
-  unsigned char *c960 = get_C960();
+  unsigned char *c960 = get_player_data_base();
   cpu.cx = c960[cpu.bx - 0xC960];
 
   word_3AE2 = cpu.cx & 0xFF;
@@ -1618,7 +1624,7 @@ static void op_5E(void)
     exit(1);
   }
   // mov [di], al
-  unsigned char *c960 = get_C960();
+  unsigned char *c960 = get_player_data_base();
   c960[cpu.bx - 0xC960] = cpu.cx & 0xFF;
   if (byte_3AE1 != 0) {
     c960[cpu.bx - 0xC960 + 1] = (cpu.cx & 0xFF00) >> 8;
@@ -1808,11 +1814,10 @@ static void write_character_name()
   cpu.ax = (ah << 8) | (cpu.ax & 0xFF);
   cpu.bx = cpu.ax;
 
-  unsigned char *c960 = get_C960();
-  c960 += val << 8; // 512 bytes.
-  printf("%s: 0x%04X, 0x%02X\n", __func__, cpu.bx, val);
+  unsigned char *player = get_player_data(val >> 1);
+  printf("%s: 0x%04X, Player number: 0x%02X\n", __func__, cpu.bx, val);
   while (1) {
-    al = *c960++;
+    al = *player++;
     ah = al;
     cpu.ax = al;
     al = al | 0x80;
@@ -2368,7 +2373,7 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
           cpu.bx = 0xC960;
           bh = game_state.unknown[0xA + si];
           cpu.bx += (bh << 8);
-          unsigned char *c960 = get_C960();
+          unsigned char *c960 = get_player_data_base();
           cpu.cx = c960[cpu.bx - 0xC960 + 0x4C];
           cpu.cx = cpu.cx & byte_2AA9;
           if (cpu.cx != 0)
@@ -2646,7 +2651,7 @@ static void op_97()
   cpu.bx += cpu.ax;
   cpu.bx += word_3AE4;
 
-  unsigned char *c960 = get_C960();
+  unsigned char *c960 = get_player_data_base();
 
   cpu.cx = c960[cpu.bx - 0xC960];
   cl = c960[cpu.bx - 0xC960];
@@ -2679,7 +2684,7 @@ static void op_98()
   cpu.bx += word_3AE4;
   cpu.cx = word_3AE2;
 
-  unsigned char *c960 = get_C960();
+  unsigned char *c960 = get_player_data_base();
   c960[cpu.bx - 0xC960] = cpu.cx & 0xFF;
   if (byte_3AE1 != (cpu.ax & 0xFF00) >> 8) {
     c960[cpu.bx - 0xC960 + 1] = (cpu.cx & 0xFF00) >> 8;
@@ -3149,7 +3154,7 @@ static void sub_1ABD(uint8_t val)
   // 1B22
   al = 0xC;
   cpu.ax = (cpu.ax & 0xFF00) | al;
-  unsigned char *c960 = get_C960();
+  unsigned char *c960 = get_player_data_base();
   unsigned char *di = c960 + (word_1C63 - 0xC960);
   di--;
 
@@ -3268,7 +3273,7 @@ void reset_game_state()
 static int sub_1C57()
 {
   uint16_t di = word_1C63;
-  unsigned char *c960 = get_C960();
+  unsigned char *c960 = get_player_data_base();
 
   cpu.ax = c960[di - 0xC960 + cpu.bx];
   cpu.ax += (c960[di - 0xC960 + 1 + cpu.bx]) << 8;

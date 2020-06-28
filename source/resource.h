@@ -57,8 +57,6 @@ int find_index_by_tag(int tag);
 unsigned char *com_extract(size_t off, size_t sz);
 struct resource* game_memory_alloc(size_t nbytes, int marker, int tag);
 
-unsigned char *get_C960();
-
 #ifdef __cplusplus
 }
 #endif
