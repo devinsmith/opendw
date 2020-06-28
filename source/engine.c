@@ -217,7 +217,7 @@ static void sub_3150(unsigned char byte);
 static void sub_316C();
 static void append_string(unsigned char byte);
 static void sub_280E();
-static void sub_1C79(unsigned char **src_ptr);
+static void sub_1C79(unsigned char **src_ptr, uint16_t offset);
 static void sub_1BF8(uint8_t color, uint8_t y_adjust);
 
 // Decoded opcode calls, foward definition.
@@ -1783,20 +1783,21 @@ static void op_76(void)
 static void op_77()
 {
   draw_pattern(&draw_rect);
-  sub_1C79(&cpu.pc);
+  sub_1C79(&cpu.pc, cpu.pc - cpu.base_pc);
 }
 
 // 0x47EC
 static void op_78(void)
 {
-  sub_1C79(&cpu.pc);
+  sub_1C79(&cpu.pc, cpu.pc - cpu.base_pc);
 }
 
 // 0x4801
 static void op_7A()
 {
   unsigned char *src_ptr= word_3ADF->bytes + word_3AE2;
-  sub_1C79(&src_ptr);
+  sub_1C79(&src_ptr, word_3AE2);
+  word_3AE2 = cpu.bx;
 }
 
 // 0x1A40
@@ -2274,7 +2275,7 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
     printf("%s: cpu.bx = 0x%04X\n", __func__, cpu.bx);
     unsigned char *src_ptr = data_2A68 + (cpu.bx - 0x2A68);
 
-    sub_1C79(&src_ptr);
+    sub_1C79(&src_ptr, (cpu.bx - 0x2A68));
     ui_draw_string();
 
     bl = draw_point.y;
@@ -2436,7 +2437,7 @@ static void op_89(void)
 
   sub_28B0(&cpu.pc, cpu.base_pc);
 
-  // 0x4984
+  // 0x4984 (A good idea to break here so you can trap keypresses).
   cpu.ax = cpu.ax & 0x00FF;
   printf("%s: BX: 0x%04X\n", __func__, cpu.bx);
   cpu.pc = cpu.base_pc + cpu.bx;
@@ -2632,6 +2633,7 @@ static void op_96()
 }
 
 // 0x42FB
+// Loads character data into word_3AE2
 static void op_97()
 {
   uint8_t al, ch, cl;
@@ -2737,9 +2739,10 @@ static void op_9A(void)
   }
 }
 
-static void sub_1C79(unsigned char **src_ptr)
+static void sub_1C79(unsigned char **src_ptr, uint16_t offset)
 {
   num_bits = 0;
+  cpu.bx = offset;
 
   byte_1CE4 = 0;
   while (1) {
@@ -2804,6 +2807,7 @@ static uint8_t sub_1D86(unsigned char **src_ptr)
       bit_buffer = dl;
       dl = 7;
       (*src_ptr)++;
+      cpu.bx++;
     }
 
     int cf = 0;
@@ -2869,6 +2873,7 @@ static uint8_t sub_1D8A(unsigned char **src_ptr)
       bit_buffer = dl;
       dl = 7;
       (*src_ptr)++;
+      cpu.bx++; // Just for keeping track of how many bytes we advance.
     }
     // 0x1D96
     uint8_t tmp = bit_buffer;
@@ -2991,7 +2996,7 @@ static void sub_27E3()
 {
   word_3163 = ui_header_set_byte;
   ui_header_reset();
-  sub_1C79(&cpu.pc);
+  sub_1C79(&cpu.pc, cpu.pc - cpu.base_pc);
   sub_316C();
   sub_280E();
 }
