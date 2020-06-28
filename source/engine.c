@@ -1777,7 +1777,6 @@ static void op_75(void)
 static void op_76(void)
 {
   draw_pattern(&draw_rect);
-  sub_1C79(&cpu.pc);
 }
 
 // 0x47E3
