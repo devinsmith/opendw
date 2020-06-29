@@ -101,6 +101,7 @@ uint16_t g_linenum; // 36C4
 
 uint8_t byte_3855 = 0;
 uint16_t word_3856 = 0;
+uint8_t byte_3867 = 0;
 uint8_t byte_387F = 0;
 
 uint8_t byte_3AE1 = 0;
@@ -120,6 +121,7 @@ const struct resource *running_script = NULL;
 const struct resource *word_3ADF = NULL;
 
 uint16_t word_42D6 = 0;
+uint16_t word_4454 = 0;
 uint8_t byte_4F2B = 0;
 
 /* Timers? */
@@ -184,8 +186,6 @@ struct virtual_cpu {
   unsigned char *base_pc;
 };
 
-
-
 /* | Bit # |  Mask  | Abbreviation       | Description                     |
  * +-------+--------+--------------------+---------------------------------+
  * | 0     | 0x0001 | CF                 | Carry flag                      |
@@ -206,6 +206,7 @@ struct virtual_cpu {
 */
 #define CARRY_FLAG_MASK 0x1
 #define ZERO_FLAG_MASK 0x40
+#define SIGN_FLAG_MASK 0x80
 
 struct virtual_cpu cpu;
 struct mouse_status mouse;
@@ -251,10 +252,12 @@ static void op_25();
 static void op_26();
 static void op_28();
 static void op_2B();
+static void op_2D();
 static void op_2F();
 static void op_30();
 static void op_32();
 static void op_38();
+static void op_39();
 static void op_3E();
 static void op_3F();
 static void op_40();
@@ -262,6 +265,7 @@ static void op_41();
 static void op_42();
 static void op_44();
 static void op_45();
+static void op_47();
 static void loop(); // 49
 static void op_4A();
 static void op_4B();
@@ -277,6 +281,7 @@ static void op_5A();
 static void op_5C();
 static void get_character_data();
 static void op_5E();
+static void op_63();
 static void op_66();
 static void op_69();
 static void op_74();
@@ -289,6 +294,7 @@ static void read_header_bytes(void); // 7B
 static void op_7D();
 static void op_80();
 static void op_81();
+static void op_82();
 static void op_83();
 static void op_84();
 static void op_85();
@@ -356,7 +362,7 @@ struct op_call_table targets[] = {
   { NULL, "0x3E36" },
   { op_2B, "0x3E45" },
   { NULL, "0x3E4C" },
-  { NULL, "0x3E67" },
+  { op_2D, "0x3E67" },
   { NULL, "0x3E6E" },
   { op_2F, "0x3E75" },
   { op_30, "0x3E9D" },
@@ -368,7 +374,7 @@ struct op_call_table targets[] = {
   { NULL, "0x3F8C" },
   { NULL, "0x3FAD" },
   { op_38, "0x3FBC" },
-  { NULL, "0x3FD4" },
+  { op_39, "0x3FD4" },
   { NULL, "0x3FEA" },
   { NULL, "0x4002" },
   { NULL, "0x4018" },
@@ -382,7 +388,7 @@ struct op_call_table targets[] = {
   { op_44, "0x4099" },
   { op_45, "0x40A3" },
   { NULL, "0x40AF" },
-  { NULL, "0x40B8" },
+  { op_47, "0x40B8" },
   { NULL, "0x40ED" },
   { loop, "0x4106" },
   { op_4A, "0x4113" },
@@ -410,7 +416,7 @@ struct op_call_table targets[] = {
   { NULL, "0x438B" },
   { NULL, "0x43A6" },
   { NULL, "0x43BF" },
-  { NULL, "0x43F7" },
+  { op_63, "0x43F7" },
   { NULL, "0x446E" },
   { NULL, "0x44B8" },
   { op_66, "0x40C1" },
@@ -441,7 +447,7 @@ struct op_call_table targets[] = {
   { NULL, "0x486D" },
   { op_80, "0x487F" },
   { op_81, "0x48C5" },
-  { NULL, "0x48D2" },
+  { op_82, "0x48D2" },
   { op_83, "0x48EE" },
   { op_84, "0x4907" },
   { op_85, "0x4920" },
@@ -1046,6 +1052,12 @@ static void op_2B()
   word_3AE4 = (word_3AE4 & 0xFF00) | byte_3AE4;
 }
 
+// 0x3E67
+static void op_2D()
+{
+  word_3AE2 = word_3AE2 >> 1;
+}
+
 // 0x3E75
 static void op_2F()
 {
@@ -1161,6 +1173,25 @@ static void op_38()
     cpu.ax = (cpu.ax & 0xFF00) | al;
     word_3AE2 = word_3AE2 & al;
   }
+}
+
+// 0x3FD4
+static void op_39()
+{
+  uint8_t al, ah;
+
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
+
+  cpu.ax = game_state.unknown[cpu.bx];
+  cpu.ax += game_state.unknown[cpu.bx + 1] << 8;
+
+  cpu.ax |= word_3AE2;
+  ah = (cpu.ax & 0xFF00) >> 8;
+  ah = ah & byte_3AE1;
+  cpu.ax = (ah << 8) | (cpu.ax & 0xFF);
+  word_3AE2 = cpu.ax;
 }
 
 // 0x4051
@@ -1313,6 +1344,20 @@ static void op_45(void)
   cpu.ax = new_address;
   printf("(op45)    New address: 0x%04x\n", new_address);
   cpu.pc = cpu.base_pc + new_address;
+}
+
+// 0x40B8
+static void op_47()
+{
+  if ((word_3AE6 & SIGN_FLAG_MASK) == 0) {
+    // 40A0
+    op_52();
+    return;
+  }
+  // 40AA
+  cpu.pc++;
+  cpu.pc++;
+
 }
 
 // 0x4106
@@ -1643,6 +1688,48 @@ static void op_5E(void)
 
 }
 
+// 0x43F7
+static void op_63()
+{
+  uint8_t al, ah;
+
+  ah = (cpu.ax & 0xFF00) >> 8;
+  byte_3AE1 = ah;
+
+  // 0x3AE3
+  word_3AE2 = (ah << 8) | (word_3AE2 & 0xFF);
+
+  // es:lodsw
+  cpu.ax = *cpu.pc++;
+  cpu.ax += ((*cpu.pc++) << 8);
+
+  word_4454 = cpu.ax;
+  word_3ADB = cpu.pc - cpu.base_pc; // is this correct?
+  byte_3867 = 0;
+
+  // 0x440D
+
+  cpu.bx = 0;
+  cpu.bx = cpu.bx << 1;
+  al = game_state.unknown[6];
+  ah = 0;
+  cpu.ax = al;
+  cpu.di = cpu.ax;
+  cpu.ax = 0xCA4C;
+  ah = (cpu.ax & 0xFF00) >> 8;
+  ah += game_state.unknown[cpu.di + 0xA]; // character select.
+  cpu.ax = (ah << 8) | (cpu.ax & 0xFF);
+  cpu.ax += get_unknown_4456(cpu.bx);
+  cpu.di = cpu.ax;
+  if (data_CA4C[cpu.di - 0xCA4C] != 0) {
+    // 0x4430
+    printf("%s: 0x4430 unimplemented\n", __func__);
+    exit(1);
+  }
+  // 0x444C
+  word_3AE6 &= 0xFFFE;
+}
+
 // 0x40C1
 static void op_66(void)
 {
@@ -1876,20 +1963,12 @@ static void op_80(void)
   sub_1BE6();
 }
 
-// 0x1DBB
-// also called by 0x1DB9 (with high val of 0)
-static void sub_1DBB(uint16_t val)
+// 0x1DCA
+static void sub_1DCA(uint8_t dl)
 {
-  uint8_t al, bl, dl;
+  uint8_t al, bl;
   unsigned int tmp;
 
-  word_11C6 = val;
-  dl = 4;
-  word_11C8 = 0;
-
-  // 1DC8 : mov dl, 9
-
-  // 0x1DCA
   bl = dl;
   cpu.bx = bl;
   byte_1E20 = 0;
@@ -1956,6 +2035,26 @@ static void sub_1DBB(uint16_t val)
   // 0x1E19
   byte_1E1F = 0;
   cpu.bx = 0;
+
+}
+
+// 0x1DBB
+// also called by 0x1DB9 (with high val of 0)
+static void sub_1DBB(uint16_t val)
+{
+  uint8_t dl;
+
+  word_11C6 = val;
+  dl = 4;
+  word_11C8 = 0;
+
+  sub_1DCA(dl);
+}
+
+// 0x1DC8
+static void sub_1DC8()
+{
+  sub_1DCA(9);
 }
 
 // 0x48C5
@@ -1963,6 +2062,27 @@ static void op_81()
 {
   cpu.ax = word_3AE2;
   sub_1DBB(cpu.ax);
+}
+
+// 0x48D2
+static void op_82()
+{
+  uint8_t al;
+
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
+
+  cpu.ax = game_state.unknown[cpu.bx];
+  cpu.ax += game_state.unknown[cpu.bx + 1] << 8;
+
+  word_11C6 = cpu.ax;
+
+  cpu.ax = game_state.unknown[cpu.bx + 2];
+  cpu.ax += game_state.unknown[cpu.bx + 3] << 8;
+
+  word_11C8 = cpu.ax;
+  sub_1DC8();
 }
 
 // 0x48EE
@@ -2711,22 +2831,26 @@ static void op_99(void)
 
   // XXX: Figure out what test this is really trying to do.
   // Zero flag, carry flag, sign flag?
-
   int zf = 0;
   int cf = 0;
+  int sf = 0;
+
   // 40C9
   if (byte_3AE1 == (cpu.ax >> 8)) {
     uint8_t cl = cpu.cx & 0x00FF;
     if ((cl & cl) == 0) {
       zf = 1;
     }
+    sf = (cl >= 0x80);
   } else {
     if ((cpu.cx & cpu.cx) == 0) {
       zf = 1;
     }
+    sf = (cpu.cx >= 0x8000);
   }
 
   uint16_t flags = 0;
+  flags |= sf << 7;
   flags |= zf << 6;
   flags |= 1 << 1; // Always 1, reserved.
   flags |= cf << 0;
