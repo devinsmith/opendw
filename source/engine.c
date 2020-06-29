@@ -122,6 +122,10 @@ const struct resource *word_3ADF = NULL;
 
 uint16_t word_42D6 = 0;
 uint16_t word_4454 = 0;
+
+// 0x4A99
+unsigned char data_4A99[] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
+
 uint8_t byte_4F2B = 0;
 
 /* Timers? */
@@ -180,6 +184,7 @@ struct virtual_cpu {
   // flags
   uint8_t cf;
   uint8_t zf;
+  uint8_t sf;
 
   // program counter
   unsigned char *pc;
@@ -258,6 +263,7 @@ static void op_30();
 static void op_32();
 static void op_38();
 static void op_39();
+static void op_3D();
 static void op_3E();
 static void op_3F();
 static void op_40();
@@ -281,6 +287,7 @@ static void op_5A();
 static void op_5C();
 static void get_character_data();
 static void op_5E();
+static void op_61();
 static void op_63();
 static void op_66();
 static void op_69();
@@ -378,7 +385,7 @@ struct op_call_table targets[] = {
   { NULL, "0x3FEA" },
   { NULL, "0x4002" },
   { NULL, "0x4018" },
-  { NULL, "0x4030" },
+  { op_3D, "0x4030" },
   { op_3E, "0x4051" },
   { op_3F, "0x4067" },
   { op_40, "0x4074" },
@@ -414,7 +421,7 @@ struct op_call_table targets[] = {
   { op_5E, "0x4322" },
   { NULL, "0x4372" },
   { NULL, "0x438B" },
-  { NULL, "0x43A6" },
+  { op_61, "0x43A6" },
   { NULL, "0x43BF" },
   { op_63, "0x43F7" },
   { NULL, "0x446E" },
@@ -1194,6 +1201,45 @@ static void op_39()
   word_3AE2 = cpu.ax;
 }
 
+// 0x4030
+static void op_3D()
+{
+  uint8_t ah, al;
+  uint16_t flags;
+
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
+  cpu.cx = word_3AE2;
+  ah = (cpu.ax & 0xFF00) >> 8;
+  if (byte_3AE1 != ah) {
+    // 0x403E
+    if (cpu.cx <= game_state.unknown[cpu.bx]) {
+      cpu.cf = 1;
+    } else {
+      cpu.cf = 0;
+    }
+  } else {
+    // 0x404B
+    uint8_t cl;
+    cl = cpu.cx & 0xFF;
+    if (cl <= game_state.unknown[cpu.bx]) {
+      cpu.cf = 1;
+    } else {
+      cpu.cf = 0;
+    }
+  }
+  // flags;
+  flags = 0;
+  cpu.cf = !cpu.cf;
+
+  flags |= cpu.sf << 7;
+  flags |= cpu.zf << 6;
+  flags |= 1 << 1; // Always 1, reserved.
+  flags |= cpu.cf << 0;
+  word_3AE6 = flags;
+}
+
 // 0x4051
 static void op_3E(void)
 {
@@ -1686,6 +1732,63 @@ static void op_5E(void)
     c960[cpu.bx - 0xC960 + 1] = (cpu.cx & 0xFF00) >> 8;
   }
 
+}
+
+// 0x4A7D
+static void sub_4A7D()
+{
+  uint8_t al;
+
+  al = word_3AE2;
+  cpu.ax = al;
+  cpu.di = cpu.ax;
+  cpu.bx = cpu.ax;
+
+  al = *cpu.pc++;
+  cpu.ax = al;
+  cpu.bx = cpu.bx >> 3;
+  cpu.bx += cpu.ax;
+
+  cpu.di += 7;
+  al = data_4A99[cpu.di];
+  cpu.ax = al;
+}
+
+static void sub_40D1()
+{
+  uint16_t flags = 0;
+
+  flags |= cpu.sf << 7;
+  flags |= cpu.zf << 6;
+  flags |= 1 << 1; // Always 1, reserved.
+  flags |= cpu.cf << 0;
+  cpu.ax = flags;
+
+  cpu.ax &= 0xFFFE;
+  word_3AE6 &= 0x0001;
+  word_3AE6 |= cpu.ax;
+}
+
+// 0x43A6
+static void op_61()
+{
+  // 4A7D
+  sub_4A7D();
+  cpu.cx = game_state.unknown[6];
+  cpu.di = cpu.cx;
+
+  cpu.cx = 0xC960;
+
+  uint8_t val = game_state.unknown[cpu.di + 10];
+  unsigned char *player = get_player_data(val >> 1);
+
+  // test [bx+di], al
+  uint8_t test_val = player[cpu.bx];
+  uint8_t test_result = test_val & (cpu.ax & 0xFF);
+  cpu.cf = 0;
+  cpu.sf = test_result >= 0x80;
+  cpu.zf = test_result == 0;
+  sub_40D1();
 }
 
 // 0x43F7
