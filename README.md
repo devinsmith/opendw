@@ -5,7 +5,7 @@ This game was originally written in 16 bit x86 assembly language running in
 real mode. OpenDW is an attempt to port this game to modern environments using
 the C language.
 
-Original game engine by [Rebecca Ann Heineman](http://www.burgerbecky.com/).
+Original game engine by [Rebecca Ann Heineman](https://www.burgerbecky.com/) (note: invalid certificate).
 
 This game can be purchased at [GOG](https://www.gog.com/game/dragon_wars).
 
