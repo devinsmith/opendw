@@ -602,6 +602,14 @@ static uint16_t pop_word()
   return val;
 }
 
+static uint16_t peek_word()
+{
+  uint16_t val = cpu.stack[cpu.sp];
+  val += (cpu.stack[cpu.sp + 1] << 8);
+
+  return val;
+}
+
 // 0x3B18
 static void op_00()
 {
@@ -1412,11 +1420,14 @@ static void op_55()
 {
   uint8_t ah;
 
-  cpu.cx = pop_word();
+  // peek word, pop byte.
+  cpu.cx = peek_word();
+  pop_byte();
   word_3AE2 = (cpu.cx & 0xFF);
   ah = (cpu.ax & 0xFF00) >> 8;
   if (ah != byte_3AE1) {
     word_3AE2 = cpu.cx;
+    pop_byte();
   }
 }
 
