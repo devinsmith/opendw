@@ -1896,7 +1896,7 @@ static void sub_1DBB(uint16_t val)
   int counter = cpu.bx << 1;
 
   // 1DD4 (loop)
-  while (counter > 0) {
+  while (counter >= 0) {
     dl = 0xB0;
 
     while (1) {
@@ -1953,6 +1953,7 @@ static void sub_1DBB(uint16_t val)
     // 0x1E15
     counter = counter - 2;
   }
+  // 0x1E19
   byte_1E1F = 0;
   cpu.bx = 0;
 }
