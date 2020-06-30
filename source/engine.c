@@ -253,9 +253,12 @@ static void op_1D();
 static void op_21();
 static void op_22();
 static void op_23();
+static void op_24();
 static void op_25();
 static void op_26();
+static void op_27();
 static void op_28();
+static void op_2A();
 static void op_2B();
 static void op_2D();
 static void op_2F();
@@ -360,13 +363,13 @@ struct op_call_table targets[] = {
   { op_21, "0x3DAE" },
   { op_22, "0x3DB7" },
   { op_23, "0x3DC0" },
-  { NULL, "0x3DD7" },
+  { op_24, "0x3DD7" },
   { op_25, "0x3DE5" },
   { op_26, "0x3DEC" },
-  { NULL, "0x3E06" },
+  { op_27, "0x3E06" },
   { op_28, "0x3E14" },
   { NULL, "0x3E1B" },
-  { NULL, "0x3E36" },
+  { op_2A, "0x3E36" },
   { op_2B, "0x3E45" },
   { NULL, "0x3E4C" },
   { op_2D, "0x3E67" },
@@ -1016,6 +1019,19 @@ static void op_23(void)
   }
 }
 
+// 0x3DD7
+static void op_24()
+{
+  uint8_t ah;
+
+  cpu.ax = word_3AE2;
+  cpu.ax++;
+  ah = (cpu.ax & 0xFF00) >> 8;
+  ah = ah & byte_3AE1;
+  cpu.ax = (ah << 8) | (cpu.ax & 0xFF);
+  word_3AE2 = cpu.ax;
+}
+
 // 0x3DE5
 static void op_25()
 {
@@ -1043,12 +1059,39 @@ static void op_26(void)
   }
 }
 
+// 0x3E06
+static void op_27()
+{
+  uint8_t ah;
+
+  cpu.ax = word_3AE2;
+  cpu.ax--;
+  ah = (cpu.ax & 0xFF00) >> 8;
+  ah = ah & byte_3AE1;
+  cpu.ax = (ah << 8) | (cpu.ax & 0xFF);
+  word_3AE2 = cpu.ax;
+}
+
 // 0x3E14
 static void op_28()
 {
   uint8_t byte_3AE4 = (word_3AE4 & 0x00FF);
   byte_3AE4--;
   word_3AE4 = (word_3AE4 & 0xFF00) | byte_3AE4;
+}
+
+// 0x3E36
+static void op_2A()
+{
+  uint8_t ah;
+
+  cpu.ax = word_3AE2;
+  cpu.ax = cpu.ax << 1;
+
+  ah = (cpu.ax & 0xFF00) >> 8;
+  ah = ah & byte_3AE1;
+  cpu.ax = (ah << 8) | (cpu.ax & 0xFF);
+  word_3AE2 = cpu.ax;
 }
 
 // 0x3E45
@@ -1214,7 +1257,7 @@ static void op_3D()
   ah = (cpu.ax & 0xFF00) >> 8;
   if (byte_3AE1 != ah) {
     // 0x403E
-    if (cpu.cx <= game_state.unknown[cpu.bx]) {
+    if (cpu.cx < game_state.unknown[cpu.bx]) {
       cpu.cf = 1;
     } else {
       cpu.cf = 0;
@@ -1223,7 +1266,7 @@ static void op_3D()
     // 0x404B
     uint8_t cl;
     cl = cpu.cx & 0xFF;
-    if (cl <= game_state.unknown[cpu.bx]) {
+    if (cl < game_state.unknown[cpu.bx]) {
       cpu.cf = 1;
     } else {
       cpu.cf = 0;
@@ -2633,7 +2676,14 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
           // 0x2A2B
           if ((al & 0x80) == 0) {
             // 0x2A2F
-            printf("%s: 0x2A2F unimplemented\n", __func__);
+            cpu.di++;
+            al = al | 0x80;
+            cpu.ax = (cpu.ax & 0xFF00) | al;
+            if (al > byte_2AA6)
+            {
+              continue;
+            }
+            printf("%s: 0x2A38 unimplemented\n", __func__);
             exit(1);
           }
           if (al == byte_2AA6) {
@@ -2673,6 +2723,7 @@ static void op_89(void)
   sub_28B0(&cpu.pc, cpu.base_pc);
 
   // 0x4984 (A good idea to break here so you can trap keypresses).
+  // the key pressed will be in AX (OR'd with 0x80).
   cpu.ax = cpu.ax & 0x00FF;
   printf("%s: BX: 0x%04X\n", __func__, cpu.bx);
   cpu.pc = cpu.base_pc + cpu.bx;
