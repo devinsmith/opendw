@@ -157,6 +157,7 @@ get_key()
 {
   SDL_Event e;
 
+
   while (SDL_WaitEventTimeout(&e, 2000)) {
     if (e.type == SDL_KEYDOWN) {
       const SDL_KeyboardEvent *ke = &e.key;
@@ -175,6 +176,13 @@ get_key()
         return 0x8A;
       if (ksym->sym == SDLK_UP)
         return 0x8B;
+
+      // Add special cases.
+      // Special case to capture + key on some keyboards.
+      if ((ksym->sym == SDLK_EQUALS && ksym->mod & KMOD_SHIFT) ||
+          ksym->sym == SDLK_PLUS) {
+        return 0x2B | 0x80;
+      }
 
       // Normal keys.
       if ((ksym->sym & SDLK_SCANCODE_MASK) == 0) {
