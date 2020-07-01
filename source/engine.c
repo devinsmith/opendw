@@ -263,6 +263,7 @@ static void op_2B();
 static void op_2D();
 static void op_2F();
 static void op_30();
+static void op_31();
 static void op_32();
 static void op_38();
 static void op_39();
@@ -376,7 +377,7 @@ struct op_call_table targets[] = {
   { NULL, "0x3E6E" },
   { op_2F, "0x3E75" },
   { op_30, "0x3E9D" },
-  { NULL, "0x3EC1" },
+  { op_31, "0x3EC1" },
   { op_32, "0x3EEB" },
   { NULL, "0x3F11" },
   { NULL, "0x3F4D" },
@@ -1166,6 +1167,39 @@ static void op_30()
   word_3AE6 = (word_3AE6 & 0xFF00) | (((word_3AE6 & 0xFF) << 1) | cf);
 
   return;
+}
+
+// 0x3EC1
+static void op_31()
+{
+  uint8_t al, ah;
+  unsigned int tmp;
+
+  // shr byte [word_3AE6], 1
+  cpu.cf = word_3AE6 & CARRY_FLAG_MASK;
+  word_3AE6 = (word_3AE6 & 0xFF00) | ((word_3AE6 & 0xFF) >> 1);
+
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
+  cpu.cx = game_state.unknown[cpu.bx];
+  cpu.cx += game_state.unknown[cpu.bx + 1] << 8;
+  ah = (cpu.ax & 0xFF00) >> 8;
+
+  if (byte_3AE1 != ah) {
+    // 0x3ED3
+    tmp = word_3AE2 - cpu.cx;
+    cpu.cf = (tmp & 0x10000) == 0x10000;
+    word_3AE2 -= cpu.cx;
+  } else {
+    // 0x3EDF
+    tmp = word_3AE2 - (cpu.cx & 0xFF);
+    cpu.cf = (tmp & 0x100) == 0x100;
+    word_3AE2 -= (cpu.cx & 0xFF);
+  }
+  cpu.cf = !cpu.cf;
+  // rcl byte [3AE6], 1
+  word_3AE6 = (word_3AE6 & 0xFF00) | (((word_3AE6 & 0xFF) << 1) | cpu.cf);
 }
 
 // 0x3EEB
@@ -2683,8 +2717,15 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
             {
               continue;
             }
-            printf("%s: 0x2A38 unimplemented\n", __func__);
-            exit(1);
+            // 0x2A38
+            bl = *(base + cpu.di);
+            bl |= 0x80;
+            if (bl < byte_2AA6) {
+              // 0x29DD
+              continue;
+            }
+            sub_2A4C();
+            return;
           }
           if (al == byte_2AA6) {
             // 0x2A4C
