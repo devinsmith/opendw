@@ -69,6 +69,8 @@ unsigned char *data_1E21;
 unsigned char data_1EB9[] = { 0xC2, 0x00 };
 
 // 0x2C0E
+// Acceptable keys?
+// 0x824, 0x9B (Escape)
 unsigned char data_2C0E[] = { 0x04, 0x82, 0x9B, 0x00, 0x00, 0xFF };
 
 uint8_t byte_1F07 = 0;
@@ -125,6 +127,12 @@ uint16_t word_4454 = 0;
 
 // 0x4A99
 unsigned char data_4A99[] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
+
+// 0x49AB (compressed Yes/No bytes)
+unsigned char data_49AB[] = { 0xFE, 0x6, 0x97, 0x7F, 0x2B, 0xC0 };
+
+// 0x49CA (keys ?)
+unsigned char data_49CA[] = { 0x00, 0x00, 0xCE, 0x00, 0x00, 0xD9, 0x00, 0x00, 0xFF };
 
 uint8_t byte_4F2B = 0;
 
@@ -312,6 +320,7 @@ static void op_85();
 static void op_86();
 static void op_88();
 static void op_89();
+static void op_8C();
 static void op_8D();
 static void op_93();
 static void op_94();
@@ -468,7 +477,7 @@ struct op_call_table targets[] = {
   { op_89, "0x4977" },
   { NULL, "0x498E" },
   { NULL, "0x499B" },
-  { NULL, "0x49A5" },
+  { op_8C, "0x49A5" },
   { op_8D, "0x49D3" },
   { NULL, "0x0000" },
   { NULL, "0x49DD" },
@@ -1734,6 +1743,7 @@ static void op_5C(void)
   cpu.ax = (cpu.ax & 0xFF00) | al;
   push_word(cpu.ax);
   game_state.unknown[6] = 0;
+  al = word_3AE8;
   while (al < game_state.unknown[0x1F]) {
     cpu.bx = word_42D6;
     al = word_3AE8;
@@ -2068,6 +2078,7 @@ static void op_77()
 static void op_78(void)
 {
   sub_1C79(&cpu.pc, cpu.pc - cpu.base_pc);
+  cpu.pc = cpu.base_pc + cpu.bx;
 }
 
 // 0x4801
@@ -2518,7 +2529,7 @@ static void sub_1F8F()
 }
 
 // 0x28B0
-// Should we take BX as an argument.
+// The inputs here have to do with the keys we accept.
 static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
 {
   uint8_t al, ah;
@@ -2743,12 +2754,13 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
 static void sub_2C00()
 {
   cpu.bx = 0x2C0E; // function pointer.
-  unsigned char *ptr = data_2C0E + 0;
+  unsigned char *ptr = data_2C0E;
   sub_28B0(&ptr, data_2C0E);
   draw_pattern(&draw_rect);
 }
 
 // 0x496D
+// Delete (?)
 static void op_88()
 {
   sub_2C00();
@@ -2900,6 +2912,42 @@ static void sub_1E49()
   al = 0x8D;
   sub_3150(al);
   return;
+}
+
+static void sub_1C70(unsigned char *src_ptr)
+{
+  sub_1C79(&src_ptr, 0);
+  cpu.cf = 0;
+}
+
+// 0x49A5
+static void op_8C()
+{
+  sub_1C70(data_49AB);
+  cpu.bx = 0x49CA;
+  unsigned char *ptr = data_49CA;
+  sub_28B0(&ptr, data_49CA);
+  uint8_t key = cpu.ax;
+
+  draw_pattern(&draw_rect);
+
+  if (key == 0xD9) {
+    cpu.cf = 1;
+    cpu.zf = 1;
+  } else {
+    cpu.zf = 0;
+    if ((key & 0xFF) > 0xD9) {
+      cpu.cf = 0;
+    } else {
+      cpu.cf = 1;
+    }
+  }
+
+  word_3AE6 = 0;
+  word_3AE6 |= cpu.sf << 7;
+  word_3AE6 |= cpu.zf << 6;
+  word_3AE6 |= 1 << 1; // Always 1, reserved.
+  word_3AE6 |= cpu.cf << 0;
 }
 
 // 0x49D3
