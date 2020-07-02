@@ -134,6 +134,9 @@ unsigned char data_49AB[] = { 0xFE, 0x6, 0x97, 0x7F, 0x2B, 0xC0 };
 // 0x49CA (keys ?)
 unsigned char data_49CA[] = { 0x00, 0x00, 0xCE, 0x00, 0x00, 0xD9, 0x00, 0x00, 0xFF };
 
+unsigned char byte_4F0F;
+unsigned char byte_4F10;
+
 uint8_t byte_4F2B = 0;
 
 /* Timers? */
@@ -233,6 +236,7 @@ static void append_string(unsigned char byte);
 static void sub_280E();
 static void sub_1C79(unsigned char **src_ptr, uint16_t offset);
 static void sub_1BF8(uint8_t color, uint8_t y_adjust);
+static void sub_4A7D();
 
 // Decoded opcode calls, foward definition.
 static void op_00();
@@ -246,6 +250,7 @@ static void op_08();
 static void op_09();
 static void op_0A();
 static void op_0B();
+static void op_0C();
 static void op_0D();
 static void op_0F();
 static void op_11();
@@ -283,16 +288,19 @@ static void op_41();
 static void op_42();
 static void op_44();
 static void op_45();
+static void op_46();
 static void op_47();
 static void loop(); // 49
 static void op_4A();
 static void op_4B();
 static void op_4C();
+static void op_4F();
 static void op_52();
 static void op_53();
 static void op_54();
 static void op_55();
 static void op_56();
+static void op_57();
 static void op_58();
 static void op_59();
 static void op_5A();
@@ -320,6 +328,7 @@ static void op_85();
 static void op_86();
 static void op_88();
 static void op_89();
+static void op_8B();
 static void op_8C();
 static void op_8D();
 static void op_93();
@@ -349,7 +358,7 @@ struct op_call_table targets[] = {
   { op_09, "0x3B67" },
   { op_0A, "0x3B7A" },
   { op_0B, "0x3B8C" },
-  { NULL, "0x3BA2" },
+  { op_0C, "0x3BA2" },
   { op_0D, "0x3BB7" },
   { NULL, "0x3BD0" },
   { op_0F, "0x3BED" },
@@ -407,7 +416,7 @@ struct op_call_table targets[] = {
   { NULL, "0x408E" },
   { op_44, "0x4099" },
   { op_45, "0x40A3" },
-  { NULL, "0x40AF" },
+  { op_46, "0x40AF" },
   { op_47, "0x40B8" },
   { NULL, "0x40ED" },
   { loop, "0x4106" },
@@ -416,7 +425,7 @@ struct op_call_table targets[] = {
   { op_4C, "0x412A" },
   { NULL, "0x4132" },
   { NULL, "0x414B" },
-  { NULL, "0x4155" },
+  { op_4F, "0x4155" },
   { NULL, "0x4161" },
   { NULL, "0x418B" },
   { op_52, "0x41B9" },
@@ -424,7 +433,7 @@ struct op_call_table targets[] = {
   { op_54, "0x41E1" },
   { op_55, "0x41E5" },
   { op_56, "0x41FD" },
-  { NULL, "0x4215" },
+  { op_57, "0x4215" },
   { op_58, "0x4239" },
   { op_59, "0x41C8" },
   { op_5A, "0x3AEE" },
@@ -476,7 +485,7 @@ struct op_call_table targets[] = {
   { op_88, "0x496D" },
   { op_89, "0x4977" },
   { NULL, "0x498E" },
-  { NULL, "0x499B" },
+  { op_8B, "0x499B" },
   { op_8C, "0x49A5" },
   { op_8D, "0x49D3" },
   { NULL, "0x0000" },
@@ -764,6 +773,25 @@ static void op_0B()
 
   ah = ah & byte_3AE1;
   cpu.ax = ah << 8 | al;
+  word_3AE2 = cpu.ax;
+}
+
+// 0x3BA2
+static void op_0C()
+{
+  uint8_t ah;
+
+  // es:lodsw
+  cpu.ax = *cpu.pc++;
+  cpu.ax += ((*cpu.pc++) << 8);
+  cpu.bx = cpu.ax;
+
+  unsigned char *src = word_3ADF->bytes;
+  cpu.ax = src[cpu.bx];
+  cpu.ax += (src[cpu.bx + 1]) << 8;
+  ah = (cpu.ax & 0xFF00) >> 8;
+  ah &= byte_3AE1;
+  cpu.ax = (ah << 8) | (cpu.ax & 0xFF);
   word_3AE2 = cpu.ax;
 }
 
@@ -1478,6 +1506,19 @@ static void op_45(void)
   cpu.pc = cpu.base_pc + new_address;
 }
 
+// 0x40AF
+static void op_46()
+{
+  if ((word_3AE6 & SIGN_FLAG_MASK) != 0) {
+    // 40A0
+    op_52();
+    return;
+  }
+  // 40AA
+  cpu.pc++;
+  cpu.pc++;
+}
+
 // 0x40B8
 static void op_47()
 {
@@ -1552,6 +1593,21 @@ static void op_4C()
   word_3AE6 &= 0xFFFE;
 }
 
+// 0x4155
+static void op_4F()
+{
+  uint8_t al;
+
+  sub_4A7D();
+  al = cpu.ax & 0xFF;
+
+  al = ~al;
+
+  uint8_t val = game_state.unknown[cpu.bx];
+  val = val & al;
+  set_game_state(cpu.bx, val);
+}
+
 // 0x41B9
 static void op_52(void)
 {
@@ -1620,6 +1676,34 @@ static void op_56(void)
     // store cl into stack.
     push_byte(cpu.cx & 0xFF);
   }
+}
+
+// 0x4215
+static void op_57()
+{
+  uint8_t al;
+
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  push_word(cpu.ax);
+
+  cpu.ax = *cpu.pc++;
+  cpu.ax += ((*cpu.pc++) << 8);
+
+  word_3ADB = cpu.ax;
+  al = word_3AE8;
+  resource_index_release(al);
+  cpu.bx = pop_word();
+  cpu.bx = cpu.bx & 0xFF;
+
+  al = 1;
+  struct resource *r = resource_load(al);
+  al = r->index;
+  word_3AE8 = al;
+  word_3AEA = al;
+  populate_3ADD_and_3ADF();
+  cpu.pc = running_script->bytes + word_3ADB;
+  cpu.base_pc = running_script->bytes;
 }
 
 // 0x4239
@@ -1836,7 +1920,7 @@ static void sub_4A7D()
   cpu.bx = cpu.bx >> 3;
   cpu.bx += cpu.ax;
 
-  cpu.di += 7;
+  cpu.di &= 7;
   al = data_4A99[cpu.di];
   cpu.ax = al;
 }
@@ -2918,6 +3002,50 @@ static void sub_1C70(unsigned char *src_ptr)
 {
   sub_1C79(&src_ptr, 0);
   cpu.cf = 0;
+}
+
+// 0x4D82
+static void sub_4D82()
+{
+  // validte that byte_4F10 is equal to 0xFF (which it is set to on startup)
+  // byte_4F10 is some kind of memory/resource index flag, 0xFF means that it
+  // hasn't been initialized.
+  if (byte_4F10 != 0xFF) {
+    sub_128D(byte_4F10);
+  }
+  byte_4F2B = 0;
+  byte_4F10 = 0xFF;
+}
+
+// 0x5764
+static void sub_5764()
+{
+  uint8_t al;
+
+  al = game_state.unknown[2];
+  printf("%s 0x5764 unimplemented, al = 0x%02X\n", __func__, al);
+  exit(1);
+}
+
+// 0x51B0
+static void sub_51B0()
+{
+  sub_4D82();
+  sub_5764();
+  printf("%s 0x51B3 unimplemented\n", __func__);
+  exit(1);
+}
+
+
+// 0x499B
+static void op_8B()
+{
+  // push si
+  // 499B
+  sub_51B0();
+  printf("%s 0x499B unimplemented\n", __func__);
+  exit(1);
+
 }
 
 // 0x49A5

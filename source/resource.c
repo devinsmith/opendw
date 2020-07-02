@@ -168,6 +168,7 @@ struct resource* resource_get_by_index(int index)
   return &allocations[index];
 }
 
+// 0x1270
 void resource_index_release(int index)
 {
   if (index == 0xFF)
