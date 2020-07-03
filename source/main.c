@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Devin Smith <devin@devinsmith.net>
+ * Copyright (c) 2018-2020 Devin Smith <devin@devinsmith.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,8 +17,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bufio.h"
-#include "compress.h"
 #include "engine.h"
 #include "offsets.h"
 #include "resource.h"
@@ -32,14 +30,14 @@
 #define GAME_HEIGHT 200
 
 static void
-title_adjust(struct buf_wri *title)
+title_adjust(const struct resource *title)
 {
   unsigned char *src, *dst;
   int i, counter = 0x3E30;
   uint16_t ax, si;
 
-  src = title->base;
-  dst = title->base + 0xA0;
+  src = title->bytes;
+  dst = title->bytes + 0xA0;
 
   for (i = 0; i < counter; i++) {
     ax = *src++;
@@ -57,10 +55,10 @@ title_adjust(struct buf_wri *title)
 }
 
 static void
-title_build(struct buf_wri *output)
+title_build(const struct resource *output)
 {
   uint8_t al;
-  unsigned char *src = output->base;
+  unsigned char *src = output->bytes;
   int i, counter = 64000;
   int hi, lo;
   uint8_t *framebuffer = vga->memory();
@@ -83,34 +81,19 @@ title_build(struct buf_wri *output)
 static void
 run_title(void)
 {
-  struct buf_rdr *title_rdr;
-  struct buf_wri *title_wri;
-  unsigned int uncompressed_sz;
-
   const struct resource *title_res = resource_load(RESOURCE_TITLE3);
   if (title_res == NULL)
     return;
 
-  title_rdr = buf_rdr_init(title_res->bytes, title_res->len);
+  title_adjust(title_res);
 
-  uncompressed_sz = buf_get16le(title_rdr);
-  printf("Unc: 0x%04x\n", uncompressed_sz);
-  title_wri = buf_wri_init(uncompressed_sz);
-
-  /* decompress title data from title reader into title writer */
-  decompress_data1(title_rdr, title_wri, uncompressed_sz);
-  title_adjust(title_wri);
-
-  dump_hex(title_wri->base, 32);
-  title_build(title_wri);
+  dump_hex(title_res->bytes, 32);
+  title_build(title_res);
 
   vga->update();
   resource_index_release(title_res->index);
 
   vga->waitkey();
-
-  buf_wri_free(title_wri);
-  buf_rdr_free(title_rdr);
 }
 
 int check_file(const char *fname)
@@ -180,9 +163,6 @@ main(int argc, char *argv[])
   ui_drawn_yet = 0xFF;
 
   ui_draw_full();
-
-  // Wait for key, temporary.
-  vga->waitkey();
 
   run_engine();
 

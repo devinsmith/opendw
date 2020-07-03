@@ -220,7 +220,7 @@ resource_load_cache_miss(enum resource_section sec)
     (unsigned int)len);
 
   struct resource* res = game_memory_alloc(len, 1, sec);
-  if (sec > 0x45) { // should be 0x17
+  if (sec > 0x17) {
     needs_decompression = 1;
   }
 
@@ -248,11 +248,19 @@ resource_load_cache_miss(enum resource_section sec)
 
     compression_rdr = buf_rdr_init(res->bytes, res->len);
     uncompressed_sz = buf_get16le(compression_rdr);
-    printf("Section %d needs decompression. %d -> %d\n", sec,
+    printf("Section 0x%02X needs decompression. %d -> %d\n", sec,
         (unsigned int)res->len, uncompressed_sz);
     uncompressed_wri = buf_wri_init(uncompressed_sz);
     decompress_data1(compression_rdr, uncompressed_wri, uncompressed_sz);
-    dump_hex(uncompressed_wri->base, 32);
+
+    // After decompressing we can get rid of the compressed copy, and store the
+    // data directly in the resource.
+    free(res->bytes);
+    res->len = uncompressed_sz;
+    // move pointer.
+    res->bytes = uncompressed_wri->base;
+    free(uncompressed_wri);
+    buf_rdr_free(compression_rdr);
   }
 
   return res;
