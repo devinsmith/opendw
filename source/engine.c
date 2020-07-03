@@ -3017,12 +3017,51 @@ static void sub_4D82()
   byte_4F10 = 0xFF;
 }
 
-// 0x5764
-static void sub_5764()
+// 0x57DB
+static void sub_57DB()
 {
   uint8_t al;
 
+  al = game_state.unknown[0x56];
+  // test al, al
+  if (al >= 0x80)
+    return;
+
+  // sub_12A8
+  struct resource *r = resource_get_by_index(al);
+  dump_hex(r->bytes, 0x80);
+
+  printf("%s 0x57E5 unimplemented\n", __func__);
+  exit(1);
+}
+
+// 0x5764
+static void sub_5764()
+{
+  uint8_t al, bl;
+
   al = game_state.unknown[2];
+  if (al != game_state.unknown[0x57]) {
+    // 0x576D
+    al = al ^ game_state.unknown[0x57];
+    if ((al & 0x7F) != 0) {
+      if (game_state.unknown[0x56] != 0xFF) {
+        // 0x577C
+        printf("%s 0x577C unimplemented, al = 0x%02X\n", __func__, al);
+        exit(1);
+      }
+      // 0x578A
+      bl = game_state.unknown[2];
+      cpu.bx = bl;
+      cpu.bx += 0x46;
+      al = 1;
+      struct resource *r = resource_load(cpu.bx);
+      set_game_state(0x56, r->index);
+      sub_57DB();
+    }
+    // 0x57AB
+  }
+  // 0x57B7
   printf("%s 0x5764 unimplemented, al = 0x%02X\n", __func__, al);
   exit(1);
 }

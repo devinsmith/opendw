@@ -18,7 +18,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include <bufio.h>
+#include "bufio.h"
+#include "compress.h"
 #include <resource.h>
 #include "player.h"
 
@@ -147,9 +148,12 @@ rm_exit(void)
 }
 
 // Essentially 0x2EB0 but not exactly.
+// AL is always loaded with the marker character (always 1?)
+// BX contains the section to load.
 struct resource* resource_load(enum resource_section sec)
 {
   if (sec >= RESOURCE_MAX) {
+    fprintf(stderr, "Attempted to load unknown resource, returning NULL\n");
     return NULL;
   }
 
@@ -202,6 +206,7 @@ resource_load_cache_miss(enum resource_section sec)
   FILE *fp;
   size_t n;
   uint16_t len;
+  int needs_decompression = 0;
 
   buf_reset(header_rdr);
   for (i = 0; i < sec; i++) {
@@ -215,6 +220,9 @@ resource_load_cache_miss(enum resource_section sec)
     (unsigned int)len);
 
   struct resource* res = game_memory_alloc(len, 1, sec);
+  if (sec > 0x45) { // should be 0x17
+    needs_decompression = 1;
+  }
 
   fp = fopen("data1", "rb");
   if (fp == NULL) {
@@ -225,12 +233,27 @@ resource_load_cache_miss(enum resource_section sec)
   fseek(fp, offset, SEEK_SET);
   n = fread(res->bytes, 1, res->len, fp);
   if (n != res->len) {
+    fprintf(stderr, "Failed to read section in data1 file.\n");
     free(res->bytes);
     free(res);
     fclose(fp);
     return NULL;
   }
   fclose(fp);
+
+  if (needs_decompression) {
+    struct buf_rdr *compression_rdr;
+    struct buf_wri *uncompressed_wri;
+    unsigned short uncompressed_sz;
+
+    compression_rdr = buf_rdr_init(res->bytes, res->len);
+    uncompressed_sz = buf_get16le(compression_rdr);
+    printf("Section %d needs decompression. %d -> %d\n", sec,
+        (unsigned int)res->len, uncompressed_sz);
+    uncompressed_wri = buf_wri_init(uncompressed_sz);
+    decompress_data1(compression_rdr, uncompressed_wri, uncompressed_sz);
+    dump_hex(uncompressed_wri->base, 32);
+  }
 
   return res;
 }
