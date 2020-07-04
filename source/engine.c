@@ -137,6 +137,25 @@ unsigned char data_49CA[] = { 0x00, 0x00, 0xCE, 0x00, 0x00, 0xD9, 0x00, 0x00, 0x
 unsigned char byte_4F0F;
 unsigned char byte_4F10;
 
+uint16_t word_5038;
+
+unsigned char *data_5521;
+uint16_t word_551F;
+
+// Unknown how large this is.
+// But also referenced as: 56D6, 56E5 (not sure if this is correct at this point)
+unsigned char data_56C7[128];
+unsigned char data_56D6[128];
+unsigned char data_56E5[128];
+unsigned char data_5A04[128];
+
+uint16_t word_5864;
+unsigned char *data_5866;
+
+// Unknown how large this is
+// 0x5897
+unsigned char data_5897[256];
+
 uint8_t byte_4F2B = 0;
 
 /* Timers? */
@@ -185,8 +204,10 @@ struct virtual_cpu {
   uint16_t ax;
   uint16_t bx;
   uint16_t cx;
+  uint16_t dx;
 
   uint16_t di;
+  uint16_t si;
 
   // stack
   uint8_t stack[STACK_SIZE]; // stacks;
@@ -3017,6 +3038,34 @@ static void sub_4D82()
   byte_4F10 = 0xFF;
 }
 
+// 0x5879
+static void sub_5879()
+{
+  cpu.di += cpu.bx;
+  cpu.bx = 0;
+}
+
+// 0x5868
+static void sub_5868(struct resource *res)
+{
+  uint8_t al;
+
+  do {
+    al = res->bytes[cpu.bx + cpu.di];
+    cpu.ax = (cpu.ax & 0xFF00) | al;
+    push_word(cpu.ax);
+    al &= 0x7F;
+
+    data_56E5[cpu.si] = al;
+    cpu.bx++;
+    cpu.si++;
+    cpu.ax = pop_word();
+  } while ((cpu.ax & 0xFF) < 0x80);
+
+  cpu.di += cpu.bx;
+  cpu.bx = 0;
+}
+
 // 0x57DB
 static void sub_57DB()
 {
@@ -3027,11 +3076,159 @@ static void sub_57DB()
   if (al >= 0x80)
     return;
 
-  // sub_12A8
   struct resource *r = resource_get_by_index(al);
-  dump_hex(r->bytes, 0x80);
+  data_5521 = r->bytes;
+  data_5866 = r->bytes;
+  cpu.di = 0;
+  // 0x57F0
+  while (cpu.di < 4) {
+    al = r->bytes[cpu.di];
+    set_game_state(cpu.di + 0x21, al);
+    cpu.di++;
+  }
+  // 0x57FF
+  cpu.bx = 0;
 
-  printf("%s 0x57E5 unimplemented\n", __func__);
+  do {
+    // 0x5801
+    al = r->bytes[cpu.bx + cpu.di];
+    data_5897[cpu.bx] = al;
+    cpu.bx++;
+  } while (al < 0x80);
+  sub_5879();
+
+  // 0x5810
+  cpu.si = 0;
+  do {
+    al = r->bytes[cpu.bx + cpu.di];
+    cpu.ax = (cpu.ax & 0xFF00) | al;
+    push_word(cpu.ax);
+    al &= 0x7F;
+    cpu.ax = (cpu.ax & 0xFF00) | al;
+    data_56C7[cpu.si] = al;
+    cpu.bx++;
+    al = r->bytes[cpu.bx + cpu.di];
+    data_56D6[cpu.si] = al;
+    cpu.bx++;
+    cpu.si++;
+    cpu.ax = pop_word();
+  } while ((cpu.ax & 0xFF) < 0x80);
+
+  // 0x582B
+  cpu.si = 0;
+  sub_5868(r);
+  cpu.si = 4;
+  sub_5868(r);
+  cpu.si = 8;
+  sub_5868(r);
+  // 0x583C
+  cpu.ax = r->bytes[cpu.bx + cpu.di];
+  cpu.ax += (r->bytes[cpu.bx + cpu.di + 1]) << 8;
+  word_5864 = cpu.ax;
+  cpu.di += 2;
+  al = game_state.unknown[0x22];
+  cpu.ax = al;
+  cpu.ax = cpu.ax << 1;
+  cpu.si = cpu.ax;
+  al = game_state.unknown[0x21];
+  al = al << 1;
+  al += game_state.unknown[0x21];
+  cpu.ax = al;
+  // 0x5858
+  do {
+    data_5A04[cpu.si] = cpu.di & 0xFF;
+    data_5A04[cpu.si + 1] = (cpu.di & 0xFF00) >> 8;
+    cpu.di += cpu.ax;
+    cpu.si -= 2;
+  } while (cpu.si < 0x8000); // jump not signed.
+}
+
+// 0x5523
+static void sub_5523()
+{
+  uint8_t bl;
+
+  bl = cpu.bx & 0xFF;
+  if (bl < game_state.unknown[0x22]) {
+    return; // 0x5558
+  }
+  // 0x5529
+  printf("%s 0x5529 unimplemented,\n", __func__);
+  exit(1);
+}
+
+// 0x5559
+static void sub_5559()
+{
+  uint8_t dl;
+
+  dl = cpu.dx & 0xFF;
+  if (dl < game_state.unknown[0x21]) {
+    return; // 0x558B
+  }
+
+  // 0x555F
+  printf("%s 0x555F unimplemented,\n", __func__);
+  exit(1);
+}
+
+// 0x54D8
+static void sub_54D8()
+{
+  sub_5523();
+  sub_5559();
+
+  // xor dh, dh
+  cpu.dx = cpu.dx & 0xFF;
+  cpu.ax = cpu.dx;
+  cpu.ax = cpu.ax << 1;
+  cpu.ax += cpu.dx;
+  cpu.bx = cpu.bx & 0xFF;
+  cpu.bx = cpu.bx << 1;
+  cpu.ax += data_5A04[cpu.bx + 2];
+  cpu.ax += data_5A04[cpu.bx + 3] << 8;
+  word_551F = cpu.ax;
+
+  // les di, [551F]
+  cpu.di = cpu.ax;
+
+
+  printf("%s 0x54F6 unimplemented,\n", __func__);
+  exit(1);
+}
+
+
+// 0x4FD9
+static void sub_4FD9()
+{
+  uint8_t bl, cl;
+
+  cpu.ax = 0x504B;
+  bl = game_state.unknown[2];
+  word_5038 = cpu.ax;
+  cpu.bx = bl;
+  cpu.bx = cpu.bx << 1;
+  if (cpu.bx < 0x50) {
+    // 0x4FEC
+    cpu.si = data_D760[cpu.bx];
+    cpu.si += data_D760[cpu.bx + 1] << 8;
+    push_word(cpu.si);
+    cpu.si &= 0x7; // make sure we aren't accessing greater than 7.
+    cl = data_4A99[cpu.si];
+    cl = ~cl;
+    cpu.si = pop_word();
+    cpu.si = cpu.si >> 3;
+    cpu.si += 0xD7B0;
+    cpu.bx = 0;
+    cpu.dx = 0;
+
+    // 0x500E
+    sub_54D8();
+
+  }
+  // 0x5037
+
+  printf("%s 0x5037 unimplemented,\n", __func__);
   exit(1);
 }
 
@@ -3058,11 +3255,14 @@ static void sub_5764()
       struct resource *r = resource_load(cpu.bx);
       set_game_state(0x56, r->index);
       sub_57DB();
+      // 579E
+      sub_4FD9();
+      // 0x57A1
     }
     // 0x57AB
   }
   // 0x57B7
-  printf("%s 0x5764 unimplemented, al = 0x%02X\n", __func__, al);
+  printf("%s 0x57B7 unimplemented, al = 0x%02X\n", __func__, al);
   exit(1);
 }
 
