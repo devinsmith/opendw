@@ -1043,7 +1043,7 @@ static void op_1D(void)
     dest_offset = tmp_offset;
   }
   // repe movsw (move word ds:si to es:di (si, di += 2), repeat 0x380 times.
-  memcpy(src + src_offset, dest + dest_offset, 0x700);
+  memcpy(dest + dest_offset, src + src_offset, 0x700);
 }
 
 // 0x3DAE
