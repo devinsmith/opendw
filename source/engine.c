@@ -137,9 +137,11 @@ unsigned char data_49CA[] = { 0x00, 0x00, 0xCE, 0x00, 0x00, 0xD9, 0x00, 0x00, 0x
 unsigned char byte_4F0F;
 unsigned char byte_4F10;
 
-uint16_t word_5038;
+// Another function pointer.
+void (*word_5038)(unsigned char *dest, unsigned int offset);
 
 unsigned char *data_5521;
+uint8_t byte_551E;
 uint16_t word_551F;
 
 // Unknown how large this is.
@@ -3175,6 +3177,8 @@ static void sub_5559()
 // 0x54D8
 static void sub_54D8()
 {
+  uint8_t al;
+
   sub_5523();
   sub_5559();
 
@@ -3190,11 +3194,40 @@ static void sub_54D8()
   word_551F = cpu.ax;
 
   // les di, [551F]
+  // di = 551F
+  // ES = 5521
   cpu.di = cpu.ax;
+  cpu.ax = data_5521[cpu.di];
+  cpu.ax += data_5521[cpu.di + 1] << 8;
+  word_11C6 = cpu.ax;
+  al = data_5521[cpu.di + 2];
+  word_11C8 = al;
+  cpu.cf = 0;
+  if ((byte_551E & 0x80) == 0x80) {
+    // 0x550B
+    cpu.ax = 0;
+    byte_551E = 0;
+    word_11C8 = 0;
+    word_11C6 &= 0x3000;
+    cpu.cf = 1;
+  }
+}
 
+// 0x504B
+static void sub_504B(unsigned char *dest, unsigned int offset)
+{
+  uint8_t al;
 
-  printf("%s 0x54F6 unimplemented,\n", __func__);
-  exit(1);
+  al = cpu.cx & 0xFF;
+  al = ~al;
+
+  al &= data_D760[cpu.si - 0xD760];
+  if (al != 0) {
+    al = 8;
+  }
+  dest[offset + 1] &= 0xF7;
+  dest[offset + 1] |= al;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
 }
 
 
@@ -3203,9 +3236,8 @@ static void sub_4FD9()
 {
   uint8_t bl, cl;
 
-  cpu.ax = 0x504B;
   bl = game_state.unknown[2];
-  word_5038 = cpu.ax;
+  word_5038 = sub_504B;
   cpu.bx = bl;
   cpu.bx = cpu.bx << 1;
   if (cpu.bx < 0x50) {
@@ -3216,15 +3248,48 @@ static void sub_4FD9()
     cpu.si &= 0x7; // make sure we aren't accessing greater than 7.
     cl = data_4A99[cpu.si];
     cl = ~cl;
+    cpu.cx = (cpu.cx & 0xFF00) | cl;
     cpu.si = pop_word();
     cpu.si = cpu.si >> 3;
     cpu.si += 0xD7B0;
     cpu.bx = 0;
     cpu.dx = 0;
 
-    // 0x500E
-    sub_54D8();
+    do {
+      push_word(cpu.dx);
+      push_word(cpu.bx);
+      push_word(cpu.cx);
+      push_word(cpu.si);
 
+      // 0x500E
+      sub_54D8();
+      cpu.si = pop_word();
+      cpu.cx = pop_word();
+
+      // 0x5011
+      // les ei, [551F]
+      // di = 551F
+      // ES = 5521
+      cpu.di = word_551F;
+      word_5038(data_5521, word_551F);
+
+      // stc
+      // rcr cl, 1
+      cl = cpu.cx & 0xFF;
+      cpu.cf = cl & 1;
+      cl = cl >> 1;
+      cl += 0x80;
+      if (cpu.cf == 0) {
+        cl = cl << 1;
+        cpu.si++;
+      }
+      cpu.bx = pop_word();
+      cpu.dx = pop_word();
+      cpu.dx++;
+    } while ((cpu.dx & 0xFF) < game_state.unknown[0x57]);
+    // 0x502E
+    printf("%s 0x502E unimplemented,\n", __func__);
+    exit(1);
   }
   // 0x5037
 
