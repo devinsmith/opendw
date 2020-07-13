@@ -52,6 +52,7 @@ struct resource* resource_get_by_index(int index);
 void resource_index_release(int index);
 void resource_set_usage_type(int index, int usage_type);
 
+// 0x2EB0
 struct resource* resource_load(enum resource_section sec);
 
 int find_index_by_tag(int tag);

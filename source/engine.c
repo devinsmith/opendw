@@ -140,6 +140,9 @@ unsigned char byte_4F10;
 // Another function pointer.
 void (*word_5038)(unsigned char *dest, unsigned int offset);
 
+// Length unknown, purpose unknown, from COM file.
+unsigned char *data_5303;
+
 unsigned char *data_5521;
 uint8_t byte_551E;
 uint16_t word_551F;
@@ -151,8 +154,8 @@ unsigned char data_56D6[128];
 unsigned char data_56E5[128];
 unsigned char data_5A04[128];
 
-uint16_t word_5864;
-unsigned char *data_5866;
+uint16_t word_5864; // offset
+unsigned char *data_5866; // data
 
 // Unknown how large this is
 // 0x5897
@@ -259,6 +262,7 @@ static void append_string(unsigned char byte);
 static void sub_280E();
 static void sub_1C79(unsigned char **src_ptr, uint16_t offset);
 static void sub_1BF8(uint8_t color, uint8_t y_adjust);
+static void sub_27E3(unsigned char **src_ptr, uint16_t offset);
 static void sub_4A7D();
 
 // Decoded opcode calls, foward definition.
@@ -3175,6 +3179,7 @@ static void sub_5559()
 }
 
 // 0x54D8
+// Take input parameters DX and BX ?
 static void sub_54D8()
 {
   uint8_t al;
@@ -3193,12 +3198,14 @@ static void sub_54D8()
   cpu.ax += data_5A04[cpu.bx + 3] << 8;
   word_551F = cpu.ax;
 
+
   // les di, [551F]
   // di = 551F
   // ES = 5521
   cpu.di = cpu.ax;
   cpu.ax = data_5521[cpu.di];
   cpu.ax += data_5521[cpu.di + 1] << 8;
+  printf("%s - DI: 0x%04X AX: 0x%04X\n", __func__, cpu.di, cpu.ax);
   word_11C6 = cpu.ax;
   al = data_5521[cpu.di + 2];
   word_11C8 = al;
@@ -3255,46 +3262,104 @@ static void sub_4FD9()
     cpu.bx = 0;
     cpu.dx = 0;
 
+    // 0x500A
     do {
-      push_word(cpu.dx);
-      push_word(cpu.bx);
-      push_word(cpu.cx);
-      push_word(cpu.si);
+      do {
+        push_word(cpu.dx);
+        push_word(cpu.bx);
+        push_word(cpu.cx);
+        push_word(cpu.si);
 
-      // 0x500E
-      sub_54D8();
-      cpu.si = pop_word();
-      cpu.cx = pop_word();
+        // 0x500E
+        sub_54D8();
+        cpu.si = pop_word();
+        cpu.cx = pop_word();
 
-      // 0x5011
-      // les ei, [551F]
-      // di = 551F
-      // ES = 5521
-      cpu.di = word_551F;
-      word_5038(data_5521, word_551F);
+        // 0x5011
+        // les ei, [551F]
+        // di = 551F
+        // ES = 5521
+        cpu.di = word_551F;
+        word_5038(data_5521, word_551F);
 
-      // stc
-      // rcr cl, 1
-      cl = cpu.cx & 0xFF;
-      cpu.cf = cl & 1;
-      cl = cl >> 1;
-      cl += 0x80;
-      if (cpu.cf == 0) {
-        cl = cl << 1;
-        cpu.si++;
-      }
-      cpu.bx = pop_word();
-      cpu.dx = pop_word();
-      cpu.dx++;
-    } while ((cpu.dx & 0xFF) < game_state.unknown[0x57]);
-    // 0x502E
-    printf("%s 0x502E unimplemented,\n", __func__);
-    exit(1);
+        // stc
+        // rcr cl, 1
+        cl = cpu.cx & 0xFF;
+        cpu.cf = cl & 1;
+        cl = cl >> 1;
+        cl += 0x80;
+        if (cpu.cf == 0) {
+          cl = cl << 1;
+          cpu.si++;
+        }
+        cpu.bx = pop_word();
+        cpu.dx = pop_word();
+        cpu.dx++;
+      } while ((cpu.dx & 0xFF) < game_state.unknown[0x21]);
+      // 0x502E
+      cpu.dx = 0;
+      cpu.bx++;
+    } while ((cpu.bx & 0xFF) < game_state.unknown[0x22]);
   }
-  // 0x5037
+}
 
-  printf("%s 0x5037 unimplemented,\n", __func__);
-  exit(1);
+// 0x536B
+static void sub_536B()
+{
+  uint8_t al, bl, dl;
+
+  push_word(cpu.dx);
+  push_word(cpu.bx);
+  sub_54D8();
+  cpu.bx = pop_word();
+  cpu.dx = pop_word();
+
+  word_11CC = word_11C8;
+  cpu.ax = word_11C6;
+  word_11CA = cpu.ax;
+  // 0x537E
+  if (game_state.unknown[3] != 0) {
+    // 0x5385
+    push_word(cpu.dx);
+    push_word(cpu.bx);
+    cpu.dx++;
+    sub_54D8();
+    cpu.bx = pop_word();
+    cpu.dx = pop_word();
+    al = word_11C6;
+    al = al & 0xF;
+    cpu.ax = (cpu.ax & 0xFF00) | al;
+    word_11CC = (word_11CC & 0xFF00) | al;
+
+    push_word(cpu.dx);
+    push_word(cpu.bx);
+    cpu.dx--;
+    sub_54D8();
+    cpu.bx = pop_word();
+    cpu.dx = pop_word();
+
+    // 0x539D
+    bl = word_11C6;
+    bl &= 0xF0;
+    bl |= ((word_11CC & 0xFF00) >> 8);
+    cpu.bx = (cpu.bx & 0xFF00) | bl;
+    dl = word_11CA;
+    cpu.dx = (cpu.dx & 0xFF00) | dl;
+    al = game_state.unknown[3];
+    cpu.ax = (cpu.ax & 0xFF00) | al;
+    if (al > 2) {
+      // 53B5
+      printf("%s 0x53B5 unimplemented\n", __func__);
+      exit(1);
+    } else if (al == 2) {
+      // 53E3
+      word_11CA = bl;
+    } else {
+      // 53CC
+      printf("%s 0x53CC unimplemented\n", __func__);
+      exit(1);
+    }
+  }
 }
 
 // 0x5764
@@ -3323,20 +3388,80 @@ static void sub_5764()
       // 579E
       sub_4FD9();
       // 0x57A1
+      cpu.cx = 2;
+      cpu.di = 0x3919;
+      cpu.ax = 0;
+      set_game_state(0xb9, 0);
+      set_game_state(0xba, 0);
+      set_game_state(0xbb, 0);
+      set_game_state(0xbc, 0);
     }
     // 0x57AB
+    sub_57DB();
+    al = game_state.unknown[2];
+    set_game_state(4, al);
+    set_game_state(0x57, al);
   }
   // 0x57B7
-  printf("%s 0x57B7 unimplemented, al = 0x%02X\n", __func__, al);
-  exit(1);
+  al = game_state.unknown[4];
+  if (al != game_state.unknown[0x5B]) {
+    // 0x57C0
+    set_game_state(0x5B, al);
+    al = game_state.unknown[0x5A];
+    sub_128D(al);
+    bl = game_state.unknown[4];
+    cpu.bx = bl;
+    cpu.bx += 0x1E;
+    al = 1;
+    struct resource *r = resource_load(cpu.bx);
+    al = r->index;
+    set_game_state(0x5A, al); // index of something.
+    cpu.ax = (cpu.ax & 0xFF00) | al;
+  }
 }
 
 // 0x51B0
 static void sub_51B0()
 {
+  uint8_t al, bl, dl;
+
   sub_4D82();
   sub_5764();
-  printf("%s 0x51B3 unimplemented\n", __func__);
+  cpu.bx = word_5864;
+  sub_27E3(&data_5866, word_5864);
+  cpu.bx = game_state.unknown[3];
+  cpu.bx = cpu.bx << 1;
+
+  cpu.si = data_5303[cpu.bx];
+  cpu.si += (data_5303[cpu.bx + 1]) << 8;
+  cpu.di = 0xB;
+  do {
+    // 0x51D0
+    push_word(cpu.di);
+    push_word(cpu.si);
+
+    dl = game_state.unknown[1];
+    dl += data_5303[cpu.si + 0xB];
+    cpu.dx = (cpu.dx & 0xFF00) | dl;
+    bl = game_state.unknown[0];
+    bl += data_5303[cpu.si + 0xC];
+    cpu.bx = bl;
+
+    // 0x51E2
+    sub_536B();
+    cpu.si = pop_word();
+    cpu.di = pop_word();
+    al = word_11CA;
+    data_5A04[56 + cpu.di] = al;
+    al = (word_11CA & 0xFF00) >> 8;
+    al &= 0xF7;
+    data_5A04[94 + cpu.di] = al;
+    cpu.si--;
+    cpu.si--;
+    cpu.di--;
+  } while (cpu.di != 0xFFFF);
+
+  printf("%s 0x51FC unimplemented: BX - 0x%04X AL - 0x%02X DL - 0x%02X\n", __func__, cpu.bx, al, dl);
   exit(1);
 }
 
@@ -3803,11 +3928,12 @@ static void sub_316C()
   word_3163 = append_string;
 }
 
-static void sub_27E3()
+static void sub_27E3(unsigned char **src_ptr, uint16_t offset)
 {
   word_3163 = ui_header_set_byte;
+  ui_string.len = 0;
   ui_header_reset();
-  sub_1C79(&cpu.pc, cpu.pc - cpu.base_pc);
+  sub_1C79(src_ptr, offset);
   sub_316C();
   sub_280E();
 }
@@ -3829,7 +3955,7 @@ static void sub_3150(unsigned char byte)
 // 0x482D
 static void read_header_bytes(void)
 {
-  sub_27E3();
+  sub_27E3(&cpu.pc, cpu.pc - cpu.base_pc);
 }
 
 // 0x3AA0
@@ -3890,6 +4016,7 @@ void run_engine()
 
   // load unknown data from COM file.
   data_2A68 = com_extract(0x2A68, 0x39);
+  data_5303 = com_extract(0x5303, 512); // XXX: Validate that this is 512 bytes
   data_D760 = com_extract(0xD760, 0x700);
   data_1E21 = com_extract(0x1E21, 0xEF);
 
