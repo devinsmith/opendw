@@ -255,7 +255,7 @@ struct mouse_status mouse;
 
 static void run_script(uint8_t script_index, uint16_t src_offset);
 static uint8_t sub_1CF8();
-static uint8_t sub_1D8A();
+static uint8_t bit_extract(int num_bits, unsigned char **src_ptr);
 static void sub_3150(unsigned char byte);
 static void sub_316C();
 static void append_string(unsigned char byte);
@@ -3428,7 +3428,8 @@ static void sub_51B0()
   sub_4D82();
   sub_5764();
   cpu.bx = word_5864;
-  sub_27E3(&data_5866, word_5864);
+  unsigned char *src = data_5866 + word_5864;
+  sub_27E3(&src, word_5864);
   cpu.bx = game_state.unknown[3];
   cpu.bx = cpu.bx << 1;
 
@@ -3723,47 +3724,10 @@ unsigned char alphabet[] = {
   0xaa, 0xbf, 0xbc, 0xbe, 0xba, 0xbb, 0xad, 0xa5
 };
 
-static uint8_t sub_1D86(unsigned char **src_ptr)
-{
-  uint8_t al, bl;
-
-  bl = 0x06;
-
-  // 0x1D8C
-  // xor al, al
-  cpu.ax = cpu.ax & 0xFF00;
-  al = 0;
-  int8_t dl = (int8_t)num_bits;
-  while (bl != 0) {
-    dl--;
-    if (dl < 0) {
-      // 0x1DA5
-      //
-      dl = **src_ptr;
-      bit_buffer = dl;
-      dl = 7;
-      (*src_ptr)++;
-      cpu.bx++;
-    }
-
-    int cf = 0;
-    if (bit_buffer & 0x80) {
-      cf = 1;
-    }
-    bit_buffer = bit_buffer << 1;
-    al = al << 1;
-    al |= cf;
-    bl--;
-  }
-
-  num_bits = dl; // leftover bits
-  return al;
-}
-
 static uint8_t sub_1CF8(unsigned char **src_ptr)
 {
   while (1) {
-    uint8_t ret = sub_1D8A(src_ptr);
+    uint8_t ret = bit_extract(5, src_ptr);
     if (ret == 0)
       return 0;
 
@@ -3777,7 +3741,7 @@ static uint8_t sub_1CF8(unsigned char **src_ptr)
     }
 
     if (ret > 0x1E) {
-      ret = sub_1D86(src_ptr);
+      ret = bit_extract(6, src_ptr);
       ret += 0x1E;
     }
 
@@ -3795,11 +3759,15 @@ static uint8_t sub_1CF8(unsigned char **src_ptr)
   }
 }
 
-// Extract 5 bits out of each byte.
+// Extract "num_bits" bits out of each byte.
 // bit_buffer contains leftover bit buffer.
-static uint8_t sub_1D8A(unsigned char **src_ptr)
+//
+// 0x1D86 -> 1D8C(6)
+// 0x1D8A -> 1D8C(5)
+// 0x1D8C (num_bits passed in BL)
+static uint8_t bit_extract(int num_bits, unsigned char **src_ptr)
 {
-  int counter = 5;
+  int counter = num_bits;
   int al = 0;
   int dl = num_bits;
   while (counter > 0) {
