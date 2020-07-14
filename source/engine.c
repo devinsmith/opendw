@@ -2182,7 +2182,7 @@ static void op_76(void)
 static void op_77()
 {
   draw_pattern(&draw_rect);
-  sub_1C79(&cpu.pc, cpu.pc - cpu.base_pc);
+  op_78();
 }
 
 // 0x47EC
