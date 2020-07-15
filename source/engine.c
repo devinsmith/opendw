@@ -255,7 +255,7 @@ struct mouse_status mouse;
 
 static void run_script(uint8_t script_index, uint16_t src_offset);
 static uint8_t sub_1CF8();
-static uint8_t bit_extract(int num_bits, unsigned char **src_ptr);
+static uint8_t bit_extract(int n, unsigned char **src_ptr);
 static void sub_3150(unsigned char byte);
 static void sub_316C();
 static void append_string(unsigned char byte);
@@ -3759,15 +3759,15 @@ static uint8_t sub_1CF8(unsigned char **src_ptr)
   }
 }
 
-// Extract "num_bits" bits out of each byte.
+// Extract "n" bits out of each byte.
 // bit_buffer contains leftover bit buffer.
 //
 // 0x1D86 -> 1D8C(6)
 // 0x1D8A -> 1D8C(5)
 // 0x1D8C (num_bits passed in BL)
-static uint8_t bit_extract(int num_bits, unsigned char **src_ptr)
+static uint8_t bit_extract(int n, unsigned char **src_ptr)
 {
-  int counter = num_bits;
+  int counter = n;
   int al = 0;
   int dl = num_bits;
   while (counter > 0) {
