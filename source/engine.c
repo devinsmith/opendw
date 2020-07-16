@@ -148,11 +148,12 @@ uint8_t byte_551E;
 uint16_t word_551F;
 
 // Unknown how large this is.
-// But also referenced as: 56D6, 56E5 (not sure if this is correct at this point)
+// But also referenced as: 56E5 (not sure if this is correct at this point)
 unsigned char data_56C7[128];
-unsigned char data_56D6[128];
 unsigned char data_56E5[128];
 unsigned char data_5A04[128];
+
+static struct resource *data_59E4[128];
 
 uint16_t word_5864; // offset
 unsigned char *data_5866; // data
@@ -3114,7 +3115,7 @@ static void sub_57DB()
     data_56C7[cpu.si] = al;
     cpu.bx++;
     al = r->bytes[cpu.bx + cpu.di];
-    data_56D6[cpu.si] = al;
+    data_56C7[cpu.si + 0xf] = al;
     cpu.bx++;
     cpu.si++;
     cpu.ax = pop_word();
@@ -3353,7 +3354,7 @@ static void sub_536B()
       exit(1);
     } else if (al == 2) {
       // 53E3
-      word_11CA = bl;
+      word_11CA = (word_11CA & 0xFF00) | bl;
     } else {
       // 53CC
       printf("%s 0x53CC unimplemented\n", __func__);
@@ -3420,6 +3421,90 @@ static void sub_5764()
   }
 }
 
+// 0x59A6
+static void sub_59A6()
+{
+  uint8_t al, bl;
+  struct resource *r;
+
+  cpu.bx = 0xFFFF;
+
+  // Cache resources indexes.
+  // 0x59A9
+  do {
+    cpu.bx++;
+    push_word(cpu.bx);
+    bl = data_5897[cpu.bx];
+    cpu.bx = (cpu.bx & 0xFF00) | bl;
+    cpu.bx &= 0x7F;
+    cpu.bx += 0x6E;
+    al = 1;
+    r = resource_load(cpu.bx);
+    cpu.bx = pop_word();
+    //       [bx + 0x58A6]
+    data_5897[cpu.bx + 0xf] = r->index;
+    al = data_5897[cpu.bx];
+  } while (al < 0x80);
+  // 0x59C8
+  //
+  cpu.bx = 0xE;
+
+  // 0x59CB
+  do {
+    //            [bx + 0x58A6]
+    al = data_5897[cpu.bx + 0xf];
+    if (al < 0x80) {
+      // 0x59D3
+      push_word(cpu.bx);
+      // 12A8
+      r = resource_get_by_index(al);
+      cpu.bx = pop_word();
+      data_59E4[cpu.bx] = r;
+    }
+    // 0x59E0
+    cpu.bx--;
+  } while (cpu.bx != 0xFFFF);
+}
+
+static void sub_56FC()
+{
+  uint8_t al, bl;
+  int tmp_carry;
+  struct resource *r;
+
+  bl = data_5A04[0x68];
+
+  // rcl 4 times
+  cpu.cf = 0; // XXX, maybe not correct.
+  for (int i = 0; i < 3; i++) {
+    // rcl bl, 1
+    tmp_carry = bl & 0x80 ? 1 : 0;
+    bl = (bl << 1) + cpu.cf;
+    cpu.cf = tmp_carry;
+  }
+  cpu.bx = (cpu.bx & 0xFF00) | bl;
+  cpu.bx &= 3;
+
+  bl = data_56E5[cpu.bx];
+  cpu.bx = (cpu.bx & 0xFF00) | bl;
+  al = data_5897[cpu.bx];
+  al &= 0x7F;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  if (al != 1) {
+    // 0x5718
+    r = data_59E4[cpu.bx];
+    printf("%s 0x5718 unimplemented 0x%04X\n", __func__, cpu.bx);
+    exit(1);
+
+  }
+  // 0x5735
+
+  printf("%s 0x5735 unimplemented 0x%04X\n", __func__, cpu.bx);
+  exit(1);
+
+
+}
+
 // 0x51B0
 static void sub_51B0()
 {
@@ -3442,27 +3527,60 @@ static void sub_51B0()
     push_word(cpu.si);
 
     dl = game_state.unknown[1];
-    dl += data_5303[cpu.si + 0xB];
+    dl += data_5303[cpu.si + 0x8];
     cpu.dx = (cpu.dx & 0xFF00) | dl;
     bl = game_state.unknown[0];
-    bl += data_5303[cpu.si + 0xC];
+    bl += data_5303[cpu.si + 0x9];
     cpu.bx = bl;
 
     // 0x51E2
     sub_536B();
     cpu.si = pop_word();
     cpu.di = pop_word();
+    printf("%s 0x%04X 11CA: 0x%04X\n", __func__, cpu.di, word_11CA);
     al = word_11CA;
-    data_5A04[56 + cpu.di] = al;
+    data_5A04[0x52 + cpu.di] = al;
     al = (word_11CA & 0xFF00) >> 8;
     al &= 0xF7;
-    data_5A04[94 + cpu.di] = al;
+    cpu.ax = (cpu.ax & 0xFF00) | al;
+    data_5A04[0x5E + cpu.di] = al;
     cpu.si--;
     cpu.si--;
     cpu.di--;
   } while (cpu.di != 0xFFFF);
 
-  printf("%s 0x51FC unimplemented: BX - 0x%04X AL - 0x%02X DL - 0x%02X\n", __func__, cpu.bx, al, dl);
+  bl = data_5A04[0x5C];
+  printf("%s 0x51FC BL - 0x%02X\n", __func__, bl);
+  bl = bl >> 4;
+
+  if (bl != 0) {
+    // 0x520C
+    cpu.bx = bl;
+    bl = data_56C7[cpu.bx + 0xE];
+    cpu.bx = bl;
+  }
+  set_game_state(0x26, bl);
+  if ((game_state.unknown[0x23] & 8) == 0 && game_state.unknown[0xc1] == 0) {
+    // 0x37C8
+    // draw_viewport ??
+    printf("%s 0x5224 (call 37C8) unimplemented\n", __func__);
+    exit(1);
+  }
+  // 0x5227
+  dl = game_state.unknown[1];
+  cpu.dx = (cpu.dx & 0xFF00) | dl;
+  bl = game_state.unknown[0];
+  cpu.bx = (cpu.bx & 0xFF00) | bl;
+  sub_54D8();
+  if (cpu.cf == 0) {
+    // 0x5234
+    data_5521[word_551F + 1] |= 0x8;
+  }
+  // 0x523E
+  sub_59A6();
+  sub_56FC();
+
+  printf("%s 0x5244 unimplemented: BX - 0x%04X AL - 0x%04X DL - 0x%02X\n", __func__, cpu.bx, cpu.ax, cpu.dx & 0xFF);
   exit(1);
 }
 
