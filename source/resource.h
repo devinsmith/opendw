@@ -29,6 +29,7 @@ enum resource_section {
   RESOURCE_TITLE2 = 0x1A,
   RESOURCE_TITLE3 = 0x1D,
   RESOURCE_UNKNOWN = 0x47,
+  RESOURCE_LAST = 0xFF,
   RESOURCE_MAX
 };
 

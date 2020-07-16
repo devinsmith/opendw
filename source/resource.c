@@ -167,6 +167,7 @@ struct resource* resource_load(enum resource_section sec)
   return resource_load_cache_miss(sec);
 }
 
+// 0x12A8
 struct resource* resource_get_by_index(int index)
 {
   return &allocations[index];
