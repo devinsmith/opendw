@@ -23,16 +23,23 @@
 
 uint16_t offsets[NUM_OFFSETS];
 
+// 0x1053 (always gets set to 0x50 ?)
+unsigned short word_1053 = 0;
+unsigned short word_1055 = 0;
+
 /* 0x17DD */
 void init_offsets()
 {
   int i;
   uint16_t val = 0;
+
+  word_1053 = 0x50;
+
+  // 0x17E5
   for (i = 0; i < NUM_OFFSETS; i++) {
     offsets[i] = val;
     val += 0x50;
   }
-//  dump_hex(offsets, 2 * 0x88);
 }
 
 uint16_t get_offset(int pos)

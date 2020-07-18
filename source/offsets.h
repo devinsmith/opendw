@@ -23,6 +23,9 @@
 extern "C" {
 #endif
 
+extern unsigned short word_1053;
+extern unsigned short word_1055;
+
 void init_offsets();
 uint16_t get_offset(int pos);
 
