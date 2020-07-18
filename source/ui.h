@@ -56,6 +56,7 @@ extern struct ui_rect draw_rect;
 extern struct ui_point draw_point;
 
 void ui_load();
+void sub_37C8();
 void draw_viewport();
 void ui_draw();
 void ui_draw_full();

@@ -34,6 +34,14 @@
  *
  * Lots of global variables here until we can figure out how they are used. */
 
+uint16_t word_1048;
+uint16_t counter_104D;
+
+unsigned char byte_104E;
+// 104F is technically a dword with segment:offset.
+uint16_t word_104F = 0; // offset into 1051
+struct resource *word_1051;
+
 uint16_t word_11C0 = 0;
 uint16_t word_11C2 = 0;
 uint16_t word_11C4 = 0;
@@ -135,7 +143,7 @@ unsigned char data_49AB[] = { 0xFE, 0x6, 0x97, 0x7F, 0x2B, 0xC0 };
 unsigned char data_49CA[] = { 0x00, 0x00, 0xCE, 0x00, 0x00, 0xD9, 0x00, 0x00, 0xFF };
 
 unsigned char byte_4F0F;
-unsigned char byte_4F10;
+unsigned char byte_4F10 = 0;
 
 // Another function pointer.
 void (*word_5038)(unsigned char *dest, unsigned int offset);
@@ -3033,7 +3041,7 @@ static void sub_1C70(unsigned char *src_ptr)
 }
 
 // 0x4D82
-static void sub_4D82()
+void sub_4D82()
 {
   // validte that byte_4F10 is equal to 0xFF (which it is set to on startup)
   // byte_4F10 is some kind of memory/resource index flag, 0xFF means that it
@@ -3466,6 +3474,35 @@ static void sub_59A6()
   } while (cpu.bx != 0xFFFF);
 }
 
+static void sub_CE7()
+{
+  uint8_t al;
+  unsigned char *ds = word_1051->bytes + word_104F + cpu.bx;
+
+  cpu.ax = *ds;
+  ds++;
+  cpu.ax += (*ds) << 8;
+
+  if (cpu.ax == 0)
+    return;
+
+  word_104F += cpu.ax;
+  // 0xCF8
+  ds = word_1051->bytes + word_104F;
+  al = *ds++;
+  word_1048 = al;
+  counter_104D = *ds++;
+  cpu.dx = 0x4080;
+  al = *ds++;
+  cpu.ax = (int8_t)al;
+  if ((byte_104E & 0x80) != 0) {
+    cpu.ax = 0x10000 - cpu.ax;
+  }
+
+  printf("%s 0xD16 unimplemented 0x%04X - 0x%02X\n", __func__, word_104F, al);
+  exit(1);
+}
+
 static void sub_56FC()
 {
   uint8_t al, bl;
@@ -3490,23 +3527,33 @@ static void sub_56FC()
   al = data_5897[cpu.bx];
   al &= 0x7F;
   cpu.ax = (cpu.ax & 0xFF00) | al;
-  if (al != 1) {
+  if (al == 1) {
     // 0x5718
     r = data_59E4[cpu.bx];
-    printf("%s 0x5718 unimplemented 0x%04X\n", __func__, cpu.bx);
+    word_1051 = r;
+    cpu.ax = 0;
+    word_104F = cpu.ax;
+    word_36C0 = cpu.ax;
+    g_linenum = cpu.ax;
+    byte_104E = cpu.ax & 0xFF;
+    cpu.bx = 4;
+
+    // 5732
+    sub_CE7();
+    // return;
+  } else {
+
+    // 0x5735
+
+    printf("%s 0x5735 unimplemented 0x%04X\n", __func__, cpu.bx);
     exit(1);
-
   }
-  // 0x5735
-
-  printf("%s 0x5735 unimplemented 0x%04X\n", __func__, cpu.bx);
-  exit(1);
 
 
 }
 
 // 0x51B0
-static void sub_51B0()
+static void start_the_game()
 {
   uint8_t al, bl, dl;
 
@@ -3590,7 +3637,7 @@ static void op_8B()
 {
   // push si
   // 499B
-  sub_51B0();
+  start_the_game();
   printf("%s 0x499B unimplemented\n", __func__);
   exit(1);
 

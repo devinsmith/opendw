@@ -26,7 +26,9 @@
 #include "utils.h"
 #include "vga.h"
 
+// 0x6748
 struct viewport_data {
+  uint16_t offset; // Offset of data
   int xpos;
   int ypos;
   int runlength;
@@ -91,20 +93,34 @@ uint8_t data_2AC3[0x19];
 
 static int loaded = 0;
 
+// Viewport metadata.
+// 0x6748
+unsigned char data_6748[] = {
+  0x58, 0x67, 0x00, 0x00,
+  0x84, 0x67, 0x98, 0x00,
+  0xB0, 0x67, 0x00, 0x7B,
+  0xE8, 0x67, 0x98, 0x7B
+};
+
+// 0x6748
 struct viewport_data viewports[] = {
   {
+    0x6758,
     0x00, 0x00, 0x04, 0x0A, 0x00, 0x00,
     NULL
   },
   {
+    0x6784,
     0x98, 0x00, 0x04, 0x0A, 0x00, 0x00,
     NULL
   },
   {
+    0x67B0,
     0x00, 0x7B, 0x04, 0x0D, 0x00, 0x00,
     NULL
   },
   {
+    0x67E8,
     0x98, 0x7B, 0x04, 0x0D, 0x00, 0x00,
     NULL
   }
@@ -175,7 +191,7 @@ void draw_viewport()
   int cols = 0x50;
   int line_num = 8;
 
-  unsigned char *data = calloc(sizeof(unsigned char), rows * cols);
+  unsigned char *data = get_ptr_4F11();
   uint8_t *framebuffer = vga->memory();
 
   /* Iterate backwards like DW does */
@@ -206,8 +222,6 @@ void draw_viewport()
     line_num++;
   }
   vga->update();
-
-  free(data);
 }
 
 /* 0x35A0 -> 0x3679 */
@@ -617,4 +631,98 @@ int ui_adjust_rect(uint8_t input)
   }
   ui_rect_shrink();
   return 1;
+}
+
+// 0xCF8
+// extract and process viewport data.
+void sub_CF8(unsigned char *data, struct viewport_data *vp)
+{
+  uint8_t al;
+  uint16_t ax, bx;
+  unsigned char *ds = data;
+
+  vp->runlength = *ds++;
+  vp->numruns = *ds++;
+
+  al = *ds++;
+  ax = (int8_t)al;
+  if (byte_104E >= 0x80) {
+    // neg ax;
+    ax = -ax;
+  }
+  vp->xpos += ax;
+  if (vp->runlength >= 0x80 && byte_104E >= 0x80) {
+    vp->xpos--;
+  }
+  vp->runlength &= 0x7F;
+  al = *ds++;
+  ax = (int8_t)al;
+
+  if (byte_104E >= 0x40) {
+    ax = -ax;
+  }
+  vp->ypos += ax;
+
+  bx = vp->xpos;
+  bx &= 1;
+  bx = bx << 1;
+  if (vp->xpos >= 0x8000) {
+    bx |= 4;
+  }
+
+  // 0xD52
+  if (byte_104E >= 0x80) {
+    bx |= 8;
+  }
+  ax = word_1053;
+  if (byte_104E >= 0x40) {
+    ax = -ax;
+  }
+  // 0xD67
+  word_1055 = ax;
+
+  if (bx == 0) {
+    process_quadrant(vp, get_ptr_4F11());
+  }
+
+}
+
+// 0x0CA0
+void sub_CA0()
+{
+  uint16_t ax, bx, di, cx;
+  uint16_t i;
+
+  unsigned char *ds = get_ptr_4F11();
+  di = 0;
+  cx = 0x88;
+  ax = 0xF00F;
+
+  // 0xCAD
+  for (i = 0; i < cx; i++) {
+    ds[di] &= 0x0F;
+    ds[di + 0x4F] &= 0xF0;
+    di += 0x50;
+  }
+  printf("di = 0x%04X\n", di);
+  byte_104E = 0;
+
+  bx = 0xC;
+  // 0xCBF
+
+  // Here we load 1051:104F with the viewport data
+  // Need to call CF8
+}
+
+// 0x37C8
+void sub_37C8()
+{
+  sub_4D82();
+
+  memset(get_ptr_4F11(), 0, 0x1540 * 2);
+  byte_4F0F= 0xFF;
+
+  sub_CA0();
+
+  draw_viewport();
 }

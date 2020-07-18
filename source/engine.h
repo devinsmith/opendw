@@ -21,12 +21,14 @@
 extern "C" {
 #endif
 
+extern unsigned char byte_104E;
 extern unsigned char byte_4F0F;
 extern unsigned char byte_4F10;
 
 void set_game_state(int offset, unsigned char value);
 void reset_game_state();
 void run_engine();
+void sub_4D82();
 
 #ifdef __cplusplus
 }

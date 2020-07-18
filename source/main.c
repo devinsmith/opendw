@@ -131,6 +131,8 @@ main(int argc, char *argv[])
     goto done;
   }
 
+  setup_memory();
+
   init_offsets();
   load_chr_table();
 
@@ -152,9 +154,10 @@ main(int argc, char *argv[])
     goto done;
   }
 
+  ui_set_background(0);
   run_title();
   ui_load();
-  draw_viewport();
+  sub_37C8();
 
   draw_rect.x = 1;
   draw_rect.y = 8;
