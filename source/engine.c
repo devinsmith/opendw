@@ -159,30 +159,18 @@ unsigned char *data_56A3; // Length unknown, from COM file.
 
 // Used as viewport offsets;
 // 0x567F - 0x5690
-unsigned char data_567F[] = {
-  0x10, 0x00,
-  0x00, 0x00,
-  0x80, 0x00,
-  0x20, 0x00,
-  0x00, 0x00,
-  0x70, 0x00,
-  0x30, 0x00,
-  0x00, 0x00,
-  0x60, 0x00
+unsigned short data_567F[] = {
+  0x0010, 0x0000, 0x0080,
+  0x0020, 0x0000, 0x0070,
+  0x0030, 0x0000, 0x0060
 };
 
 // Used as viewport offsets:
 // 0x5691 - 0x56A2
-unsigned char data_5691[] = {
-  0x78, 0x00,
-  0x78, 0x00,
-  0x78, 0x00,
-  0x68, 0x00,
-  0x68, 0x00,
-  0x68, 0x00,
-  0x58, 0x00,
-  0x58, 0x00,
-  0x58, 0x00
+unsigned short data_5691[] = {
+  0x0078, 0x0078, 0x0078,
+  0x0068, 0x0068, 0x0068,
+  0x0058, 0x0058, 0x0058
 };
 
 // 0x56B5 - 0x56C6
@@ -3664,6 +3652,7 @@ static void start_the_game()
 
   cpu.si = 0x10;
   do {
+    // 0x5247
     push_word(cpu.si);
     cpu.bx = data_56A3[cpu.si];
     cpu.bx += data_56A3[cpu.si + 1] << 8;
@@ -3671,24 +3660,20 @@ static void start_the_game()
     bl = bl >> 4;
     cpu.bx = (cpu.bx & 0xFF00) | bl;
     cpu.bx &= 3;
-    bl = data_56A3[0x46 + cpu.bx];
+    // [bx+56E9]
+    bl = data_56E5[cpu.bx + 4];
     cpu.bx = (cpu.bx & 0xFF00) | bl;
-    cpu.bx = cpu.bx << 1;
 
     // mov ax, [bx + 0x59E4]
     r = data_59E4[cpu.bx];
     word_1051 = r;
     word_104F = 0;
 
-    cpu.ax = data_567F[cpu.si];
-    cpu.ax += data_567F[cpu.si + 1] << 8;
-    vp.xpos = cpu.ax;
-    cpu.ax = data_5691[cpu.si];
-    cpu.ax += data_5691[cpu.si + 1] << 8;
-    vp.ypos = cpu.ax;
+    vp.xpos = data_567F[cpu.si >> 1];
+    vp.ypos = data_5691[cpu.si >> 1];
     byte_104E = 0;
 
-    // How is this used?
+    // offset
     cpu.bx = data_56B5[cpu.si];
     cpu.bx += data_56B5[cpu.si + 1] << 1;
 
@@ -3697,7 +3682,18 @@ static void start_the_game()
     cpu.si -= 2;
   } while (cpu.si < 0x8000);
 
-  printf("%s 0x5282 unimplemented: BX - 0x%04X AL - 0x%04X DL - 0x%02X\n", __func__, cpu.bx, cpu.ax, cpu.dx & 0xFF);
+  // 0x52BE
+  cpu.si = 0x2E;
+#if 0
+  do {
+    // 0x5291
+    push_word(cpu.si);
+    // XXX.
+  } while (cpu.si < 0x8000);
+#endif
+  // 0x52F8
+
+  printf("%s 0x5291 unimplemented: BX - 0x%04X AL - 0x%04X DL - 0x%02X\n", __func__, cpu.bx, cpu.ax, cpu.dx & 0xFF);
   exit(1);
 }
 
