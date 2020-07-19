@@ -26,18 +26,6 @@
 #include "utils.h"
 #include "vga.h"
 
-// 0x6748
-struct viewport_data {
-  uint16_t offset; // Offset of data
-  int xpos;
-  int ypos;
-  int runlength;
-  int numruns;
-  int unknown1;
-  int unknown2;
-  unsigned char *data;
-};
-
 struct pic_data {
   uint8_t width;
   uint8_t height;
@@ -95,32 +83,28 @@ static int loaded = 0;
 
 // Viewport metadata.
 // 0x6748
-unsigned char data_6748[] = {
+unsigned char viewport_metadata[] = {
   0x58, 0x67, 0x00, 0x00,
   0x84, 0x67, 0x98, 0x00,
   0xB0, 0x67, 0x00, 0x7B,
   0xE8, 0x67, 0x98, 0x7B
 };
 
-// 0x6748
+// Populated from data extracted from 0x6748
 struct viewport_data viewports[] = {
   {
-    0x6758,
     0x00, 0x00, 0x04, 0x0A, 0x00, 0x00,
     NULL
   },
   {
-    0x6784,
     0x98, 0x00, 0x04, 0x0A, 0x00, 0x00,
     NULL
   },
   {
-    0x67B0,
     0x00, 0x7B, 0x04, 0x0D, 0x00, 0x00,
     NULL
   },
   {
-    0x67E8,
     0x98, 0x7B, 0x04, 0x0D, 0x00, 0x00,
     NULL
   }
@@ -164,7 +148,7 @@ static void process_quadrant(const struct viewport_data *d, unsigned char *data)
   offset += newx;
   printf("Offset: %04x\n", offset);
   unsigned char *p = data + offset;
-  unsigned char *q = d->data;
+  unsigned char *q = d->data + 4;
   for (int i = 0; i < d->numruns; i++) {
     for (int j = 0; j < d->runlength; j++) {
       unsigned char val = *q;
@@ -191,20 +175,11 @@ void draw_viewport()
   int cols = 0x50;
   int line_num = 8;
 
-  unsigned char *data = get_ptr_4F11();
   uint8_t *framebuffer = vga->memory();
-
-  /* Iterate backwards like DW does */
-  int vidx = 3;
-  while (vidx >= 0) {
-    const struct viewport_data *p = &viewports[vidx];
-    process_quadrant(p, data);
-    vidx--;
-  }
 
   // 0x88 x 0x50
   /* see 0x1060 */
-  unsigned char *src = data;
+  unsigned char *src = get_ptr_4F11();
   for (int y = 0; y < rows; y++) {
     uint16_t fb_off = get_line_offset(line_num) + 0x10;
     for (int x = 0; x < cols; x++) {
@@ -433,10 +408,10 @@ void ui_header_draw()
 void ui_load()
 {
   /* Viewport data is stored in the dragon.com file */
-  viewports[0].data = com_extract(0x6758 + 4, 4 * 0xA);
-  viewports[1].data = com_extract(0x6784 + 4, 4 * 0xA);
-  viewports[2].data = com_extract(0x67B0 + 4, 4 * 0xD);
-  viewports[3].data = com_extract(0x67E8 + 4, 4 * 0xD);
+  viewports[0].data = com_extract(0x6758, 4 + (4 * 0xA));
+  viewports[1].data = com_extract(0x6784, 4 + (4 * 0xA));
+  viewports[2].data = com_extract(0x67B0, 4 + (4 * 0xD));
+  viewports[3].data = com_extract(0x67E8, 4 + (4 * 0xD));
 
   unsigned char *ui_piece_offsets_base = com_extract(0x6AE0, UI_PIECE_COUNT * 2);
   unsigned char *ui_piece_offsets = ui_piece_offsets_base;
@@ -683,20 +658,21 @@ void sub_CF8(unsigned char *data, struct viewport_data *vp)
 
   if (bx == 0) {
     process_quadrant(vp, get_ptr_4F11());
+  } else {
+    printf("%s: An unhandled BX was specified.\n", __func__);
+    exit(1);
   }
-
 }
 
 // 0x0CA0
 void sub_CA0()
 {
-  uint16_t ax, bx, di, cx;
+  uint16_t di, cx;
   uint16_t i;
 
   unsigned char *ds = get_ptr_4F11();
   di = 0;
   cx = 0x88;
-  ax = 0xF00F;
 
   // 0xCAD
   for (i = 0; i < cx; i++) {
@@ -707,11 +683,27 @@ void sub_CA0()
   printf("di = 0x%04X\n", di);
   byte_104E = 0;
 
-  bx = 0xC;
   // 0xCBF
+  int vidx = 3;
+  while (vidx >= 0) {
+    int offset_idx = vidx << 2;
+    uint16_t offset;
 
-  // Here we load 1051:104F with the viewport data
-  // Need to call CF8
+    // Load viewport data.
+    struct viewport_data *p = &viewports[vidx];
+    offset = viewport_metadata[offset_idx];
+    offset += viewport_metadata[offset_idx + 1] << 8;
+
+    p->xpos = viewport_metadata[offset_idx + 2];
+    p->ypos = viewport_metadata[offset_idx + 3];
+
+    // Data already loaded in ui_load.
+    //
+    sub_CF8(p->data, p);
+
+    vidx--;
+  }
+  draw_viewport();
 }
 
 // 0x37C8
@@ -723,6 +715,4 @@ void sub_37C8()
   byte_4F0F= 0xFF;
 
   sub_CA0();
-
-  draw_viewport();
 }

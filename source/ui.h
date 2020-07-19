@@ -34,6 +34,16 @@ struct ui_string_line {
   unsigned char bytes[40];
 };
 
+struct viewport_data {
+  int xpos; // Sometimes set as 36C0
+  int ypos; // Sometimes set as 36C4
+  int runlength;
+  int numruns;
+  int unknown1;
+  int unknown2;
+  unsigned char *data;
+};
+
 // 0x320C
 extern struct ui_string_line ui_string;
 
@@ -57,6 +67,7 @@ extern struct ui_point draw_point;
 
 void ui_load();
 void sub_37C8();
+void sub_CF8(unsigned char *data, struct viewport_data *vp);
 void draw_viewport();
 void ui_draw();
 void ui_draw_full();

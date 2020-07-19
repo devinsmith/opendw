@@ -1,3 +1,2 @@
-Menu navigation.
-- Create character.
--- There's a bug where some byte isn't getting pushed to the stack. (op_11 ?)
+Begin the game
+sub_51B0, specifically 51D0

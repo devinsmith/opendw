@@ -155,6 +155,49 @@ unsigned char *data_5521;
 uint8_t byte_551E;
 uint16_t word_551F;
 
+unsigned char *data_56A3; // Length unknown, from COM file.
+
+// Used as viewport offsets;
+// 0x567F - 0x5690
+unsigned char data_567F[] = {
+  0x10, 0x00,
+  0x00, 0x00,
+  0x80, 0x00,
+  0x20, 0x00,
+  0x00, 0x00,
+  0x70, 0x00,
+  0x30, 0x00,
+  0x00, 0x00,
+  0x60, 0x00
+};
+
+// Used as viewport offsets:
+// 0x5691 - 0x56A2
+unsigned char data_5691[] = {
+  0x78, 0x00,
+  0x78, 0x00,
+  0x78, 0x00,
+  0x68, 0x00,
+  0x68, 0x00,
+  0x68, 0x00,
+  0x58, 0x00,
+  0x58, 0x00,
+  0x58, 0x00
+};
+
+// 0x56B5 - 0x56C6
+unsigned char data_56B5[] = {
+  0x12, 0x00,
+  0x10, 0x00,
+  0x14, 0x00,
+  0x0C, 0x00,
+  0x0A, 0x00,
+  0x0E, 0x00,
+  0x06, 0x00,
+  0x04, 0x00,
+  0x08, 0x00
+};
+
 // Unknown how large this is.
 // But also referenced as: 56E5 (not sure if this is correct at this point)
 unsigned char data_56C7[128];
@@ -3474,9 +3517,8 @@ static void sub_59A6()
   } while (cpu.bx != 0xFFFF);
 }
 
-static void sub_CE7()
+static void sub_CE7(struct viewport_data *vp)
 {
-  uint8_t al;
   unsigned char *ds = word_1051->bytes + word_104F + cpu.bx;
 
   cpu.ax = *ds;
@@ -3489,18 +3531,8 @@ static void sub_CE7()
   word_104F += cpu.ax;
   // 0xCF8
   ds = word_1051->bytes + word_104F;
-  al = *ds++;
-  word_1048 = al;
-  counter_104D = *ds++;
-  cpu.dx = 0x4080;
-  al = *ds++;
-  cpu.ax = (int8_t)al;
-  if ((byte_104E & 0x80) != 0) {
-    cpu.ax = 0x10000 - cpu.ax;
-  }
-
-  printf("%s 0xD16 unimplemented 0x%04X - 0x%02X\n", __func__, word_104F, al);
-  exit(1);
+  vp->data = ds;
+  sub_CF8(vp->data, vp);
 }
 
 static void sub_56FC()
@@ -3508,6 +3540,7 @@ static void sub_56FC()
   uint8_t al, bl;
   int tmp_carry;
   struct resource *r;
+  struct viewport_data vp;
 
   bl = data_5A04[0x68];
 
@@ -3533,18 +3566,18 @@ static void sub_56FC()
     word_1051 = r;
     cpu.ax = 0;
     word_104F = cpu.ax;
+    vp.xpos = cpu.ax;
     word_36C0 = cpu.ax;
     g_linenum = cpu.ax;
+    vp.ypos = cpu.ax;
     byte_104E = cpu.ax & 0xFF;
     cpu.bx = 4;
 
     // 5732
-    sub_CE7();
-    // return;
+    sub_CE7(&vp);
   } else {
 
     // 0x5735
-
     printf("%s 0x5735 unimplemented 0x%04X\n", __func__, cpu.bx);
     exit(1);
   }
@@ -3556,6 +3589,8 @@ static void sub_56FC()
 static void start_the_game()
 {
   uint8_t al, bl, dl;
+  struct resource *r;
+  struct viewport_data vp;
 
   sub_4D82();
   sub_5764();
@@ -3627,7 +3662,42 @@ static void start_the_game()
   sub_59A6();
   sub_56FC();
 
-  printf("%s 0x5244 unimplemented: BX - 0x%04X AL - 0x%04X DL - 0x%02X\n", __func__, cpu.bx, cpu.ax, cpu.dx & 0xFF);
+  cpu.si = 0x10;
+  do {
+    push_word(cpu.si);
+    cpu.bx = data_56A3[cpu.si];
+    cpu.bx += data_56A3[cpu.si + 1] << 8;
+    bl = data_5A04[94 + cpu.bx];
+    bl = bl >> 4;
+    cpu.bx = (cpu.bx & 0xFF00) | bl;
+    cpu.bx &= 3;
+    bl = data_56A3[0x46 + cpu.bx];
+    cpu.bx = (cpu.bx & 0xFF00) | bl;
+    cpu.bx = cpu.bx << 1;
+
+    // mov ax, [bx + 0x59E4]
+    r = data_59E4[cpu.bx];
+    word_1051 = r;
+    word_104F = 0;
+
+    cpu.ax = data_567F[cpu.si];
+    cpu.ax += data_567F[cpu.si + 1] << 8;
+    vp.xpos = cpu.ax;
+    cpu.ax = data_5691[cpu.si];
+    cpu.ax += data_5691[cpu.si + 1] << 8;
+    vp.ypos = cpu.ax;
+    byte_104E = 0;
+
+    // How is this used?
+    cpu.bx = data_56B5[cpu.si];
+    cpu.bx += data_56B5[cpu.si + 1] << 1;
+
+    sub_CE7(&vp);
+    cpu.si = pop_word();
+    cpu.si -= 2;
+  } while (cpu.si < 0x8000);
+
+  printf("%s 0x5282 unimplemented: BX - 0x%04X AL - 0x%04X DL - 0x%02X\n", __func__, cpu.bx, cpu.ax, cpu.dx & 0xFF);
   exit(1);
 }
 
@@ -4152,6 +4222,7 @@ void run_engine()
   data_5303 = com_extract(0x5303, 512); // XXX: Validate that this is 512 bytes
   data_D760 = com_extract(0xD760, 0x700);
   data_1E21 = com_extract(0x1E21, 0xEF);
+  data_56A3 = com_extract(0x56A3, 512); // Unknown size.
 
   // 0x1A6
   // Loads into 0x1887:0000
