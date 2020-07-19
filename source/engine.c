@@ -155,8 +155,6 @@ unsigned char *data_5521;
 uint8_t byte_551E;
 uint16_t word_551F;
 
-unsigned char *data_56A3; // Length unknown, from COM file.
-
 // Used as viewport offsets;
 // 0x567F - 0x5690
 unsigned short data_567F[] = {
@@ -173,17 +171,19 @@ unsigned short data_5691[] = {
   0x0058, 0x0058, 0x0058
 };
 
+// Used as viewport data.
+// 0x56A3 - 0x56B4
+unsigned short data_56A3[] = {
+  0x000A, 0x0009, 0x000B,
+  0x0007, 0x0006, 0x0008,
+  0x0004, 0x0003, 0x0005
+};
+
 // 0x56B5 - 0x56C6
 unsigned char data_56B5[] = {
-  0x12, 0x00,
-  0x10, 0x00,
-  0x14, 0x00,
-  0x0C, 0x00,
-  0x0A, 0x00,
-  0x0E, 0x00,
-  0x06, 0x00,
-  0x04, 0x00,
-  0x08, 0x00
+  0x0012, 0x0010, 0x0014,
+  0x000C, 0x000A, 0x000E,
+  0x0006, 0x0004, 0x0008
 };
 
 // Unknown how large this is.
@@ -3579,6 +3579,7 @@ static void start_the_game()
   uint8_t al, bl, dl;
   struct resource *r;
   struct viewport_data vp;
+  int counter;
 
   sub_4D82();
   sub_5764();
@@ -3650,12 +3651,10 @@ static void start_the_game()
   sub_59A6();
   sub_56FC();
 
-  cpu.si = 0x10;
+  counter = 8;
   do {
     // 0x5247
-    push_word(cpu.si);
-    cpu.bx = data_56A3[cpu.si];
-    cpu.bx += data_56A3[cpu.si + 1] << 8;
+    cpu.bx = data_56A3[counter];
     bl = data_5A04[94 + cpu.bx];
     bl = bl >> 4;
     cpu.bx = (cpu.bx & 0xFF00) | bl;
@@ -3669,18 +3668,16 @@ static void start_the_game()
     word_1051 = r;
     word_104F = 0;
 
-    vp.xpos = data_567F[cpu.si >> 1];
-    vp.ypos = data_5691[cpu.si >> 1];
+    vp.xpos = data_567F[counter];
+    vp.ypos = data_5691[counter];
     byte_104E = 0;
 
     // offset
-    cpu.bx = data_56B5[cpu.si];
-    cpu.bx += data_56B5[cpu.si + 1] << 1;
+    cpu.bx = data_56B5[counter];
 
     sub_CE7(&vp);
-    cpu.si = pop_word();
-    cpu.si -= 2;
-  } while (cpu.si < 0x8000);
+    counter--;
+  } while (counter >= 0);
 
   // 0x52BE
   cpu.si = 0x2E;
@@ -4218,7 +4215,6 @@ void run_engine()
   data_5303 = com_extract(0x5303, 512); // XXX: Validate that this is 512 bytes
   data_D760 = com_extract(0xD760, 0x700);
   data_1E21 = com_extract(0x1E21, 0xEF);
-  data_56A3 = com_extract(0x56A3, 512); // Unknown size.
 
   // 0x1A6
   // Loads into 0x1887:0000
