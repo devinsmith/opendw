@@ -67,6 +67,7 @@ extern struct ui_point draw_point;
 
 void ui_load();
 void sub_37C8();
+void sub_CA0();
 void sub_CF8(unsigned char *data, struct viewport_data *vp);
 void draw_viewport();
 void ui_draw();

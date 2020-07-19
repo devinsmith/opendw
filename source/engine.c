@@ -155,6 +155,56 @@ unsigned char *data_5521;
 uint8_t byte_551E;
 uint16_t word_551F;
 
+// 0x558F - 0x55BE
+unsigned short data_558F[] = {
+  0x0020, 0x0000, 0x0080, 0xFFC0,
+  0x0080, 0x0020, 0xFFC0, 0x0080,
+  0x0030, 0x0020, 0x0070, 0xFFF0,
+  0x0070, 0x0030, 0xFFF0, 0x0070,
+  0x0040, 0x0030, 0x0060, 0x0020,
+  0x0060, 0x0040, 0x0020, 0x0060
+};
+
+// 0x55BF - 0x55EE
+unsigned short data_55BF[] = {
+  0x0010, 0x0000, 0x0000, 0x0010,
+  0x0010, 0x0010, 0x0010, 0x0010,
+  0x0020, 0x0010, 0x0010, 0x0020,
+  0x0020, 0x0020, 0x0020, 0x0020,
+  0x0030, 0x0020, 0x0020, 0x0030,
+  0x0030, 0x0030, 0x0030, 0x0030
+};
+
+// 0x55EF - 0x561E
+unsigned short data_55EF[] = {
+  0x0016, 0x000A, 0x000B, 0x0015,
+  0x0017, 0x008A, 0x0089, 0x008B,
+  0x0013, 0x0007, 0x0008, 0x0012,
+  0x0014, 0x0087, 0x0086, 0x0088,
+  0x0010, 0x0004, 0x0005, 0x000F,
+  0x0011, 0x0084, 0x0083, 0x0085
+};
+
+// 0x561F - 0x564E
+unsigned short data_561F[] = {
+  0x0004, 0x000C, 0x000C, 0x0004,
+  0x0004, 0x0004, 0x0004, 0x0004,
+  0x0006, 0x000E, 0x000E, 0x0006,
+  0x0006, 0x0006, 0x0006, 0x0006,
+  0x0008, 0x0010, 0x0010, 0x0008,
+  0x0008, 0x0008, 0x0008, 0x0008
+};
+
+// 0x564F - 0x567E
+unsigned short data_564F[] = {
+  0x0001, 0x0000, 0x0080, 0x0001,
+  0x0001, 0x0000, 0x0000, 0x0000,
+  0x0001, 0x0000, 0x0080, 0x0001,
+  0x0001, 0x0000, 0x0000, 0x0000,
+  0x0001, 0x0000, 0x0080, 0x0001,
+  0x0001, 0x0000, 0x0000, 0x0000
+};
+
 // Used as viewport offsets;
 // 0x567F - 0x5690
 unsigned short data_567F[] = {
@@ -3569,8 +3619,26 @@ static void sub_56FC()
     printf("%s 0x5735 unimplemented 0x%04X\n", __func__, cpu.bx);
     exit(1);
   }
+}
 
+// 0x587E
+static void sub_587E()
+{
+  uint8_t al;
+  int counter = 0xE;
 
+  do {
+    // 0x5881
+    // mov al, [si + 0x58A6]
+    al = data_5897[counter + 0xf];
+    if (al <= 0x7F) {
+      // 5889
+      sub_128D(al);
+    }
+    // 0x588E
+    data_5897[counter + 0xf] = 0xFF;
+    counter--;
+  } while (counter >= 0);
 }
 
 // 0x51B0
@@ -3679,19 +3747,56 @@ static void start_the_game()
     counter--;
   } while (counter >= 0);
 
-  // 0x52BE
-  cpu.si = 0x2E;
-#if 0
+  // 0x528E
+  counter = 23;
   do {
     // 0x5291
-    push_word(cpu.si);
-    // XXX.
-  } while (cpu.si < 0x8000);
-#endif
-  // 0x52F8
+    cpu.ax = data_55EF[counter];
+    cpu.di = cpu.ax;
+    cpu.di &= 0x007F;
+    bl = data_5A04[0x52 + cpu.di];
+    if ((cpu.ax & 0xFF) > 0x80) {
+      bl = bl >> 4;
+    }
+    cpu.bx = (cpu.bx & 0xFF00) | bl;
+    cpu.bx &= 0x000F;
+    if (cpu.bx != 0) {
+      // 0x52B2
+      cpu.cx = data_564F[counter];
+      byte_104E = cpu.cx & 0xFF;
+      al = data_56C7[cpu.bx];
+      // if cpu.cx is odd.
+      if (((cpu.cx & 0xFF) & 1) == 1) {
+        // 0x52C3 (odd)
+        al = data_56E5[cpu.bx + 0x7];
+      }
+      // 0x52C7
+      if (al <= 0x7F) {
+        // 0x52CB
+        al = al << 1;
+        cpu.ax = al;
+        cpu.di = cpu.ax;
 
-  printf("%s 0x5291 unimplemented: BX - 0x%04X AL - 0x%04X DL - 0x%02X\n", __func__, cpu.bx, cpu.ax, cpu.dx & 0xFF);
-  exit(1);
+        // 52D1
+        //
+        r = data_59E4[cpu.di >> 1];
+        word_1051 = r;
+        word_104F = 0;
+        cpu.ax = data_558F[counter];
+        vp.xpos = cpu.ax;
+        vp.ypos = data_55BF[counter];
+        cpu.bx = data_561F[counter];
+        sub_CE7(&vp);
+      }
+    }
+    // 0x52F3
+    counter--;
+  } while (counter >= 0);
+  // 0x52F8
+  //
+  byte_4F0F = 0xFF;
+  sub_587E();
+  sub_CA0();
 }
 
 
@@ -3701,9 +3806,6 @@ static void op_8B()
   // push si
   // 499B
   start_the_game();
-  printf("%s 0x499B unimplemented\n", __func__);
-  exit(1);
-
 }
 
 // 0x49A5
