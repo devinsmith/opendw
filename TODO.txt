@@ -1,2 +1,2 @@
 Begin the game
-sub_51B0, specifically 51D0
+Purgatory stuff (op_9D, op_71 needs to be finished)
