@@ -354,6 +354,7 @@ static void sub_1C79(unsigned char **src_ptr, uint16_t offset);
 static void sub_1BF8(uint8_t color, uint8_t y_adjust);
 static void sub_27E3(unsigned char **src_ptr, uint16_t offset);
 static void sub_4A7D();
+static void sub_54D8();
 
 // Decoded opcode calls, foward definition.
 static void op_00();
@@ -428,6 +429,7 @@ static void op_61();
 static void op_63();
 static void op_66();
 static void op_69();
+static void op_71();
 static void op_74();
 static void op_75();
 static void op_76();
@@ -576,7 +578,7 @@ struct op_call_table targets[] = {
   { NULL, "0x45FA" },
   { NULL, "0x4607" },
   { NULL, "0x4632" },
-  { NULL, "0x465B" },
+  { op_71, "0x465B" },
   { NULL, "0x46B6" },
   { NULL, "0x47B7" },
   { op_74, "0x47C0" },
@@ -2247,6 +2249,69 @@ static void draw_rectangle(void)
   ui_rect_shrink();
   draw_pattern(&draw_rect);
   vga->update();
+}
+
+// 0x46A1
+static void sub_46A1(void)
+{
+  uint8_t al;
+  uint16_t offset = cpu.bx & 0xFF;
+  // 0x46A3
+  offset += data_5A04[0];
+  offset += data_5A04[1] << 8;
+
+  cpu.bx = data_5521[offset];
+  cpu.bx += data_5521[offset + 1] << 8;
+  al = game_state.unknown[0x56];
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  // 0x3AA0
+  run_script(al, cpu.bx);
+}
+
+
+// 0x465B
+static void op_71(void)
+{
+  uint8_t al, bl, dl;
+
+  al = game_state.unknown[2];
+  if (al == game_state.unknown[0x57]) {
+    // 0x4667
+    dl = game_state.unknown[1];
+    bl = game_state.unknown[0];
+
+    cpu.dx = (cpu.dx & 0xFF00) | dl;
+    cpu.bx = (cpu.bx & 0xFF00) | bl;
+    sub_54D8();
+
+    al = word_11C8;
+    if (al != game_state.unknown[0x3E]) {
+      // 0x467B
+      set_game_state(0x3E, 0);
+      if (al != 0) {
+        // 0x4684
+        set_game_state(0x3F, al);
+        cpu.ax = (cpu.ax & 0xFF00) | al;
+        cpu.ax++;
+        al = cpu.ax & 0xFF;
+        al = al << 1;
+
+        bl = al;
+        cpu.bx = (cpu.bx & 0xFF00) | bl;
+        sub_46A1();
+        printf("%s: 0x468C unimplemented, al = 0x%02X\n", __func__, al);
+        exit(1);
+
+      }
+      // 0x4698
+    }
+    // 0x4698
+    printf("%s: 0x4698 unimplemented, al = 0x%02X\n", __func__, al);
+    exit(1);
+
+  }
+  // 0x469D
+
 }
 
 // 0x47C0
