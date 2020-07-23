@@ -354,6 +354,8 @@ static void sub_1C79(unsigned char **src_ptr, uint16_t offset);
 static void sub_1BF8(uint8_t color, uint8_t y_adjust);
 static void sub_27E3(unsigned char **src_ptr, uint16_t offset);
 static void sub_4A7D();
+static void sub_4AC0();
+static void sub_4AC6();
 static void sub_54D8();
 static void sub_536B();
 
@@ -409,6 +411,7 @@ static void op_44();
 static void jump_zero_flag();
 static void op_46();
 static void op_47();
+static void op_48();
 static void loop(); // 49
 static void op_4A();
 static void op_4B();
@@ -543,7 +546,7 @@ struct op_call_table targets[] = {
   { jump_zero_flag, "0x40A3" },
   { op_46, "0x40AF" },
   { op_47, "0x40B8" },
-  { NULL, "0x40ED" },
+  { op_48, "0x40ED" },
   { loop, "0x4106" },
   { op_4A, "0x4113" },
   { op_4B, "0x4122" },
@@ -1655,7 +1658,22 @@ static void op_47()
   // 40AA
   cpu.pc++;
   cpu.pc++;
+}
 
+// 0x40ED
+static void op_48()
+{
+  uint8_t al;
+
+  sub_4AC6();
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.bx = cpu.ax;
+
+  if (game_state.unknown[cpu.bx] < 0x80) {
+    set_game_state(cpu.bx, game_state.unknown[cpu.bx] | 0x80);
+    sub_4AC0();
+  }
 }
 
 // 0x4106
@@ -2243,14 +2261,10 @@ static void op_6F(void)
   cpu.bx = 0;
 
   // 0x4620
-  // copy contents of 11CA, 11CC into game_state.
-  do {
-    al = word_11CA;
-    set_game_state(cpu.di, al);
-    cpu.bx++;
-    cpu.di++;
-  } while (cpu.bx < 3);
-
+  // copy contents of 11CA, 11CB, 11CC into game_state.
+  set_game_state(cpu.di++, word_11CA & 0xFF);
+  set_game_state(cpu.di++, (word_11CA & 0xFF00) >> 8);
+  set_game_state(cpu.di++, (word_11CC & 0xFF));
 }
 
 // 0x25E0
@@ -2338,6 +2352,10 @@ static void sub_46A1(void)
 static void op_71(void)
 {
   uint8_t al, bl, dl;
+  unsigned char *base_pc = cpu.base_pc;
+
+  uint16_t si = cpu.pc - cpu.base_pc; // is this correct?
+  push_word(si);
 
   al = game_state.unknown[2];
   if (al == game_state.unknown[0x57]) {
@@ -2374,11 +2392,11 @@ static void op_71(void)
     // 0x4698
     cpu.bx = 0;
     sub_46A1();
-    printf("%s: 0x4698 unimplemented, al = 0x%02X, pop si?\n", __func__, al);
-    exit(1);
   }
   // 0x469D
   // pop si ?
+  si = pop_word();
+  cpu.pc = base_pc + si;
 }
 
 // 0x47B7
@@ -3560,7 +3578,8 @@ static void sub_536B()
     al = word_11C6;
     al = al & 0xF;
     cpu.ax = (cpu.ax & 0xFF00) | al;
-    word_11CC = (word_11CC & 0xFF00) | al;
+    // mov [[11CD], al
+    word_11CC = (al << 8) | (word_11CC & 0xFF);
 
     push_word(cpu.dx);
     push_word(cpu.bx);
