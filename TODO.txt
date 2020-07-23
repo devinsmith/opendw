@@ -1,3 +1,2 @@
-Begin the game
 op_48
-Purgatory stuff
+-- Get to a point where we're waiting on navigation keys.
