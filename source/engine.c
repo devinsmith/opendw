@@ -1959,10 +1959,13 @@ static void op_5C(void)
   cpu.ax += ((*cpu.pc++) << 8);
 
   word_42D6 = cpu.ax;
+
+  // mov [3ADB], si
   word_3ADB = cpu.pc - cpu.base_pc; // is this correct?
   unsigned char *save_pc = cpu.pc;
 
   if (game_state.unknown[0x1F] == 0) {
+    // 0x42D3
     return;
   }
 
@@ -1970,14 +1973,15 @@ static void op_5C(void)
   cpu.ax = (cpu.ax & 0xFF00) | al;
   push_word(cpu.ax);
   game_state.unknown[6] = 0;
-  al = word_3AE8;
-  while (al < game_state.unknown[0x1F]) {
+
+  do {
+    // 0x42B8
     cpu.bx = word_42D6;
     al = word_3AE8;
     run_script(al, word_42D6);
     game_state.unknown[6]++;
     al = game_state.unknown[6];
-  }
+  } while (al < game_state.unknown[0x1F]);
   cpu.ax = pop_word();
   al = cpu.ax & 0xFF;
   game_state.unknown[6] = al;
