@@ -355,6 +355,7 @@ static void sub_1BF8(uint8_t color, uint8_t y_adjust);
 static void sub_27E3(unsigned char **src_ptr, uint16_t offset);
 static void sub_4A7D();
 static void sub_54D8();
+static void sub_536B();
 
 // Decoded opcode calls, foward definition.
 static void op_00();
@@ -405,7 +406,7 @@ static void op_40();
 static void op_41();
 static void op_42();
 static void op_44();
-static void op_45();
+static void jump_zero_flag();
 static void op_46();
 static void op_47();
 static void loop(); // 49
@@ -429,7 +430,10 @@ static void op_61();
 static void op_63();
 static void op_66();
 static void op_69();
+static void op_6A();
+static void op_6F();
 static void op_71();
+static void op_73();
 static void op_74();
 static void op_75();
 static void op_76();
@@ -458,6 +462,8 @@ static void op_97();
 static void op_98();
 static void op_99();
 static void op_9A();
+static void op_9B();
+static void op_9D();
 
 struct op_call_table {
   void (*func)();
@@ -534,7 +540,7 @@ struct op_call_table targets[] = {
   { op_42, "0x4085" },
   { NULL, "0x408E" },
   { op_44, "0x4099" },
-  { op_45, "0x40A3" },
+  { jump_zero_flag, "0x40A3" },
   { op_46, "0x40AF" },
   { op_47, "0x40B8" },
   { NULL, "0x40ED" },
@@ -571,16 +577,16 @@ struct op_call_table targets[] = {
   { NULL, "0x44CB" },
   { NULL, "0x450A" },
   { op_69, "0x453F" },
-  { NULL, "0x4573" },
+  { op_6A, "0x4573" },
   { NULL, "0x45A1" },
   { NULL, "0x45A8" },
   { NULL, "0x45F0" },
   { NULL, "0x45FA" },
-  { NULL, "0x4607" },
+  { op_6F, "0x4607" },
   { NULL, "0x4632" },
   { op_71, "0x465B" },
   { NULL, "0x46B6" },
-  { NULL, "0x47B7" },
+  { op_73, "0x47B7" },
   { op_74, "0x47C0" },
   { op_75, "0x47D1" },
   { op_76, "0x47D9" },
@@ -620,9 +626,9 @@ struct op_call_table targets[] = {
   { op_98, "0x4348" },
   { op_99, "0x40E7" },
   { op_9A, "0x3C42" },
-  { NULL, "0x416B" },
+  { op_9B, "0x416B" },
   { NULL, "0x4175" },
-  { NULL, "0x4181" },
+  { op_9D, "0x4181" },
   { NULL, "0x492D" },
   { NULL, "0x4AF0" },
   { NULL, "0x8A06" },
@@ -1611,7 +1617,7 @@ static void op_44(void)
 }
 
 // 0x40A3
-static void op_45(void)
+static void jump_zero_flag(void)
 {
   if ((word_3AE6 & ZERO_FLAG_MASK) != 0) {
     cpu.pc++;
@@ -1621,7 +1627,7 @@ static void op_45(void)
   uint16_t new_address = *cpu.pc++;
   new_address += *cpu.pc++ << 8;
   cpu.ax = new_address;
-  printf("(op45)    New address: 0x%04x\n", new_address);
+  printf("(%s)    New address: 0x%04x\n", __func__, new_address);
   cpu.pc = cpu.base_pc + new_address;
 }
 
@@ -2188,6 +2194,65 @@ static void op_69(void)
 
 }
 
+// 0x4AC0
+static void sub_4AC0()
+{
+  word_3AE6 |= 0x40;
+}
+
+// 0x4AC6
+static void sub_4AC6()
+{
+  word_3AE6 &= 0xBF;
+}
+
+// 0x4573
+static void op_6A(void)
+{
+  int i;
+  uint8_t val[4];
+
+  sub_4AC6();
+  // 0x4576
+  // push si
+  //
+  for (i = 0; i < 4; i++) {
+    val[i] = *cpu.pc++;
+  }
+  if (game_state.unknown[0] >= val[0] &&
+      game_state.unknown[1] >= val[1] &&
+      val[2] >= game_state.unknown[0] &&
+      val[3] >= game_state.unknown[1]) {
+    sub_4AC0();
+  }
+  // 0x459A
+}
+
+// 0x4607
+static void op_6F(void)
+{
+  uint8_t al;
+
+  cpu.dx = (cpu.dx & 0xFF00) | game_state.unknown[1];
+  cpu.bx = (cpu.bx & 0xFF00) | game_state.unknown[0];
+  sub_536B();
+
+  al = *cpu.pc++;
+  cpu.ax = al;
+  cpu.di = cpu.ax;
+  cpu.bx = 0;
+
+  // 0x4620
+  // copy contents of 11CA, 11CC into game_state.
+  do {
+    al = word_11CA;
+    set_game_state(cpu.di, al);
+    cpu.bx++;
+    cpu.di++;
+  } while (cpu.bx < 3);
+
+}
+
 // 0x25E0
 static void draw_rectangle(void)
 {
@@ -2299,19 +2364,30 @@ static void op_71(void)
         bl = al;
         cpu.bx = (cpu.bx & 0xFF00) | bl;
         sub_46A1();
-        printf("%s: 0x468C unimplemented, al = 0x%02X\n", __func__, al);
-        exit(1);
-
+        al = game_state.unknown[2];
+        if (al != game_state.unknown[0x57]) {
+          return;
+        }
       }
       // 0x4698
     }
     // 0x4698
-    printf("%s: 0x4698 unimplemented, al = 0x%02X\n", __func__, al);
+    cpu.bx = 0;
+    sub_46A1();
+    printf("%s: 0x4698 unimplemented, al = 0x%02X, pop si?\n", __func__, al);
     exit(1);
-
   }
   // 0x469D
+  // pop si ?
+}
 
+// 0x47B7
+static void op_73(void)
+{
+  uint8_t al;
+
+  al = game_state.unknown[0x3F];
+  set_game_state(0x3E, al);
 }
 
 // 0x47C0
@@ -4071,6 +4147,43 @@ static void op_9A(void)
   }
 }
 
+// 0x4A79
+static void sub_4A79(void)
+{
+  uint8_t al = *cpu.pc++;
+
+  // jmp 4A80
+  // 0x4A80
+  cpu.ax = al;
+  cpu.di = cpu.ax;
+  cpu.bx = cpu.ax;
+
+  al = *cpu.pc++;
+  cpu.bx = cpu.bx >> 3;
+  cpu.bx += al;
+  cpu.di &= 7;
+  al = data_4A99[cpu.di];
+  cpu.ax = al;
+}
+
+// 0x416B
+static void op_9B(void)
+{
+  sub_4A79();
+  set_game_state(cpu.bx, game_state.unknown[cpu.bx] | (cpu.ax & 0xFF));
+}
+
+// 0x4181
+static void op_9D(void)
+{
+  sub_4A79();
+
+  // test [bx+3860], al
+  cpu.cf = 0;
+  cpu.zf = (game_state.unknown[cpu.bx] & cpu.ax) == 0 ? 1 : 0;
+  sub_40D1();
+}
+
 static void sub_1C79(unsigned char **src_ptr, uint16_t offset)
 {
   num_bits = 0;
@@ -4345,6 +4458,7 @@ static void run_script(uint8_t script_index, uint16_t src_offset)
 
   while (!done) {
     prev_op = op_code;
+    // 0x3ACF
     // es lodsb
     op_code = *cpu.pc++;
     // xor ah, ah

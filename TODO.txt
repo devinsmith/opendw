@@ -1,2 +1,3 @@
 Begin the game
-Purgatory stuff (op_9D, op_71 needs to be finished)
+Purgatory stuff (op_71 needs to be finished)
+op_6F
