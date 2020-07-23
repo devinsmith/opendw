@@ -407,8 +407,8 @@ static void op_3F();
 static void op_40();
 static void op_41();
 static void op_42();
-static void op_44();
-static void jump_zero_flag();
+static void op_jnz();
+static void op_jz();
 static void op_46();
 static void op_47();
 static void op_48();
@@ -542,8 +542,8 @@ struct op_call_table targets[] = {
   { op_41, "0x407C" },
   { op_42, "0x4085" },
   { NULL, "0x408E" },
-  { op_44, "0x4099" },
-  { jump_zero_flag, "0x40A3" },
+  { op_jnz, "0x4099" },
+  { op_jz, "0x40A3" },
   { op_46, "0x40AF" },
   { op_47, "0x40B8" },
   { op_48, "0x40ED" },
@@ -1605,7 +1605,8 @@ static void op_42(void)
 
 // 0x4099
 // op_44
-static void op_44(void)
+// Jump on non-zero flag.
+static void op_jnz(void)
 {
   if ((word_3AE6 & ZERO_FLAG_MASK) == 0) {
     cpu.pc++;
@@ -1615,12 +1616,14 @@ static void op_44(void)
   uint16_t new_address = *cpu.pc++;
   new_address += *cpu.pc++ << 8;
   cpu.ax = new_address;
-  printf("(op44)    New address: 0x%04x\n", new_address);
-  cpu.pc = cpu.base_pc + new_address;
+  printf("(%s)    New address: 0x%04x\n", __func__, new_address);
+  cpu.pc = running_script->bytes + new_address;
 }
 
 // 0x40A3
-static void jump_zero_flag(void)
+// op_45
+// Jump on zero flag.
+static void op_jz(void)
 {
   if ((word_3AE6 & ZERO_FLAG_MASK) != 0) {
     cpu.pc++;
@@ -1631,7 +1634,7 @@ static void jump_zero_flag(void)
   new_address += *cpu.pc++ << 8;
   cpu.ax = new_address;
   printf("(%s)    New address: 0x%04x\n", __func__, new_address);
-  cpu.pc = cpu.base_pc + new_address;
+  cpu.pc = running_script->bytes + new_address;
 }
 
 // 0x40AF
@@ -1865,7 +1868,7 @@ static void op_58(void)
   cpu.ax += ((*cpu.pc++) << 8);
   uint16_t src_offset = cpu.ax;
 
-  uint16_t si = cpu.pc - cpu.base_pc; // is this correct?
+  uint16_t si = cpu.pc - running_script->bytes;
   push_word(si);
   // push cs
   // pop es
@@ -1897,6 +1900,7 @@ static void op_58(void)
   word_3AE8 = al;
   word_3AEA = al;
   populate_3ADD_and_3ADF();
+  // 3AC7
   cpu.pc = running_script->bytes + src_offset;
   cpu.base_pc = running_script->bytes;
 }
@@ -1947,8 +1951,6 @@ static void op_5A(void)
 
   byte_3AE1 = al;
   word_3AE2 = (al << 8) | (word_3AE2 & 0xFF); // lower portion of word_3AE2 takes al.
-
-
 }
 
 // 0x4295
@@ -1962,7 +1964,6 @@ static void op_5C(void)
 
   // mov [3ADB], si
   word_3ADB = cpu.pc - cpu.base_pc; // is this correct?
-  unsigned char *save_pc = cpu.pc;
 
   if (game_state.unknown[0x1F] == 0) {
     // 0x42D3
@@ -1986,7 +1987,9 @@ static void op_5C(void)
   al = cpu.ax & 0xFF;
   game_state.unknown[6] = al;
 
-  cpu.pc = save_pc;
+  // jmp 0x3AC7
+  cpu.pc = running_script->bytes + word_3ADB;
+  cpu.base_pc = running_script->bytes;
 }
 
 // 0x42D8 (5D)
