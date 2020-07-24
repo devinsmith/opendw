@@ -359,8 +359,33 @@ void draw_indexed_picture9()
 {
   draw_ui_piece(&ui_pieces[9]);
 
-  // 4C31 = 0
-  // 4C33 = 0
+  word_4C31[0] = 0;
+  word_4C31[1] = 0;
+  word_4C31[2] = 0;
+  word_4C31[3] = 0;
+}
+
+static void sub_1F54(uint8_t al)
+{
+  if (byte_2476 == 0) {
+    return;
+  }
+  // 0x1F5B
+  printf("%s: 0x1F5B unhandled.\n", __func__);
+  exit(1);
+}
+
+// 0x35A0
+void sub_35A0(uint8_t piece_index)
+{
+  if (piece_index >= UI_PIECE_COUNT) {
+    printf("%s: Piece count is too high! 0x%02X\n", __func__, piece_index);
+    exit(1);
+  }
+
+  sub_1F54(9);
+
+  draw_ui_piece(&ui_pieces[piece_index]);
 }
 
 /* 0x26E9 */

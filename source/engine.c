@@ -88,7 +88,7 @@ uint8_t byte_1F08 = 0;
 uint16_t word_246D;
 
 struct ui_rect data_268F;
-uint8_t byte_2476;
+unsigned char byte_2476;
 
 uint16_t word_2AA2;
 unsigned char *word_2AA4;
@@ -253,6 +253,9 @@ unsigned char data_5897[256];
 
 uint8_t byte_4F2B = 0;
 
+// 0x4C31 - 0x4C34
+unsigned char word_4C31[4];
+
 /* Timers? */
 struct timer_ctx {
   uint8_t  timer0; // 0x4C35
@@ -353,6 +356,7 @@ static void sub_280E();
 static void sub_1C79(unsigned char **src_ptr, uint16_t offset);
 static void sub_1BF8(uint8_t color, uint8_t y_adjust);
 static void sub_27E3(unsigned char **src_ptr, uint16_t offset);
+static void sub_3165();
 static void sub_4A7D();
 static void sub_4AC0();
 static void sub_4AC6();
@@ -457,6 +461,7 @@ static void op_89();
 static void op_8B();
 static void op_8C();
 static void op_8D();
+static void op_91();
 static void op_93();
 static void op_94();
 static void op_95();
@@ -619,7 +624,7 @@ struct op_call_table targets[] = {
   { NULL, "0x0000" },
   { NULL, "0x49DD" },
   { NULL, "0x49E7" },
-  { NULL, "0x49F3" },
+  { op_91, "0x49F3" },
   { NULL, "0x49FD" },
   { op_93, "0x4A67" },
   { op_94, "0x4A6D" },
@@ -2692,14 +2697,84 @@ static int sub_2752(uint8_t input)
   return ui_adjust_rect(input);
 }
 
+// 0x4C07
+static void sub_4C07()
+{
+  uint8_t al;
+
+  al = game_state.unknown[0xBE + cpu.bx];
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  if (al != 0) {
+    if (al == word_4C31[cpu.bx]) {
+      cpu.zf = 1;
+    }
+    word_4C31[cpu.bx] = al;
+    cpu.cf = 0;
+    return;
+  }
+  // 0x4C19
+  if (word_4C31[cpu.bx] == 0) {
+    cpu.cf = 1;
+  }
+}
+
 // 0x4B60
 static void sub_4B60()
 {
+  uint8_t al;
+
   if (sub_2752(9) == 1) {
     return;
   }
-  printf("%s: 0x4B68 unimplemented\n", __func__);
-  exit(1);
+  // 0x4B68
+  cpu.bx = 0;
+  sub_4C07();
+  if (cpu.cf == 0 && cpu.zf == 0) {
+    // 0x4B71
+    al = cpu.ax & 0xFF;
+    al += 9;
+    cpu.ax = (cpu.ax & 0xFF00) | al;
+    sub_35A0(cpu.ax & 0xFF);
+  }
+  // 0x4B76
+  cpu.bx = 1;
+  sub_4C07();
+  if (cpu.cf == 0) {
+    if (cpu.zf == 1) {
+      // 0x4B80
+      printf("%s: 0x4B80 unimplemented\n", __func__);
+      exit(1);
+    }
+    // 0x4B91
+    printf("%s: 0x4B91 unimplemented\n", __func__);
+    exit(1);
+  }
+  // 0x4BA7
+  cpu.bx = 2;
+  sub_4C07();
+  if (cpu.cf == 0 && cpu.zf == 0) {
+    // 0x4BB1
+    printf("%s: 0x4BB1 unimplemented\n", __func__);
+    exit(1);
+  }
+  // 0x4BB6
+  cpu.bx = 3;
+  sub_4C07();
+  if (cpu.cf == 0) {
+    if (cpu.zf == 0) {
+      // 0x4BC0
+      printf("%s: 0x4BC0 unimplemented\n", __func__);
+      exit(1);
+    } else {
+      // 0x4BC4
+      printf("%s: 0x4BC4 unimplemented\n", __func__);
+      exit(1);
+    }
+    // 0x4BDC
+    printf("%s: 0x4BDC unimplemented\n", __func__);
+    exit(1);
+  }
+  // 0x4BE7
 }
 
 // 0x4D5C
@@ -2718,12 +2793,40 @@ static void sub_4D5C()
 // 0x1A72
 static void sub_1A72()
 {
+  uint8_t al, ah;
+
   if (sub_2752(0xB) == 1) {
     return;
   }
-  printf("%s: 0x1A79 unimplemented\n", __func__);
-  exit(1);
+  al = draw_point.x;
+  ah = draw_point.y;
+  cpu.ax = (ah << 8) | al;
+  push_word(cpu.ax);
+  al = game_state.unknown[6];
+  cpu.ax = (ah << 8) | al;
+  push_word(cpu.ax);
 
+  // 0x1A85
+  sub_3165();
+  cpu.bx = 6;
+  do {
+    // 0x1A8B
+    al = game_state.unknown[cpu.bx + 0x18];
+    if (al < 0x80) {
+      // 0x1A93
+      printf("%s: 0x1A93 unimplemented\n", __func__);
+      exit(1);
+    }
+    // 0x1AA9
+    cpu.bx--;
+  } while (cpu.bx != 0xFFFF);
+  // 0x1AAC
+  cpu.ax = pop_word();
+  set_game_state(6, cpu.ax & 0xFF);
+  cpu.ax = pop_word();
+  draw_point.y = (cpu.ax & 0xFF00) >> 8;
+  draw_point.x = (cpu.ax & 0xFF);
+  sub_316C();
 }
 
 // 0x1F10
@@ -2777,14 +2880,23 @@ static int sub_2AEE()
     return 1;
   }
   if ((word_2AA7 & 0x10) != 0) {
-    printf("%s: 0x2B43 unimplemented\n", __func__);
-    exit(1);
+    cpu.ax = word_3856;
+    if (cpu.ax >= 0xD8) {
+      // 0x2B4B
+      printf("%s: 0x2B4B unimplemented\n", __func__);
+      exit(1);
+    }
   }
+  // 0x2B81
   if ((word_2AA7 & 0x20) != 0) {
-    printf("%s: 0x2B88 unimplemented\n", __func__);
-    exit(1);
+    cpu.ax = word_3856;
+    if (cpu.ax >= 0x10) {
+      printf("%s: 0x2B8E unimplemented\n", __func__);
+      exit(1);
+    }
   }
 
+  // 0x2BCF
   return 0;
 }
 
@@ -3137,7 +3249,8 @@ static void op_88()
 static void op_89(void)
 {
   printf("%s : 0x4977\n", __func__);
-  word_3ADB = cpu.pc - cpu.base_pc; // is this correct?
+  word_3ADB = cpu.pc - running_script->bytes;
+  cpu.base_pc = running_script->bytes;
   cpu.bx = word_3ADB;
 
   sub_28B0(&cpu.pc, cpu.base_pc);
@@ -4010,6 +4123,12 @@ static void op_8D()
 {
   printf("%s : 0x49D3\n", __func__);
   sub_1E49();
+}
+
+// 0x49F3
+static void op_91(void)
+{
+  sub_1A72();
 }
 
 // 0x4A67

@@ -22,6 +22,8 @@ extern "C" {
 #endif
 
 extern unsigned char byte_104E;
+extern unsigned char byte_2476;
+extern unsigned char word_4C31[4];
 extern unsigned char byte_4F0F;
 extern unsigned char byte_4F10;
 
