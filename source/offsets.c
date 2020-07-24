@@ -21,6 +21,7 @@
 
 #define NUM_OFFSETS 0x88
 
+// 0xB042
 uint16_t offsets[NUM_OFFSETS];
 
 // 0x1053 (always gets set to 0x50 ?)
