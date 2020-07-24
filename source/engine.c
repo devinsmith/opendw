@@ -34,7 +34,6 @@
  *
  * Lots of global variables here until we can figure out how they are used. */
 
-uint16_t word_1048;
 uint16_t counter_104D;
 
 unsigned char byte_104E;
@@ -356,6 +355,7 @@ static void sub_280E();
 static void sub_1C79(unsigned char **src_ptr, uint16_t offset);
 static void sub_1BF8(uint8_t color, uint8_t y_adjust);
 static void sub_27E3(unsigned char **src_ptr, uint16_t offset);
+static void sub_2CF5();
 static void sub_3165();
 static void sub_4A7D();
 static void sub_4AC0();
@@ -387,12 +387,15 @@ static void op_0B();
 static void op_0C();
 static void op_0D();
 static void op_0F();
+static void op_10();
 static void op_11();
 static void op_12();
 static void op_13();
 static void op_14();
 static void op_15();
+static void op_16();
 static void op_17();
+static void op_18();
 static void op_19();
 static void op_1A();
 static void op_1C();
@@ -429,6 +432,7 @@ static void loop(); // 49
 static void op_4A();
 static void op_4B();
 static void op_4C();
+static void op_4D();
 static void op_4F();
 static void op_52();
 static void op_53();
@@ -506,15 +510,15 @@ struct op_call_table targets[] = {
   { op_0D, "0x3BB7" },
   { NULL, "0x3BD0" },
   { op_0F, "0x3BED" },
-  { NULL, "0x3C10" },
+  { op_10, "0x3C10" },
   { op_11, "0x3C2D" },
   { op_12, "0x3C59" },
   { op_13, "0x3C72" },
   { op_14, "0x3C8F" },
   { op_15, "0x3CAB" },
-  { NULL, "0x3CCB" },
+  { op_16, "0x3CCB" },
   { op_17, "0x3CEF" },
-  { NULL, "0x3D19" },
+  { op_18, "0x3D19" },
   { op_19, "0x3D3D" },
   { op_1A, "0x3D5A" },
   { NULL, "0x3D73" },
@@ -567,7 +571,7 @@ struct op_call_table targets[] = {
   { op_4A, "0x4113" },
   { op_4B, "0x4122" },
   { op_4C, "0x412A" },
-  { NULL, "0x4132" },
+  { op_4D, "0x4132" },
   { NULL, "0x414B" },
   { op_4F, "0x4155" },
   { NULL, "0x4161" },
@@ -991,6 +995,28 @@ static void op_0F(void)
   word_3AE2 = (ah << 8) | al;
 }
 
+// 0x3C10
+static void op_10(void)
+{
+  uint8_t al, ah;
+
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  cpu.di = cpu.ax;
+  cpu.bx = game_state.unknown[cpu.di];
+  cpu.bx += game_state.unknown[cpu.di + 1] << 8;
+  al = *cpu.pc++;
+  cpu.bx += al;
+
+  unsigned char *es = word_3ADF->bytes;
+  cpu.ax = es[cpu.bx];
+  cpu.ax += es[cpu.bx + 1] << 8;
+  ah = (cpu.ax & 0xFF00) >> 8;
+  ah = ah & byte_3AE1;
+  cpu.ax = (ah << 8) | (cpu.ax & 0xFF);
+  word_3AE2 = cpu.ax;
+}
+
 // 0x3C2D
 static void op_11(void)
 {
@@ -1072,6 +1098,28 @@ static void op_15()
   }
 }
 
+// 0x3CCB
+static void op_16()
+{
+  uint8_t al;
+  uint16_t index;
+
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  index = cpu.ax;
+
+  cpu.bx = game_state.unknown[index];
+  cpu.bx += (game_state.unknown[index + 1] << 8);
+  cpu.bx += word_3AE4;
+
+  unsigned char *es = word_3ADF->bytes;
+  cpu.cx = word_3AE2;
+  es[cpu.bx] = cpu.cx & 0xFF;
+  if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
+    es[cpu.bx + 1] = (cpu.cx & 0xFF00) >> 8;
+  }
+}
+
 // 0x3CEF
 static void op_17(void)
 {
@@ -1091,6 +1139,30 @@ static void op_17(void)
   r->bytes[cpu.di] = (cpu.cx & 0x00FF);
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
     r->bytes[cpu.di + 1] = ((cpu.cx & 0xFF00) >> 8);
+  }
+}
+
+// 0x3D19
+static void op_18(void)
+{
+  uint8_t al;
+  uint16_t index;
+
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+  index = cpu.ax;
+  cpu.di = game_state.unknown[index];
+  cpu.di += (game_state.unknown[index + 1] << 8);
+
+  al = *cpu.pc++;
+  cpu.di += al;
+
+  unsigned char *es = word_3ADF->bytes;
+  cpu.cx = word_3AE2;
+
+  es[cpu.di] = cpu.cx & 0xFF;
+  if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
+    es[cpu.di + 1] = (cpu.cx & 0xFF00) >> 8;
   }
 }
 
@@ -1753,6 +1825,20 @@ static void op_4B(void)
 static void op_4C()
 {
   word_3AE6 &= 0xFFFE;
+}
+
+// 0x4132
+static void op_4D()
+{
+  uint32_t mul_result;
+
+  sub_2CF5();
+
+  mul_result = cpu.ax * word_3AE2;
+  word_3AE2 = (mul_result & 0x00FF0000) >> 16;
+  if (byte_3AE1 != 0) {
+    word_3AE2 = (mul_result & 0xFFFF0000) >> 16;
+  }
 }
 
 // 0x4155
@@ -2897,7 +2983,9 @@ static void sub_1F10()
 // Get timer ticks?
 static void sub_2CF5()
 {
-  word_2D09 = 0x1234; // can we just use random?
+  cpu.ax = 0x1234; // can we just use random?
+  cpu.ax += word_2D09;
+  word_2D09 = cpu.ax; // can we just use random?
 }
 
 // 0x3824
