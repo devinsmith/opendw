@@ -363,7 +363,16 @@ static void sub_4AC6();
 static void sub_54D8();
 static void sub_536B();
 
-// Decoded opcode calls, foward definition.
+#define NUM_FUNCS 2
+static void sub_50B2();
+static void sub_5088();
+
+void (*func_5060[NUM_FUNCS])() = {
+  sub_50B2,
+  sub_5088
+};
+
+// Decoded opcode calls, forward definition.
 static void op_00();
 static void op_01();
 static void op_03();
@@ -461,6 +470,7 @@ static void op_89();
 static void op_8B();
 static void op_8C();
 static void op_8D();
+static void op_90();
 static void op_91();
 static void op_93();
 static void op_94();
@@ -623,7 +633,7 @@ struct op_call_table targets[] = {
   { op_8D, "0x49D3" },
   { NULL, "0x0000" },
   { NULL, "0x49DD" },
-  { NULL, "0x49E7" },
+  { op_90, "0x49E7" },
   { op_91, "0x49F3" },
   { NULL, "0x49FD" },
   { op_93, "0x4A67" },
@@ -4136,6 +4146,51 @@ static void op_8D()
 {
   printf("%s : 0x49D3\n", __func__);
   sub_1E49();
+}
+
+static void sub_5076(int function_idx)
+{
+  // Output sound effect based on function.
+  if (function_idx >= NUM_FUNCS) {
+    printf("%s unknown function %d\n", __func__, function_idx);
+    exit(1);
+  }
+
+  func_5060[function_idx]();
+}
+
+static void sub_5096()
+{
+  // Check sound, output sound.
+
+  // if (byte_107, 0x80) {
+  // }
+}
+
+static void sub_50B2()
+{
+  printf("%s: unimplemented\n", __func__);
+  exit(1);
+}
+
+static void sub_5088()
+{
+  cpu.dx = 0xF0;
+  cpu.bx = 0x200;
+  sub_5096();
+}
+
+// 49E7
+// Sound Movement?
+static void op_90(void)
+{
+  uint8_t al;
+
+  al = *cpu.pc++;
+  cpu.ax = (cpu.ax & 0xFF00) | al;
+//  push_si
+  sub_5076(al);
+  //pop si
 }
 
 // 0x49F3

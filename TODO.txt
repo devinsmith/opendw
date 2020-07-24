@@ -1,2 +1,10 @@
-op_48
+op_48 (40ed)
+
+op_59 is currently popping the previous value of si incorrectly.
+ (stacktrace)
+-- op_44
+-- op_66
+-- op_5C (0x4295)
+-- op_9A
+
 -- Get to a point where we're waiting on navigation keys.
