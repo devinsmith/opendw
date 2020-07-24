@@ -3673,6 +3673,7 @@ static void sub_4FD9()
 }
 
 // 0x536B
+// Controls movement?
 static void sub_536B()
 {
   uint8_t al, bl, dl;
@@ -3719,15 +3720,27 @@ static void sub_536B()
     cpu.ax = (cpu.ax & 0xFF00) | al;
     if (al > 2) {
       // 53B5
-      printf("%s 0x53B5 unimplemented\n", __func__);
-      exit(1);
+      dl = cpu.dx & 0xFF;
+      dl = dl << 4;
+      bl = cpu.bx & 0xFF;
+      bl = bl >> 4;
+      dl = dl | bl;
+      cpu.bx = (cpu.bx & 0xFF00) | bl;
+      cpu.dx = (cpu.dx & 0xFF00) | dl;
+      word_11CA = dl;
     } else if (al == 2) {
       // 53E3
       word_11CA = (word_11CA & 0xFF00) | bl;
     } else {
       // 53CC
-      printf("%s 0x53CC unimplemented\n", __func__);
-      exit(1);
+      bl = cpu.bx & 0xFF;
+      bl = bl << 4;
+      dl = cpu.dx & 0xFF;
+      dl = dl >> 4;
+      dl = dl | bl;
+      cpu.bx = (cpu.bx & 0xFF00) | bl;
+      cpu.dx = (cpu.dx & 0xFF00) | dl;
+      word_11CA = dl;
     }
   }
 }
