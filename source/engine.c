@@ -447,6 +447,7 @@ static void op_63();
 static void op_66();
 static void op_69();
 static void op_6A();
+static void op_6C();
 static void op_6F();
 static void op_71();
 static void op_73();
@@ -597,7 +598,7 @@ struct op_call_table targets[] = {
   { op_69, "0x453F" },
   { op_6A, "0x4573" },
   { NULL, "0x45A1" },
-  { NULL, "0x45A8" },
+  { op_6C, "0x45A8" },
   { NULL, "0x45F0" },
   { NULL, "0x45FA" },
   { op_6F, "0x4607" },
@@ -2266,6 +2267,48 @@ static void op_6A(void)
     sub_4AC0();
   }
   // 0x459A
+}
+
+static void sub_45D0(uint8_t al)
+{
+  if (al == 0) {
+    set_game_state(0, game_state.unknown[0] + 1);
+    return;
+  }
+
+  al--;
+  if (al == 0) {
+    // 0x45E6
+    set_game_state(1, game_state.unknown[1] + 1);
+    return;
+  }
+
+  al--;
+  if (al == 0) {
+    // 0x45EB
+    set_game_state(0, game_state.unknown[0] - 1);
+    return;
+  }
+
+  set_game_state(1, game_state.unknown[1] - 1);
+}
+
+// 0x45A8
+static void op_6C(void)
+{
+  uint8_t al = game_state.unknown[3];
+
+  // push si
+  // 45AC
+  sub_45D0(al);
+  // 45AF
+  if ((game_state.unknown[0x23] & 0x2) != 0) {
+    // 0x45B6
+    printf("%s: 0x45B6 unimplemented\n", __func__);
+    exit(1);
+  }
+  // 0x45CC
+  // pop si
 }
 
 // 0x4607
