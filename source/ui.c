@@ -157,12 +157,92 @@ static void process_quadrant(const struct viewport_data *d, unsigned char *data)
       dval = dval & get_and_table(val);
       dval = dval | get_or_table(val);
 
-      printf("(%02x %02x) ", dval, val);
+      //printf("(%02x %02x) ", dval, val);
       *p = dval;
       p++;
       q++;
     }
-    offset += 0x50;
+    offset += word_1055;
+    p = data + offset;
+    //printf("\n");
+  }
+}
+
+// 0xDEB
+static void sub_DEB(const struct viewport_data *d, unsigned char *data)
+{
+  uint16_t ax, bx, old_ax, newx, cx;
+  uint16_t newy, di, dx;
+  uint8_t al, dl;
+  int sign;
+  uint16_t word_104A;
+  uint8_t byte_104C;
+  uint16_t offset;
+
+  // sar 36C0, 1
+  sign = d->xpos & 0x8000;
+  newx = d->xpos >> 1;
+  newx |= sign;
+
+  dl = 0;
+
+  ax = d->runlength;
+  word_104A = ax;
+  ax += newx;
+  old_ax = ax;
+  ax -= word_1053;
+  if (ax <= old_ax) {
+    // 0x0E06
+    word_104A -= ax;
+    printf("%s 0xE06 unhandled\n", __func__);
+    exit(1);
+  }
+  // 0xE0F
+  byte_104C = dl;
+  newy = d->ypos;
+  newy = newy << 1;
+
+  di = newx;
+  offset = get_offset(d->ypos);
+  offset += newx;
+
+  ax = ax & 0xFF;
+
+  // 0xE27
+  cx = word_104A;
+  // 0xE35
+  unsigned char *p = data + offset;
+  unsigned char *ds = d->data + 4;
+
+  // 1048 = 13 ?
+  for (int i = 0; i < d->numruns; i++) {
+    for (int j = 0; j < cx; j++) {
+      al = *ds;
+      ax = (ax & 0xFF00) | al;
+      bx = ax;
+
+      dx = p[0];
+      dx += p[1] << 8;
+
+      dx &= get_and_table_B452(bx);
+      dx |= get_or_table_B652(bx);
+
+      *p = dx & 0xFF;
+      p++;
+      *p = (dx & 0xFF00) >> 8;
+      printf("(0x%04X) ", dx);
+      ds++;
+    }
+    // 0xE4C
+    *p = (dx & 0xFF);
+    if (byte_104C < 0x80) {
+      p++;
+      *p = (dx & 0xFF00) >> 8;
+      ds++;
+    }
+    // 0x3A + 0x13
+    // offset += 1055
+    offset += word_1055;
     p = data + offset;
     printf("\n");
   }
@@ -674,6 +754,9 @@ void sub_CF8(unsigned char *data, struct viewport_data *vp)
   if (byte_104E >= 0x80) {
     bx |= 8;
   }
+
+  // 0xD5C
+  //
   ax = word_1053;
   if (byte_104E >= 0x40) {
     ax = -ax;
@@ -681,11 +764,18 @@ void sub_CF8(unsigned char *data, struct viewport_data *vp)
   // 0xD67
   word_1055 = ax;
 
-  if (bx == 0) {
+  // 0xD78 offset
+  switch (bx) {
+  case 0:
     process_quadrant(vp, get_ptr_4F11());
-  } else {
-    printf("%s: An unhandled BX was specified.\n", __func__);
+    break;
+  case 2:
+    sub_DEB(vp, get_ptr_4F11());
+    break;
+  default:
+    printf("%s: An unhandled BX (0x%04X) was specified.\n", __func__, bx);
     exit(1);
+    break;
   }
 }
 

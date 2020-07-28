@@ -35,9 +35,9 @@ struct ui_string_line {
 };
 
 struct viewport_data {
-  int xpos; // Sometimes set as 36C0
+  uint16_t xpos; // Sometimes set as 36C0
   int ypos; // Sometimes set as 36C4
-  int runlength;
+  int runlength; // Sometimes set as 1048
   int numruns;
   int unknown1;
   int unknown2;
