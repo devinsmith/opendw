@@ -238,7 +238,6 @@ static void sub_DEB(const struct viewport_data *d, unsigned char *data)
     if (byte_104C < 0x80) {
       p++;
       *p = (dx & 0xFF00) >> 8;
-      ds++;
     }
     // 0x3A + 0x13
     // offset += 1055
