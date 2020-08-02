@@ -81,6 +81,10 @@ uint8_t data_2AC3[0x19];
 
 static int loaded = 0;
 
+// At 0x4F11 in memory.
+// 10880 bytes.
+static unsigned char *viewport_data; // 0x4F11
+
 // Viewport metadata.
 // 0x6748
 unsigned char viewport_metadata[] = {
@@ -386,7 +390,7 @@ void draw_viewport()
 
   // 0x88 x 0x50
   /* see 0x1060 */
-  unsigned char *src = get_ptr_4F11();
+  unsigned char *src = viewport_data;
   for (int y = 0; y < rows; y++) {
     uint16_t fb_off = get_line_offset(line_num) + 0x10;
     for (int x = 0; x < cols; x++) {
@@ -681,6 +685,8 @@ void ui_clean()
   for (size_t ui_idx = 0; ui_idx < UI_PIECE_COUNT; ui_idx++) {
     free(ui_pieces[ui_idx].data);
   }
+
+  free(viewport_data);
 }
 
 void ui_header_reset()
@@ -894,16 +900,16 @@ void sub_CF8(unsigned char *data, struct viewport_data *vp)
   // 0xD78 offset
   switch (bx) {
   case 0:
-    process_quadrant(vp, get_ptr_4F11());
+    process_quadrant(vp, viewport_data);
     break;
   case 2:
-    sub_DEB(vp, get_ptr_4F11());
+    sub_DEB(vp, viewport_data);
     break;
   case 4:
-    sub_E6D(vp, get_ptr_4F11());
+    sub_E6D(vp, viewport_data);
     break;
   case 6:
-    sub_EC5(vp, get_ptr_4F11());
+    sub_EC5(vp, viewport_data);
     break;
   default:
     printf("%s: An unhandled BX (0x%04X) was specified.\n", __func__, bx);
@@ -918,7 +924,7 @@ void update_viewport()
   uint16_t di, cx;
   uint16_t i;
 
-  unsigned char *ds = get_ptr_4F11();
+  unsigned char *ds = viewport_data;
   di = 0;
   cx = 0x88;
 
@@ -959,8 +965,13 @@ void sub_37C8()
 {
   sub_4D82();
 
-  memset(get_ptr_4F11(), 0, 0x1540 * 2);
+  memset(viewport_data, 0, 0x1540 * 2);
   byte_4F0F= 0xFF;
 
   update_viewport();
+}
+
+void init_viewport_memory()
+{
+  viewport_data = malloc(10880);
 }

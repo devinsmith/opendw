@@ -22,6 +22,7 @@
 #include "compress.h"
 #include <resource.h>
 #include "player.h"
+#include "ui.h"
 
 /* Only deals with data1 */
 /* I'm not sure yet how data2 is used */
@@ -33,7 +34,6 @@ static struct buf_rdr *header_rdr = NULL;
 static struct resource allocations[128] = { 0 };
 static struct resource *resource_load_cache_miss(enum resource_section sec);
 
-static unsigned char *ptr1; // 0x4F11
 static unsigned char *ptr2; // 0x4F13
 static unsigned char *ptr3; // 0x313E
 
@@ -314,12 +314,8 @@ unsigned char *com_extract(size_t off, size_t sz)
 // 0x0A25
 void setup_memory()
 {
-  ptr1 = malloc(0x2A8 * 16);
+  init_viewport_memory();
   ptr2 = malloc(0x2A8 * 16);
   ptr3 = malloc(0x370 * 16);
 }
 
-unsigned char *get_ptr_4F11()
-{
-  return ptr1;
-}
