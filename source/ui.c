@@ -172,7 +172,7 @@ static void process_quadrant(const struct viewport_data *d, unsigned char *data)
 static void sub_DEB(const struct viewport_data *d, unsigned char *data)
 {
   uint16_t ax, bx, old_ax, newx, cx;
-  uint16_t newy, di, dx;
+  uint16_t newy, dx;
   uint8_t al, dl;
   int sign;
   uint16_t word_104A;
@@ -202,7 +202,6 @@ static void sub_DEB(const struct viewport_data *d, unsigned char *data)
   newy = d->ypos;
   newy = newy << 1;
 
-  di = newx;
   offset = get_offset(d->ypos);
   offset += newx;
 
@@ -244,6 +243,135 @@ static void sub_DEB(const struct viewport_data *d, unsigned char *data)
     offset += word_1055;
     p = data + offset;
     printf("\n");
+  }
+}
+
+// 0xEC5
+static void sub_EC5(const struct viewport_data *d, unsigned char *data)
+{
+  uint16_t ax;
+  int bx;
+  int sign, word_104A;
+  uint16_t offset, save;
+  uint16_t dx;
+  unsigned char *ds = d->data + 4;
+  unsigned char *base;
+  uint8_t al;
+
+  ax = d->xpos;
+  ax = -ax;
+  // sar ax, 1
+  sign = ax & 0x8000;
+  ax = ax >> 1;
+  ax |= sign;
+
+  bx = d->runlength;
+  bx -= ax;
+  word_104A = bx;
+  if (word_104A <= 0) {
+    return;
+  }
+
+  // 0xEDB
+  ax = ax & 0xFF;
+  ds += ax; // add si, ax
+  bx = d->ypos;
+  offset = get_offset(d->ypos);
+  offset--;
+
+  // 0xEEE
+  for (int i = 0; i < d->numruns; i++) {
+    save = offset;
+    base = ds;
+    unsigned char *p = data + offset;
+    al = *ds++;
+    bx = al;
+    dx = p[0];
+    dx += p[1] << 8;
+    dx &= get_and_table_B452(bx);
+    dx |= get_or_table_B652(bx);
+    p++;
+    *p = (dx & 0xFF00) >> 8;
+
+    // 0xF10
+    for (int j = 0; j < word_104A; j++) {
+      al = *ds++;
+      bx = al;
+      dx = p[0];
+      dx += p[1] << 8;
+
+      dx &= get_and_table_B452(bx);
+      dx |= get_or_table_B652(bx);
+
+      *p = dx & 0xFF;
+      p++;
+      *p = (dx & 0xFF00) >> 8;
+    }
+    offset = save;
+    offset += word_1055;
+    p = data + offset;
+    base += d->runlength;
+    ds = base;
+  }
+}
+
+// 0xE6D
+static void sub_E6D(const struct viewport_data *d, unsigned char *data)
+{
+  uint16_t ax, cx, dx;
+  uint8_t al;
+  uint16_t offset;
+  uint16_t word_104A;
+  int bx, sign;
+  int si = 4;
+
+
+  ax = d->xpos;
+  ax = -ax;
+  al = ax & 0xFF;
+
+  // sar al, 1
+  sign = al & 0x80;
+  al = al >> 1;
+  al |= sign;
+  ax = (ax & 0xFF00) | al;
+
+  bx = d->runlength;
+  bx -= ax;
+
+  word_104A = bx;
+  if (bx <= 0)
+    return;
+
+  // 0xE83
+  ax = ax & 0xFF;
+
+  si += ax;
+  bx = d->ypos;
+  dx = get_offset(bx);
+  ax = ax & 0xFF;
+
+  // 0xE95
+  for (int i = 0; i < d->numruns; i++) {
+    cx = word_104A;
+    offset = dx;
+    // bp = si
+    unsigned char *p = data + offset;
+    unsigned char *ds = d->data + si;
+    printf("%s: lodsb: 0x%02X\n", __func__, *ds);
+
+    // 0xE9E
+    for (int j = 0; j < cx; j++) {
+      al = *ds++;
+      bx = al;
+      al = *p;
+      al &= get_and_table(bx);
+      al |= get_or_table(bx);
+      *p = al;
+      p++;
+    }
+    si += d->runlength;
+    offset += word_1055;
   }
 }
 
@@ -771,6 +899,12 @@ void sub_CF8(unsigned char *data, struct viewport_data *vp)
   case 2:
     sub_DEB(vp, get_ptr_4F11());
     break;
+  case 4:
+    sub_E6D(vp, get_ptr_4F11());
+    break;
+  case 6:
+    sub_EC5(vp, get_ptr_4F11());
+    break;
   default:
     printf("%s: An unhandled BX (0x%04X) was specified.\n", __func__, bx);
     exit(1);
@@ -779,7 +913,7 @@ void sub_CF8(unsigned char *data, struct viewport_data *vp)
 }
 
 // 0x0CA0
-void sub_CA0()
+void update_viewport()
 {
   uint16_t di, cx;
   uint16_t i;
@@ -828,5 +962,5 @@ void sub_37C8()
   memset(get_ptr_4F11(), 0, 0x1540 * 2);
   byte_4F0F= 0xFF;
 
-  sub_CA0();
+  update_viewport();
 }

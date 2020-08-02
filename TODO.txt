@@ -1,10 +1,2 @@
-op_48 (40ed)
-
-op_59 is currently popping the previous value of si incorrectly.
- (stacktrace)
--- op_44
--- op_66
--- op_5C (0x4295)
--- op_9A
-
--- Get to a point where we're waiting on navigation keys.
+More drawing routines (sub_CF8)
+There is still some UI glitches with the viewport (e.g. water displaying instead of land).

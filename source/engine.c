@@ -4230,7 +4230,7 @@ static void start_the_game()
   //
   byte_4F0F = 0xFF;
   sub_587E();
-  sub_CA0();
+  update_viewport();
 }
 
 
