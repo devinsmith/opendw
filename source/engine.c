@@ -3868,7 +3868,7 @@ static void sub_536B()
       dl = dl | bl;
       cpu.bx = (cpu.bx & 0xFF00) | bl;
       cpu.dx = (cpu.dx & 0xFF00) | dl;
-      word_11CA = dl;
+      word_11CA = (word_11CA & 0xFF00) | bl;
     } else if (al == 2) {
       // 53E3
       word_11CA = (word_11CA & 0xFF00) | bl;
