@@ -3989,13 +3989,14 @@ static void sub_59A6()
   } while (cpu.bx != 0xFFFF);
 }
 
-static void sub_CE7(struct viewport_data *vp)
+static void sub_CE7(struct viewport_data *vp, uint16_t bx)
 {
-  unsigned char *ds = word_1051->bytes + word_104F + cpu.bx;
+  unsigned char *ds = word_1051->bytes + word_104F + bx;
 
   cpu.ax = *ds;
   ds++;
   cpu.ax += (*ds) << 8;
+  printf("%s: BX: 0x%04X AX: 0x%04X\n", __func__, bx, cpu.ax);
 
   if (cpu.ax == 0)
     return;
@@ -4046,7 +4047,7 @@ static void sub_56FC()
     cpu.bx = 4;
 
     // 5732
-    sub_CE7(&vp);
+    sub_CE7(&vp, cpu.bx);
   } else {
 
     // 0x5735
@@ -4177,7 +4178,7 @@ static void start_the_game()
     // offset
     cpu.bx = data_56B5[counter];
 
-    sub_CE7(&vp);
+    sub_CE7(&vp, cpu.bx);
     counter--;
   } while (counter >= 0);
 
@@ -4220,7 +4221,7 @@ static void start_the_game()
         vp.xpos = cpu.ax;
         vp.ypos = data_55BF[counter];
         cpu.bx = data_561F[counter];
-        sub_CE7(&vp);
+        sub_CE7(&vp, cpu.bx);
       }
     }
     // 0x52F3
