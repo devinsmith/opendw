@@ -3845,7 +3845,7 @@ static void sub_536B()
 
     push_word(cpu.dx);
     push_word(cpu.bx);
-    cpu.dx--;
+    cpu.bx--;
     sub_54D8();
     cpu.bx = pop_word();
     cpu.dx = pop_word();
@@ -3881,7 +3881,7 @@ static void sub_536B()
       dl = dl | bl;
       cpu.bx = (cpu.bx & 0xFF00) | bl;
       cpu.dx = (cpu.dx & 0xFF00) | dl;
-      word_11CA = dl;
+      word_11CA = (word_11CA & 0xFF00) | dl;
     }
   }
 }
