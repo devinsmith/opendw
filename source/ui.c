@@ -82,8 +82,9 @@ uint8_t data_2AC3[0x19];
 static int loaded = 0;
 
 // At 0x4F11 in memory.
-// 10880 bytes.
-static unsigned char *viewport_data; // 0x4F11
+// 10880 bytes. (136 x 80)
+static unsigned char *viewport_memory; // 0x4F11
+static const int viewport_mem_sz = 10880;
 
 // Viewport metadata.
 // 0x6748
@@ -142,15 +143,31 @@ static uint16_t backgrounds[2] = { 0xFFFF, 0x0000 };
 /* D88 */
 static void process_quadrant(const struct viewport_data *d, unsigned char *data)
 {
-  int newx, newy;
+  int newx, sign, ax;
+  int word_104A;
   uint16_t offset;
 
+  // sar 36C0, 1
+  sign = d->xpos & 0x8000;
   newx = d->xpos >> 1;
-  newy = d->ypos << 1;
-  printf("%02x %02x, %02x, %02x\n", d->xpos, d->ypos, newx, newy);
+  newx |= sign;
+
+  ax = d->runlength;
+  word_104A = ax;
+  ax += d->xpos;
+  ax -= word_1053;
+  if (ax > 0) {
+#if 0
+    word_104A -= ax;
+    if (word_104A <= 0)
+      return;
+#endif
+  }
+
+  printf("0x%02X 0x%02X, 0x%02X\n", d->xpos, d->ypos, newx);
   offset = get_offset(d->ypos);
   offset += newx;
-  printf("Offset: %04x\n", offset);
+  printf("Offset: %04x (%d bytes)\n", offset, d->numruns * d->runlength);
   unsigned char *p = data + offset;
   unsigned char *q = d->data + 4;
   for (int i = 0; i < d->numruns; i++) {
@@ -390,7 +407,7 @@ void draw_viewport()
 
   // 0x88 x 0x50
   /* see 0x1060 */
-  unsigned char *src = viewport_data;
+  const unsigned char *src = viewport_memory;
   for (int y = 0; y < rows; y++) {
     uint16_t fb_off = get_line_offset(line_num) + 0x10;
     for (int x = 0; x < cols; x++) {
@@ -686,7 +703,7 @@ void ui_clean()
     free(ui_pieces[ui_idx].data);
   }
 
-  free(viewport_data);
+  free(viewport_memory);
 }
 
 void ui_header_reset()
@@ -900,16 +917,16 @@ void sub_CF8(unsigned char *data, struct viewport_data *vp)
   // 0xD78 offset
   switch (bx) {
   case 0:
-    process_quadrant(vp, viewport_data);
+    process_quadrant(vp, viewport_memory);
     break;
   case 2:
-    sub_DEB(vp, viewport_data);
+    sub_DEB(vp, viewport_memory);
     break;
   case 4:
-    sub_E6D(vp, viewport_data);
+    sub_E6D(vp, viewport_memory);
     break;
   case 6:
-    sub_EC5(vp, viewport_data);
+    sub_EC5(vp, viewport_memory);
     break;
   default:
     printf("%s: An unhandled BX (0x%04X) was specified.\n", __func__, bx);
@@ -924,7 +941,8 @@ void update_viewport()
   uint16_t di, cx;
   uint16_t i;
 
-  unsigned char *ds = viewport_data;
+  // 0x4F11
+  unsigned char *ds = viewport_memory;
   di = 0;
   cx = 0x88;
 
@@ -965,7 +983,7 @@ void sub_37C8()
 {
   sub_4D82();
 
-  memset(viewport_data, 0, 0x1540 * 2);
+  memset(viewport_memory, 0, viewport_mem_sz);
   byte_4F0F= 0xFF;
 
   update_viewport();
@@ -973,5 +991,5 @@ void sub_37C8()
 
 void init_viewport_memory()
 {
-  viewport_data = malloc(10880);
+  viewport_memory = malloc(viewport_mem_sz);
 }
