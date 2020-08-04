@@ -184,6 +184,13 @@ get_key()
         return 0x2B | 0x80;
       }
 
+      // Special case to capture ? key.
+      if ((ksym->sym == SDLK_SLASH && ksym->mod & KMOD_SHIFT) ||
+          ksym->sym == SDLK_QUESTION) {
+        printf("question mark ?\n");
+        return 0x3F | 0x80;
+      }
+
       // Normal keys.
       if ((ksym->sym & SDLK_SCANCODE_MASK) == 0) {
         printf("sym: 0x%08X\n", ksym->sym);
