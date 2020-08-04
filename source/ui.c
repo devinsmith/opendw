@@ -315,7 +315,7 @@ static void sub_EC5(const struct viewport_data *d, unsigned char *data)
     *p = (dx & 0xFF00) >> 8;
 
     // 0xF10
-    for (int j = 0; j < word_104A; j++) {
+    for (int j = 0; j < (word_104A - 1); j++) {
       al = *ds++;
       bx = al;
       dx = p[0];
