@@ -25,6 +25,12 @@ VoidLinux
 sudo xbps-install -S SDL2-devel
 ```
 
+Debian
+
+```
+sudo apt install libsdl2-dev
+```
+
 # Screenshot
 
 ![Title screen](img/dw.png)
