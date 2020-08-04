@@ -71,7 +71,7 @@ void hexdump(void *ptr, int buflen)
     printf("%06x: ", i);
     for (j=0; j<16; j++)
       if (i+j < buflen)
-        printf("%02x ", buf[i+j]);
+        printf("%02X ", buf[i+j]);
       else
         printf("   ");
     printf(" ");
