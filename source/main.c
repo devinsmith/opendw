@@ -169,8 +169,6 @@ main(int argc, char *argv[])
 
   run_engine();
 
-  vga->waitkey();
-
   ui_clean();
 
 done:

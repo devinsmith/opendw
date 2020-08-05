@@ -1540,14 +1540,23 @@ static void op_3D()
   al = *cpu.pc++;
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.bx = cpu.ax;
+  // BX ?
   cpu.cx = word_3AE2;
   ah = (cpu.ax & 0xFF00) >> 8;
+
+  // Set flag defaults
+  cpu.cf = 0;
+  cpu.zf = 0;
   if (byte_3AE1 != ah) {
     // 0x403E
-    if (cpu.cx < game_state.unknown[cpu.bx]) {
+    uint16_t check_value = game_state.unknown[cpu.bx];
+    check_value += game_state.unknown[cpu.bx + 1] << 8;
+
+    if (cpu.cx < check_value) {
       cpu.cf = 1;
-    } else {
-      cpu.cf = 0;
+    }
+    if (cpu.cx == check_value) {
+      cpu.zf = 1;
     }
   } else {
     // 0x404B
@@ -1555,8 +1564,9 @@ static void op_3D()
     cl = cpu.cx & 0xFF;
     if (cl < game_state.unknown[cpu.bx]) {
       cpu.cf = 1;
-    } else {
-      cpu.cf = 0;
+    }
+    if (cl == game_state.unknown[cpu.bx]) {
+      cpu.zf = 1;
     }
   }
   // flags;
