@@ -847,6 +847,8 @@ static void op_05(void)
 }
 
 // 0x3B4A
+// op_06 (1 byte operand)
+// loads loop counter.
 static void op_06()
 {
   uint8_t al = *cpu.pc++;
@@ -944,6 +946,9 @@ static void op_0C()
 }
 
 // 0x3BB7
+// op_0D (1 word operand)
+//
+// word_3AE2 = 3ADF[operand + 3AE4] & (byte_3AE1 << 8)
 static void op_0D()
 {
   uint8_t al, ah;
@@ -3296,6 +3301,7 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
     }
 
     // 0x29CC
+    // ax = word_2AA4
     cpu.di = word_2AA2;
     cpu.di -= 3;
     *src_ptr -= 3;
@@ -3411,7 +3417,7 @@ static void op_89(void)
   cpu.ax = cpu.ax & 0x00FF;
   printf("%s: BX: 0x%04X\n", __func__, cpu.bx);
   cpu.pc = cpu.base_pc + cpu.bx;
-  word_3AE2 = cpu.ax;
+  word_3AE2 = cpu.ax; // key pressed
 }
 
 // 0x1EBF
