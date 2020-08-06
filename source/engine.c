@@ -123,7 +123,15 @@ uint16_t word_3AEA = 0;
 uint16_t saved_stack = 0;
 
 uint16_t word_3ADB = 0;
-unsigned char *data_1CEF;
+
+struct bit_extractor {
+  unsigned char *data;
+  uint16_t offset;
+};
+
+// "Bit extraction"
+// 0x1CEF
+struct bit_extractor bit_extractor_info;
 
 /* 0x3ADD */
 const struct resource *running_script = NULL;
@@ -347,14 +355,14 @@ struct mouse_status mouse;
 
 static void run_script(uint8_t script_index, uint16_t src_offset);
 static uint8_t sub_1CF8();
-static uint8_t bit_extract(int n, unsigned char **src_ptr);
+static uint8_t bit_extract(int n);
 static void sub_3150(unsigned char byte);
 static void sub_316C();
 static void append_string(unsigned char byte);
 static void sub_280E();
-static void sub_1C79(unsigned char **src_ptr, uint16_t offset);
+static void sub_1C79(unsigned char *src_ptr, uint16_t offset);
 static void sub_1BF8(uint8_t color, uint8_t y_adjust);
-static void sub_27E3(unsigned char **src_ptr, uint16_t offset);
+static void sub_27E3(unsigned char *base_ptr, uint16_t offset);
 static void sub_2CF5();
 static void sub_3165();
 static void sub_4A7D();
@@ -462,6 +470,7 @@ static void op_77();
 static void op_78();
 static void op_7A();
 static void read_header_bytes(void); // 7B
+static void op_7C();
 static void op_7D();
 static void op_80();
 static void op_81();
@@ -618,7 +627,7 @@ struct op_call_table targets[] = {
   { NULL, "0x47FA" },
   { op_7A, "0x4801" },
   { read_header_bytes, "0x482D" },
-  { NULL, "0x4817" },
+  { op_7C, "0x4817" },
   { op_7D, "0x483B" },
   { NULL, "0x4845" },
   { NULL, "0x486D" },
@@ -2603,15 +2612,14 @@ static void op_77()
 // 0x47EC
 static void op_78(void)
 {
-  sub_1C79(&cpu.pc, cpu.pc - cpu.base_pc);
+  sub_1C79(cpu.base_pc, cpu.pc - cpu.base_pc);
   cpu.pc = cpu.base_pc + cpu.bx;
 }
 
 // 0x4801
 static void op_7A()
 {
-  unsigned char *src_ptr= word_3ADF->bytes + word_3AE2;
-  sub_1C79(&src_ptr, word_3AE2);
+  sub_1C79(word_3ADF->bytes, word_3AE2);
   word_3AE2 = cpu.bx;
 }
 
@@ -2641,6 +2649,16 @@ static void write_character_name()
       break;
     }
   }
+}
+
+// 0x4817
+static void op_7C(void)
+{
+  // si
+  unsigned char *dest = word_3ADF->bytes;
+  uint16_t dest_offset = word_3AE2;
+  sub_27E3(dest, dest_offset);
+  word_3AE2 = cpu.bx;
 }
 
 // 0x483B
@@ -3231,9 +3249,8 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
     cpu.bx += data_2A68[bl + 5] << 8;
 
     printf("%s: cpu.bx = 0x%04X\n", __func__, cpu.bx);
-    unsigned char *src_ptr = data_2A68 + (cpu.bx - 0x2A68);
 
-    sub_1C79(&src_ptr, (cpu.bx - 0x2A68));
+    sub_1C79(data_2A68, (cpu.bx - 0x2A68));
     ui_draw_string();
 
     bl = draw_point.y;
@@ -3553,7 +3570,7 @@ static void sub_1E49()
 
 static void sub_1C70(unsigned char *src_ptr)
 {
-  sub_1C79(&src_ptr, 0);
+  sub_1C79(src_ptr, 0);
   cpu.cf = 0;
 }
 
@@ -4103,8 +4120,7 @@ static void start_the_game()
   sub_4D82();
   sub_5764();
   cpu.bx = word_5864;
-  unsigned char *src = data_5866 + word_5864;
-  sub_27E3(&src, word_5864);
+  sub_27E3(data_5866, word_5864);
   cpu.bx = game_state.unknown[3];
   cpu.bx = cpu.bx << 1;
 
@@ -4545,16 +4561,19 @@ static void op_9D(void)
   sub_40D1();
 }
 
-static void sub_1C79(unsigned char **src_ptr, uint16_t offset)
+static void sub_1C79(unsigned char *src_ptr, uint16_t offset)
 {
   num_bits = 0;
   cpu.bx = offset;
+  bit_extractor_info.data = src_ptr;
+  bit_extractor_info.offset = offset;
 
   byte_1CE4 = 0;
   while (1) {
-    uint8_t ret = sub_1CF8(src_ptr); // check for 0
+    uint8_t ret = sub_1CF8(); // check for 0
     if (ret == 0) {
       // 1CE6
+      cpu.bx = bit_extractor_info.offset;
       return;
     }
     if ((game_state.unknown[8] & 0x80) == 0)
@@ -4564,19 +4583,24 @@ static void sub_1C79(unsigned char **src_ptr, uint16_t offset)
       ret &= 0x7F;
     }
     // 1C9E
-    if (ret == 0xAF) {
-      // 0x1CAB
-      printf("Unhandled engine code: 0x1CAB\n");
+    if (ret == 0xAF || ret == 0xDC) {
+      if (ret == 0xAF) {
+        // 0x1CAB
+        cpu.bx = (cpu.bx & 0xFF00) | 0x80;
+      } else {
+        // 0x1CAF
+        cpu.bx = (cpu.bx & 0xFF00) | 0x80;
+      }
+      // 0x1CB1
+      byte_1CE1 = ret;
+      if (game_state.unknown[9] != 0) {
+
+      }
+      printf("%s 0x1CB1 unimplemented\n", __func__);
       exit(1);
-      return;
+    } else {
+      sub_3150(ret);
     }
-    if (ret == 0xDC) {
-      // 0x1CAF
-      printf("Unhandled engine code: 0x1CAF\n");
-      exit(1);
-      return;
-    }
-    sub_3150(ret);
   }
 }
 
@@ -4593,10 +4617,10 @@ unsigned char alphabet[] = {
   0xaa, 0xbf, 0xbc, 0xbe, 0xba, 0xbb, 0xad, 0xa5
 };
 
-static uint8_t sub_1CF8(unsigned char **src_ptr)
+static uint8_t sub_1CF8()
 {
   while (1) {
-    uint8_t ret = bit_extract(5, src_ptr);
+    uint8_t ret = bit_extract(5);
     if (ret == 0)
       return 0;
 
@@ -4610,7 +4634,7 @@ static uint8_t sub_1CF8(unsigned char **src_ptr)
     }
 
     if (ret > 0x1E) {
-      ret = bit_extract(6, src_ptr);
+      ret = bit_extract(6);
       ret += 0x1E;
     }
 
@@ -4634,7 +4658,7 @@ static uint8_t sub_1CF8(unsigned char **src_ptr)
 // 0x1D86 -> 1D8C(6)
 // 0x1D8A -> 1D8C(5)
 // 0x1D8C (num_bits passed in BL)
-static uint8_t bit_extract(int n, unsigned char **src_ptr)
+static uint8_t bit_extract(int n)
 {
   int counter = n;
   int al = 0;
@@ -4642,11 +4666,10 @@ static uint8_t bit_extract(int n, unsigned char **src_ptr)
   while (counter > 0) {
     dl--;
     if (dl < 0) {
-      dl = **src_ptr;
+      dl = bit_extractor_info.data[bit_extractor_info.offset];
       bit_buffer = dl;
       dl = 7;
-      (*src_ptr)++;
-      cpu.bx++; // Just for keeping track of how many bytes we advance.
+      bit_extractor_info.offset++;
     }
     // 0x1D96
     uint8_t tmp = bit_buffer;
@@ -4765,12 +4788,12 @@ static void sub_316C()
   word_3163 = append_string;
 }
 
-static void sub_27E3(unsigned char **src_ptr, uint16_t offset)
+static void sub_27E3(unsigned char *base_ptr, uint16_t offset)
 {
   word_3163 = ui_header_set_byte;
   ui_string.len = 0;
   ui_header_reset();
-  sub_1C79(src_ptr, offset);
+  sub_1C79(base_ptr, offset);
   sub_316C();
   sub_280E();
 }
@@ -4792,7 +4815,8 @@ static void sub_3150(unsigned char byte)
 // 0x482D
 static void read_header_bytes(void)
 {
-  sub_27E3(&cpu.pc, cpu.pc - cpu.base_pc);
+  sub_27E3(cpu.base_pc, cpu.pc - cpu.base_pc);
+  cpu.pc = cpu.base_pc + cpu.bx;
 }
 
 // 0x3AA0
