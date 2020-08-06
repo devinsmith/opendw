@@ -4563,14 +4563,18 @@ static void op_9D(void)
 
 static void sub_1C79(unsigned char *src_ptr, uint16_t offset)
 {
+  uint8_t ret, bl;
+
   num_bits = 0;
   cpu.bx = offset;
   bit_extractor_info.data = src_ptr;
   bit_extractor_info.offset = offset;
 
   byte_1CE4 = 0;
+
+  // 0x1C8B
   while (1) {
-    uint8_t ret = sub_1CF8(); // check for 0
+    ret = sub_1CF8(); // check for 0
     if (ret == 0) {
       // 1CE6
       cpu.bx = bit_extractor_info.offset;
@@ -4584,20 +4588,40 @@ static void sub_1C79(unsigned char *src_ptr, uint16_t offset)
     }
     // 1C9E
     if (ret == 0xAF || ret == 0xDC) {
-      if (ret == 0xAF) {
-        // 0x1CAB
-        cpu.bx = (cpu.bx & 0xFF00) | 0x80;
-      } else {
-        // 0x1CAF
-        cpu.bx = (cpu.bx & 0xFF00) | 0x80;
-      }
-      // 0x1CB1
-      byte_1CE1 = ret;
-      if (game_state.unknown[9] != 0) {
-
-      }
-      printf("%s 0x1CB1 unimplemented\n", __func__);
-      exit(1);
+      do {
+        if (ret == 0xAF) {
+          // 0x1CAB
+          bl = 0x80;
+        } else if (ret == 0xDC) {
+          // 0x1CAF
+          bl = 0;
+        }
+        // 0x1CB1
+        if (ret == 0xAF || ret == 0xDC) {
+          byte_1CE1 = ret;
+          if (game_state.unknown[9] != 0) {
+            // 0x1CBB
+            bl = bl ^ 0x80;
+          }
+          byte_1CE2 = bl;
+        }
+        // 0x1CC2
+        ret = sub_1CF8(); // check for 0
+        if (ret == 0) {
+          // 1CE6
+          cpu.bx = bit_extractor_info.offset;
+          return;
+        }
+        if (ret == byte_1CE1) {
+          break;
+        }
+        if (ret == 0xDC || ret == 0xAF) {
+          continue;
+        }
+        if (byte_1CE2 != 0) {
+          sub_3150(ret);
+        }
+      } while (1);
     } else {
       sub_3150(ret);
     }
