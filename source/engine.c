@@ -2287,26 +2287,36 @@ static void op_66(void)
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.bx = cpu.ax;
 
-  int zf = 0;
-  int cf = 0;
+  cpu.zf = 0;
+  cpu.cf = 0;
+  cpu.sf = 0;
 
   cpu.cx = game_state.unknown[cpu.bx];
   cpu.cx += (game_state.unknown[cpu.bx + 1] << 8);
+
+  // Check value of AH
   if (byte_3AE1 == (cpu.ax >> 8)) {
     uint8_t cl = cpu.cx & 0x00FF;
-    if ((cl & cl) == 0) {
-      zf = 1;
+    if (cl == 0) {
+      cpu.zf = 1;
+    }
+    if (cl >= 0x80) {
+      cpu.sf = 1;
     }
   } else {
-    if ((cpu.cx & cpu.cx) == 0) {
-      zf = 1;
+    if (cpu.cx == 0) {
+      cpu.zf = 1;
+    }
+    if (cpu.cx >= 0x8000) {
+      cpu.sf = 1;
     }
   }
 
   uint16_t flags = 0;
-  flags |= zf << 6;
+  flags |= cpu.sf << 7;
+  flags |= cpu.zf << 6;
   flags |= 1 << 1; // Always 1, reserved.
-  flags |= cf << 0;
+  flags |= cpu.cf << 0;
   flags &= 0xFFFE;
   word_3AE6 &= 0x0001;
   word_3AE6 |= flags;
