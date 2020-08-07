@@ -433,7 +433,7 @@ static void op_41();
 static void op_42();
 static void op_jnz();
 static void op_jz();
-static void op_46();
+static void op_js();
 static void op_47();
 static void op_48();
 static void loop(); // 49
@@ -573,7 +573,7 @@ struct op_call_table targets[] = {
   { NULL, "0x408E" },
   { op_jnz, "0x4099" },
   { op_jz, "0x40A3" },
-  { op_46, "0x40AF" },
+  { op_js, "0x40AF" },
   { op_47, "0x40B8" },
   { op_48, "0x40ED" },
   { loop, "0x4106" },
@@ -1750,7 +1750,8 @@ static void op_jz(void)
 }
 
 // 0x40AF
-static void op_46()
+// Jump if signed (similar to js)
+static void op_js()
 {
   if ((word_3AE6 & SIGN_FLAG_MASK) != 0) {
     // 40A0
