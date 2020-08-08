@@ -63,7 +63,10 @@ uint8_t bit_buffer = 0;
 
 uint8_t byte_1BE5 = 0;
 
-uint16_t word_1C63 = 0;
+// 0x1C63
+// Typically will be (player number * 0x200) + 0xC960
+uint16_t player_base_offset = 0;
+
 uint8_t byte_1CE4 = 0;
 uint8_t byte_1E1F = 0;
 uint8_t byte_1E20 = 0;
@@ -402,7 +405,7 @@ static void op_13();
 static void op_14();
 static void op_15();
 static void op_16();
-static void op_17();
+static void store_data_into_resource();
 static void op_18();
 static void op_19();
 static void op_1A();
@@ -453,7 +456,7 @@ static void op_59();
 static void op_5A();
 static void op_5C();
 static void get_character_data();
-static void op_5E();
+static void set_character_data();
 static void op_61();
 static void op_63();
 static void op_66();
@@ -527,7 +530,7 @@ struct op_call_table targets[] = {
   { op_14, "0x3C8F" },
   { op_15, "0x3CAB" },
   { op_16, "0x3CCB" },
-  { op_17, "0x3CEF" },
+  { store_data_into_resource, "0x3CEF" },
   { op_18, "0x3D19" },
   { op_19, "0x3D3D" },
   { op_1A, "0x3D5A" },
@@ -598,7 +601,7 @@ struct op_call_table targets[] = {
   { NULL, "0x427A" },
   { op_5C, "0x4295" },
   { get_character_data, "0x42D8" },
-  { op_5E, "0x4322" },
+  { set_character_data, "0x4322" },
   { NULL, "0x4372" },
   { NULL, "0x438B" },
   { op_61, "0x43A6" },
@@ -1135,23 +1138,31 @@ static void op_16()
   }
 }
 
-// 0x3CEF
-static void op_17(void)
+// 0x3CEF (op_17)
+// Stores data into resource bytes.
+static void store_data_into_resource(void)
 {
-  uint8_t al = *cpu.pc++;
-  cpu.ax = (cpu.ax & 0xFF00) | al;
-  cpu.bx = cpu.ax;
-  cpu.di = game_state.unknown[cpu.bx];
-  cpu.di += (game_state.unknown[cpu.bx + 1] << 8);
-  uint8_t bl = game_state.unknown[cpu.bx + 2];
-  cpu.bx = (cpu.bx & 0xFF00) | bl;
-  printf("op17  bl: 0x%02X di: 0x%04X\n", bl, cpu.di);
-  const struct resource *r = resource_get_by_index(bl);
-  //dump_hex(r->bytes, 0x10);
+  uint8_t offset_idx, resource_idx;
+  const struct resource *r;
+
+  offset_idx = *cpu.pc++;
+
+  // Base offset to write to.
+  cpu.di = game_state.unknown[offset_idx];
+  cpu.di += (game_state.unknown[offset_idx + 1] << 8);
+
+  // Resource to write to (by index)
+  resource_idx = game_state.unknown[offset_idx + 2];
+
+  printf("%s  index: 0x%02X base offset: 0x%04X\n",__func__,  resource_idx, cpu.di);
+  r = resource_get_by_index(resource_idx);
   cpu.di += word_3AE4;
   cpu.cx = word_3AE2;
-  printf("  op17: setting byte 0x%04X\n", cpu.di);
+
+  printf("  %s: setting byte 0x%04X\n", __func__, cpu.di);
   r->bytes[cpu.di] = (cpu.cx & 0x00FF);
+
+  // Word mode?
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
     r->bytes[cpu.di + 1] = ((cpu.cx & 0xFF00) >> 8);
   }
@@ -2122,6 +2133,7 @@ static void op_5C(void)
 
 // 0x42D8 (5D)
 // Loads word_3AE2 with character data.
+// The actual character property is read from argument.
 static void get_character_data(void)
 {
   int chr_idx;
@@ -2136,7 +2148,7 @@ static void get_character_data(void)
   bh += chr_idx;
   cpu.bx = bh << 8 | (cpu.bx & 0xFF);
 
-  al = *cpu.pc++; // Character offset
+  al = *cpu.pc++; // Character property offset
   printf("%s - Player number: %d 0x%02X\n", __func__, chr_idx, al);
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.bx += cpu.ax;
@@ -2151,9 +2163,9 @@ static void get_character_data(void)
   }
 }
 
-// 0x4322
+// 0x4322 (5E)
 // Set properties of character (value is in word_3AE2).
-static void op_5E(void)
+static void set_character_data(void)
 {
   uint8_t al = game_state.unknown[6];
   cpu.ax = (cpu.ax & 0xFF00) | al;
@@ -5005,6 +5017,7 @@ static void sub_1ABD(uint8_t val)
   byte_1BE5 = bl; // color.
 
   ui_set_background(cpu.ax);
+
   bl = game_state.unknown[0x6];
   al = bl;
   al = al << 4;
@@ -5012,12 +5025,14 @@ static void sub_1ABD(uint8_t val)
   draw_point.y = al;
   draw_point.x = 0x1B;
   cpu.bx = bl; // xor bh, bh
+
   cpu.ax = 0xC960;
   ah = (cpu.ax & 0xFF00) >> 8;
 
   ah += game_state.unknown[cpu.bx + 0xA]; // Character selector ?
   cpu.ax = (ah << 8) | (cpu.ax & 0xFF);
-  word_1C63 = cpu.ax;
+  player_base_offset = cpu.ax;
+
   al = game_state.unknown[6];
   if (al >= game_state.unknown[31]) {
     // 1AF6
@@ -5044,7 +5059,7 @@ static void sub_1ABD(uint8_t val)
   al = 0xC;
   cpu.ax = (cpu.ax & 0xFF00) | al;
   unsigned char *c960 = get_player_data_base();
-  unsigned char *di = c960 + (word_1C63 - 0xC960);
+  unsigned char *di = c960 + (player_base_offset - 0xC960);
   di--;
 
   // 1B29
@@ -5064,7 +5079,7 @@ static void sub_1ABD(uint8_t val)
   al = 0x27;
   cpu.ax = (cpu.ax & 0xFF00) | al;
   sub_1BE6();
-  di = c960 + (word_1C63 - 0xC960);
+  di = c960 + (player_base_offset - 0xC960);
   al = di[0x4C];
 
   si = 3;
@@ -5161,11 +5176,10 @@ void reset_game_state()
 
 static int sub_1C57()
 {
-  uint16_t di = word_1C63;
   unsigned char *c960 = get_player_data_base();
 
-  cpu.ax = c960[di - 0xC960 + cpu.bx];
-  cpu.ax += (c960[di - 0xC960 + 1 + cpu.bx]) << 8;
+  cpu.ax = c960[player_base_offset - 0xC960 + cpu.bx];
+  cpu.ax += (c960[player_base_offset - 0xC960 + 1 + cpu.bx]) << 8;
 
   word_11C0 = cpu.ax;
   return cpu.ax;
