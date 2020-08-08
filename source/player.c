@@ -215,20 +215,20 @@ struct player_record {
   unsigned char name[12];
 
   // Stats
-  unsigned char strength;
-  unsigned char max_strength;
-  unsigned char dexterity;
-  unsigned char max_dexterity;
-  unsigned char intel;
-  unsigned char max_intel;
-  unsigned char spirit;
-  unsigned char max_spirit;
-  unsigned short health;
-  unsigned short max_health;
-  unsigned short stun;
-  unsigned short max_stun;
-  unsigned short power;
-  unsigned short max_power;
+  unsigned char strength; // 0x0C
+  unsigned char max_strength; // 0x0D
+  unsigned char dexterity; // 0x0E
+  unsigned char max_dexterity; // 0x0F
+  unsigned char intel; // 0x10
+  unsigned char max_intel; // 0x11
+  unsigned char spirit; // 0x12
+  unsigned char max_spirit; // 0x13
+  unsigned short health; // 0x14,0x15
+  unsigned short max_health; // 0x16,0x17
+  unsigned short stun; // 0x18-0x19
+  unsigned short max_stun; // 0x1A-0x1B
+  unsigned short power; // 0x1C-0x1D
+  unsigned short max_power; // 0x1E-0x1F
 
   // Skills
   struct skill_info skills;
@@ -238,7 +238,7 @@ struct player_record {
 
   unsigned char unknown[8];
   unsigned char status; // bitfield (0 = Ok, 1 = dead, 2 = chained, 4 = poisened)
-  unsigned char unknown_byte; // always 0 ?
+  unsigned char unknown_byte; // always 0 ? 0x4D ?
   unsigned char gender; // 0 = male, 1 = female
   unsigned short level;
   unsigned int xp;
