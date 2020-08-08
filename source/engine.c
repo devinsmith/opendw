@@ -481,6 +481,7 @@ static void op_85();
 static void op_86();
 static void op_88();
 static void op_89();
+static void op_8A();
 static void op_8B();
 static void op_8C();
 static void op_8D();
@@ -641,7 +642,7 @@ struct op_call_table targets[] = {
   { NULL, "0x4955" },
   { op_88, "0x496D" },
   { op_89, "0x4977" },
-  { NULL, "0x498E" },
+  { op_8A, "0x498E" },
   { op_8B, "0x499B" },
   { op_8C, "0x49A5" },
   { op_8D, "0x49D3" },
@@ -2663,11 +2664,13 @@ static void write_character_name()
 }
 
 // 0x4817
+// Random encounter?
 static void op_7C(void)
 {
   // si
   unsigned char *dest = word_3ADF->bytes;
   uint16_t dest_offset = word_3AE2;
+  printf("%s - 0x%04X\n", __func__, dest_offset);
   sub_27E3(dest, dest_offset);
   word_3AE2 = cpu.bx;
 }
@@ -3446,6 +3449,53 @@ static void op_89(void)
   printf("%s: BX: 0x%04X\n", __func__, cpu.bx);
   cpu.pc = cpu.base_pc + cpu.bx;
   word_3AE2 = cpu.ax; // key pressed
+}
+
+// 0x4C95
+static void sub_4C95()
+{
+  printf("%s 0x4C95 unimplemented,\n", __func__);
+  exit(1);
+}
+
+// 0x4C40
+static void sub_4C40()
+{
+  uint8_t al, bl;
+  struct resource *r;
+
+  if ((cpu.ax & 0xFF) == byte_4F0F) {
+    return;
+  }
+
+  // 0x4C47
+  byte_4F0F = (cpu.ax & 0xFF);
+  sub_4D82();
+  bl = byte_4F0F;
+  if (bl < 0xFE) {
+    cpu.bx = bl;
+    cpu.bx = cpu.bx << 1;
+    cpu.bx += 0x8A;
+    al = 1;
+    r = resource_load(cpu.bx);
+    if (r == NULL) {
+      // 0x4C92
+    }
+    sub_4C95();
+
+  }
+  // 0x4C92 ?
+
+  printf("%s 0x4C92 unimplemented,\n", __func__);
+  exit(1);
+
+}
+
+// 0x498E
+static void op_8A()
+{
+  cpu.ax = word_3AE2;
+  sub_4C40();
 }
 
 // 0x1EBF
