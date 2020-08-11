@@ -1,0 +1,37 @@
+In game, pressing 'q' should quit the game.
+
+op_89
+  0x4984 (engine.c:3417)
+  cpu.ax = 0x18D1
+op_58 // loads key response script (section F) also key lookup data?
+op_06 // set loop counter (9 ?)
+op_12 (bx = 0x41) (store_game_state_data) (key press code)
+op_0D
+op_3D
+op_44
+// Loops through all characters (loop ends at 2)
+op_49
+  op_0D // load
+  op_3D // operate
+  op_44 // check
+  op_49
+    op_0D
+    op_3D
+
+op_2B
+op_00 // set mask
+op_0D // load ? (jump address) ?
+op_56
+op_01 // clear mask
+op_54 // pop's word from 56?
+op_74
+
+
+Encounter: (op_7C)
+
+op_30 
+ op_7C (0x1E1)
+ op_01 // clear mask (operate on 8 bit values)
+ op_66 (1 argument) (load game_state and check for 0) set zero flag.
+ op_46 (is argument signed)
+op_10 (

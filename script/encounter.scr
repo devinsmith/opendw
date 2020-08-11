@@ -1,0 +1,74 @@
+000000: 09 FF 52 8E 0E 09 04 52 8E 0E 09 05 52 8E 0E 09  ..R....R....R...
+000010: 06 52 8E 0E 09 07 52 8E 0E 09 08 52 8E 0E 09 09  .R....R....R....
+000020: 52 8E 0E 09 01 58 01 02 00 42 96 0E 5B 5A 9D 19  R....X...B..[Z..
+000030: 99 45 3C 11 9B 19 99 58 13 06 00 5A 62 24 01 42  .E<....X...Zb$.B
+000040: 3C 11 58 08 18 00 0E 00 5A 74 05 20 23 90 78 F4  <.X.....Zt. #.x.
+000050: D2 68 9B 52 08 82 81 40 2A 70 66 93 04 8A 9D C3  .h.R...@*pf.....
+000060: 61 31 98 0F 8E 28 84 66 63 ED B0 DD F4 0C 8C 60  a1...(.fc......`
+000070: CD 26 0D 85 33 44 2F 38 66 93 05 22 88 DF 10 CD  .&..3D/8f.."....
+000080: 31 7D 10 90 D9 2A 22 43 77 D0 26 74 CD 13 14 33  1}...*"Cw.&t...3
+000090: 4A A4 12 C4 C2 29 8A 15 49 86 C0 40 9D 04 B9 45  J....)..I..@...E
+0000a0: 71 0F 9B 04 B9 78 F2 A4 13 C4 C6 2B DA 13 C5 ED  q....x.....+....
+0000b0: 0F A1 48 A0 53 7C 6E 1B 3E 33 48 44 16 3D C8 09  ..H.S|n.>3HD.=..
+0000c0: 55 53 05 4E 9B C3 64 8A 61 6A 90 99 84 66 0C 92  US.N..d.aj...f..
+0000d0: 26 31 F6 0D 85 33 47 61 9A 4C E0 88 25 34 A0 68  &1...3Ga.L..%4.h
+0000e0: 8A 66 0C AC A6 86 69 8B E8 84 86 69 30 52 28 8D  .f....i....i0R(.
+0000f0: F1 FF 00 88 74 0A 48 1E 70 78 F1 5E 1B BE 81 39  ....t.H.px.^...9
+
+word_3AE2 = 0xFF;
+call(0xE8E);
+
+
+sub_E8E()
+{
+  op_58(01, 0x0002) // loads tag item, and offset, now we switch to a new script.
+}
+
+tag_item 1: offset2
+
+op_58(0x03, 0x0000)
+
+Section 3 script (5390 bytes)
+000000: 12 28 04 55 12 53 9A 35 11 36 06 06 0B 0A 13 11  .(.U.S.5.6......
+000010: 49 0C 00 19 1F 20 53 F1 04 53 6B 01 53 D2 01 58  I.... S..Sk.S..X
+000020: 12 1A 00 74 16 00 28 98 76 58 12 00 00 53 0E 01  ...t..(.vX...S..
+000030: 78 08 A1 03 0A 38 EF 40 58 12 97 00 42 28 00 52  x....8.@X...B(.R
+
+
+
+00: op_12(0x28);  -- Set's gamestate arg1 with word_3AE2 low byte. (0xFF)
+02: op_04();
+03: op_55(); // Extract stack byte or word.
+04: op_12(0x53);  -- Set's gamestate arg1 with word_3AE2 low byte. (resource_index)
+06: op_9A(0x35);  -- Set gamestate (arg1) with 0xFF
+08: op_11(0x36);  -- Set gamestate (arg1) with 0x00 ?
+0A: op_06(0x06);  -- Set 3AE4 as arg1 (set loop?)
+// do
+{
+  0C: op_0B(0x0A);  -- Set's 3AE2 with game_state byte (hmm)
+  0E: op_13(0x11);  -- 
+  11: LOOP(0x000C) // While
+
+
+// 5D 4D 99 45 F5 00 23 41 5A
+func_237()
+{
+  get_character_data(0x4D); // move to word_3AE2
+  op_99() // do tests
+  jz(0x00F5) //
+  increment_memory(0x41)
+}
+
+// 5D 4D 99 44 7B 04 30 56 4E 99 5A
+func_1137()
+
+{
+  get_character_data(0x4D);
+  op_99(); // test
+  if (!= 0) {
+    // jmp to 0x47B
+  }
+  op_30(0x56);
+  op_4E?
+  op_99();
+}

@@ -1,2 +1,5 @@
 More drawing routines (sub_CF8)
 There is still some UI glitches with the viewport (e.g. water displaying instead of land).
+
+Run script (Section 3, 1706 -> 0x1E1)
+op_7C is the start of a random encounter (I think) but we don't match up with dragon.com for some reason.

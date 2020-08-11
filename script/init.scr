@@ -1,6 +1,12 @@
 // Initialize characters single byte at a time in loop of 255.
 // 0338: 06 FF 0F 96 17 41 49 3A 03
 
+set_8bit();
+
+// f2 9d 33 46 0c 15  c0
+read_header_bytes(); // Sets title as "Interplay"
+
+
 int counter = 0xFF; // typically stored in word_3AE4
 do {
   // 0x33A
