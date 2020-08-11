@@ -8,5 +8,6 @@ do {
   // Transfer point is through word_3AE2
   op_0F(0x96); // loads word_3AE2
   op_17(0x41) // stores word_3AE2
+  counter--;
 } while(counter > 0);
 
