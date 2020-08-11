@@ -82,3 +82,26 @@ void hexdump(void *ptr, int buflen)
   }
 }
 
+void dosbox_hexdump_file(int segment, void *ptr, int buflen)
+{
+  FILE *fp = fopen("memdump.txt", "w");
+
+  unsigned char *buf = (unsigned char*)ptr;
+  int i, j;
+  for (i=0; i<buflen; i+=16) {
+    fprintf(fp, "%04X:%04X  ", segment, i);
+    for (j=0; j<16; j++)
+      if (i+j < buflen)
+        fprintf(fp, " %02X", buf[i+j]);
+      else
+        fprintf(fp, "   ");
+#if 0
+    for (j=0; j<16; j++)
+      if (i+j < buflen)
+        printf("%c", isprint(buf[i+j]) ? buf[i+j] : '.');
+#endif
+    fprintf(fp, " \n");
+  }
+
+  fclose(fp);
+}
