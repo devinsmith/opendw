@@ -1,11 +1,32 @@
-// Initialize characters single byte at a time in loop of 255.
-// 0338: 06 FF 0F 96 17 41 49 3A 03
+01 7b f2 9d 33 46 0c 15  c0 53 2a 03 42 90 00 74    .{..3F...S*.B..t  
+09 40 1f 70 78 f1 5e 1b  be 81 b2 a4 90 cd f8 c7    .@.px.^.........  
+7b f6 4c 85 38 22 0b 8d  60 a0 4d 37 7e d3 dd 35    {.L.8"..`.M7~..5  
+3a 86 08 9c 17 b0 a1 40  9a 60 00 89 00 00 c2 45    :......@.`.....E  
+00 c3 df 02 ff 74 05 38  23 80 78 f4 a6 28 cd 4e    .....t.8#.x..(.N  
+40 44 17 1a c1 40 9a 60  d9 4c 60 4a 69 4e 2f b8    @D...@.`.L`JiN/.  
+6e fa 44 2c 14 a6 19 0a  a6 28 50 26 9b 01 f1 5e    n.D,.....(P&...^  
+1b be 81 94 d4 c6 06 ca  92 43 37 86 53 14 66 11    .........C7.S.f.  
+
 
 set_8bit();
 
 // f2 9d 33 46 0c 15  c0
 read_header_bytes(); // Sets title as "Interplay"
+call 0x032A
 
+// 0x32A
+op_09(0x07) // load word_3AE2 with 7
+load_resource_section(word_3AE2); // store resource index into word_3AE2
+op_12(0x98) // set game state 0x98 with word_3AE2 (resource index)
+op_1A(0x43, 0x01) // set game_state 0x43 with 0x01
+set_word_mode();
+op_11(0x96) // set game_state 0x96/0x97 (word mode) with 0x0000.
+op_11(0x41) // set game_state 0x41/0x41 with 0x0000
+set_byte_mode();
+
+
+// Initialize characters single byte at a time in loop of 255.
+// 0338: 06 FF 0F 96 17 41 49 3A 03
 
 int counter = 0xFF; // typically stored in word_3AE4
 do {
