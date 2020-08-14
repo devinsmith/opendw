@@ -8,7 +8,7 @@
 1b be 81 94 d4 c6 06 ca  92 43 37 86 53 14 66 11    .........C7.S.f.  
 
 
-set_8bit();
+set_byte_mode();
 
 // f2 9d 33 46 0c 15  c0
 read_header_bytes(); // Sets title as "Interplay"
