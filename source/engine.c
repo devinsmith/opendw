@@ -384,8 +384,8 @@ void (*func_5060[NUM_FUNCS])() = {
 };
 
 // Decoded opcode calls, forward definition.
-static void op_00();
-static void op_01();
+static void set_word_mode();
+static void set_byte_mode();
 static void op_03();
 static void op_04();
 static void op_05();
@@ -507,8 +507,8 @@ struct op_call_table {
 };
 
 struct op_call_table targets[] = {
-  { op_00, "0x3B18" },
-  { op_01, "0x3B0E" },
+  { set_word_mode, "0x3B18" },
+  { set_byte_mode, "0x3B0E" },
   { NULL, "0x3B1F" },
   { op_03, "0x3B2F" },
   { op_04, "0x3B2A" },
@@ -807,14 +807,14 @@ static uint16_t peek_word()
 }
 
 // 0x3B18
-static void op_00()
+static void set_word_mode()
 {
   printf("%s - setting 3AE1 to 0xFF\n", __func__);
   byte_3AE1 = 0xFF;
 }
 
 // 0x3B0E
-static void op_01()
+static void set_byte_mode()
 {
   uint8_t ah = (cpu.ax & 0xFF00) >> 8;
 
@@ -2095,7 +2095,7 @@ static void op_5A(void)
 // 0x4295
 static void op_5C(void)
 {
-  op_01();
+  set_byte_mode();
   cpu.ax = *cpu.pc++;
   cpu.ax += ((*cpu.pc++) << 8);
 
