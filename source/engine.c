@@ -393,7 +393,7 @@ static void op_06();
 static void op_07();
 static void op_08();
 static void op_09();
-static void op_0A();
+static void load_word3AE2_gamestate();
 static void op_0B();
 static void op_0C();
 static void op_0D();
@@ -517,7 +517,7 @@ struct op_call_table targets[] = {
   { op_07, "0x3B52" },
   { op_08, "0x3B59" },
   { op_09, "0x3B67" },
-  { op_0A, "0x3B7A" },
+  { load_word3AE2_gamestate, "0x3B7A" },
   { op_0B, "0x3B8C" },
   { op_0C, "0x3BA2" },
   { op_0D, "0x3BB7" },
@@ -902,25 +902,20 @@ static void op_09(void)
 }
 
 // 0x3B7A
-static void op_0A(void)
+// op_0A
+static void load_word3AE2_gamestate(void)
 {
-  uint8_t al, ah, saved;
-  static int runs = 1;
+  uint8_t al, ah;
+  uint8_t gs_idx;
 
-  al = *cpu.pc++;
-  saved = al;
-  cpu.ax = (cpu.ax & 0xFF00) | al;
-  cpu.bx = cpu.ax;
+  gs_idx = *cpu.pc++;
 
   // mov ax, [bx + game_state]
-  al = game_state.unknown[cpu.bx];
-  ah = game_state.unknown[cpu.bx+1];
-  ah = ah & byte_3AE1;
-  cpu.ax = (ah << 8) | al;
-  word_3AE2 = cpu.ax;
-  printf("%s - AX: 0x%04X (run num: %d) 0x%02X\n", __func__, cpu.ax, runs,
-      saved);
-  runs++;
+  al = game_state.unknown[gs_idx];
+  ah = game_state.unknown[gs_idx + 1];
+  ah = ah & byte_3AE1; // mask if in byte mode.
+  word_3AE2 = (ah << 8) | al;
+  printf("%s - 0x%02X -> word_3AE2: 0x%04X\n", __func__, gs_idx, word_3AE2);
 }
 
 // 0x3B8C
@@ -2883,7 +2878,6 @@ static void op_86(void)
   cpu.ax = r->index;
   uint8_t ah = (cpu.ax & 0xFF00) >> 8;
   word_3AE2 = (ah & byte_3AE1) | (cpu.ax & 0x00FF);
-  //dump_hex(r->bytes, 0x80);
 }
 
 // Uses carry flag as a boolean
