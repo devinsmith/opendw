@@ -816,11 +816,8 @@ static void set_word_mode()
 // 0x3B0E
 static void set_byte_mode()
 {
-  uint8_t ah = (cpu.ax & 0xFF00) >> 8;
-
-  // moves AH into two variables.
-  word_3AE2 = (ah << 8) | (word_3AE2 & 0xFF); // lower portion of word_3AE2 takes ah.
-  byte_3AE1 = ah;
+  word_3AE2 &= 0xFF;
+  byte_3AE1 = 0;
 }
 
 // 0x4AA1
