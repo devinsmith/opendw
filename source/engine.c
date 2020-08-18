@@ -392,7 +392,7 @@ static void op_05();
 static void op_06();
 static void op_07();
 static void op_08();
-static void op_09();
+static void set_word3AE2_arg();
 static void load_word3AE2_gamestate();
 static void op_0B();
 static void op_0C();
@@ -481,7 +481,7 @@ static void op_82();
 static void op_83();
 static void op_84();
 static void op_85();
-static void op_86();
+static void load_word3AE2_resource();
 static void op_88();
 static void op_89();
 static void op_8A();
@@ -516,7 +516,7 @@ struct op_call_table targets[] = {
   { op_06, "0x3B4A" },
   { op_07, "0x3B52" },
   { op_08, "0x3B59" },
-  { op_09, "0x3B67" },
+  { set_word3AE2_arg, "0x3B67" },
   { load_word3AE2_gamestate, "0x3B7A" },
   { op_0B, "0x3B8C" },
   { op_0C, "0x3BA2" },
@@ -641,7 +641,7 @@ struct op_call_table targets[] = {
   { op_83, "0x48EE" },
   { op_84, "0x4907" },
   { op_85, "0x4920" },
-  { op_86, "0x493E" },
+  { load_word3AE2_resource, "0x493E" },
   { NULL, "0x4955" },
   { op_88, "0x496D" },
   { op_89, "0x4977" },
@@ -884,7 +884,8 @@ static void op_08(void)
 }
 
 // 0x3B67
-static void op_09(void)
+// op_09
+static void set_word3AE2_arg(void)
 {
   uint8_t al = *cpu.pc++;
   cpu.ax = (cpu.ax & 0xFF00) | al;
@@ -2869,7 +2870,8 @@ static void op_85(void)
 }
 
 // 0x493E
-static void op_86(void)
+// op_86
+static void load_word3AE2_resource(void)
 {
   const struct resource *r = resource_load(word_3AE2);
   cpu.ax = r->index;
