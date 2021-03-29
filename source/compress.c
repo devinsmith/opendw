@@ -119,7 +119,7 @@ static void decompress(struct buf_rdr *input, struct compress_ctx *ctx,
     int size, struct buf_wri *output)
 {
   uint16_t res;
-  uint16_t ax = 0;
+  uint16_t ax;
   int bx;
   int bp = ctx->counter;
   unsigned char *ptr;

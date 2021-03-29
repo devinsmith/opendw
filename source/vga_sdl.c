@@ -15,7 +15,6 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 
 #include <SDL.h>
 
@@ -126,8 +125,6 @@ void waitkey()
     SDL_WaitEvent(&event);
     switch (event.type) {
     case SDL_QUIT:
-      done = 1;
-      break;
     case SDL_KEYDOWN:
       done = 1;
       break;

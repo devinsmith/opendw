@@ -17,7 +17,6 @@
 #include <stdint.h>
 
 #include "offsets.h"
-#include "utils.h"
 
 #define NUM_OFFSETS 0x88
 

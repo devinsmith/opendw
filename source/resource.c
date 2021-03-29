@@ -16,7 +16,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 #include "bufio.h"
 #include "compress.h"
@@ -74,7 +73,7 @@ done:
 /* 0x1348 */
 struct resource* game_memory_alloc(size_t nbytes, int marker, int tag)
 {
-  int i = 0;
+  int i;
   struct resource *a;
 
   for (i = 0; i < nitems(allocations); i++) {
@@ -103,7 +102,7 @@ struct resource* game_memory_alloc(size_t nbytes, int marker, int tag)
  * XXX: Rename this. */
 int find_index_by_tag(int tag)
 {
-  int i = 0;
+  int i;
   for (i = 0; i < nitems(allocations); i++) {
     struct resource *a = &allocations[i];
     if (a->tag == tag && a->usage_type != 0) {

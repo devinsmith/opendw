@@ -1437,8 +1437,6 @@ static void op_30()
   word_3AE2 += al;
   // rcl byte [3AE6], 1
   word_3AE6 = (word_3AE6 & 0xFF00) | (((word_3AE6 & 0xFF) << 1) | cf);
-
-  return;
 }
 
 // 0x3EC1
@@ -3631,7 +3629,6 @@ static void sub_1E49()
   sub_1EBE();
   al = 0x8D;
   sub_3150(al);
-  return;
 }
 
 static void sub_1C70(unsigned char *src_ptr)
