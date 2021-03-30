@@ -84,6 +84,7 @@ static int loaded = 0;
 // At 0x4F11 in memory.
 // 10880 bytes. (136 x 80)
 static unsigned char *viewport_memory; // 0x4F11
+static unsigned char *viewport_mem_save; // 0x4F13
 static const int viewport_mem_sz = 10880;
 
 // Viewport metadata.
@@ -989,7 +990,14 @@ void sub_37C8()
   update_viewport();
 }
 
+// 0x4CFA
+void viewport_save()
+{
+  memcpy(viewport_mem_save, viewport_memory, viewport_mem_sz);
+}
+
 void init_viewport_memory()
 {
   viewport_memory = malloc(viewport_mem_sz);
+  viewport_mem_save = malloc(viewport_mem_sz);
 }

@@ -33,7 +33,6 @@ static struct buf_rdr *header_rdr = NULL;
 static struct resource allocations[128] = { 0 };
 static struct resource *resource_load_cache_miss(enum resource_section sec);
 
-static unsigned char *ptr2; // 0x4F13
 static unsigned char *ptr3; // 0x313E
 
 #ifndef nitems
@@ -314,7 +313,5 @@ unsigned char *com_extract(size_t off, size_t sz)
 void setup_memory()
 {
   init_viewport_memory();
-  ptr2 = malloc(0x2A8 * 16);
   ptr3 = malloc(0x370 * 16);
 }
-
