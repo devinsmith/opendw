@@ -3454,13 +3454,6 @@ static void op_89(void)
   word_3AE2 = cpu.ax; // key pressed
 }
 
-// 0x4C95
-static void sub_4C95()
-{
-  printf("%s 0x4C95 unimplemented,\n", __func__);
-  exit(1);
-}
-
 // 0x4C40
 static void sub_4C40()
 {
@@ -3484,7 +3477,7 @@ static void sub_4C40()
     if (r == NULL) {
       // 0x4C92
     }
-    sub_4C95();
+    sub_4C95(r);
 
   }
   // 0x4C92 ?
@@ -3640,7 +3633,7 @@ static void sub_1C70(unsigned char *src_ptr)
 // 0x4D82
 void sub_4D82()
 {
-  // validte that byte_4F10 is equal to 0xFF (which it is set to on startup)
+  // validate that byte_4F10 is equal to 0xFF (which it is set to on startup)
   // byte_4F10 is some kind of memory/resource index flag, 0xFF means that it
   // hasn't been initialized.
   if (byte_4F10 != 0xFF) {

@@ -86,6 +86,8 @@ static int loaded = 0;
 static unsigned char *viewport_memory; // 0x4F11
 static unsigned char *viewport_mem_save; // 0x4F13
 static const int viewport_mem_sz = 10880;
+unsigned short word_4F15; // 0x4F15
+unsigned short word_4F17; // 0x4F17
 
 // Viewport metadata.
 // 0x6748
@@ -994,6 +996,69 @@ void sub_37C8()
 void viewport_save()
 {
   memcpy(viewport_mem_save, viewport_memory, viewport_mem_sz);
+}
+
+static void sub_4CB2(struct resource *r)
+{
+  unsigned char *ds = r->bytes;
+
+  // Offsets, x, y, num rows, num cols ?
+  unsigned short byte1 = *ds++; // dx
+  unsigned short byte2 = *ds++; // di
+  unsigned short byte3 = *ds++; // ax
+  byte3 -= byte1;
+  unsigned char cx = byte3;
+  byte1 += 5;
+
+  unsigned short byte4 = *ds++; // bp
+  unsigned short bx = 0;
+
+  byte4 = byte4 << 1;
+  byte2 = byte2 << 1;
+  uint16_t di = byte2; // save di
+
+  // 4FBE
+  uint16_t offset = get_offset(byte2);
+  byte2 += byte1;
+
+  // Save cx
+
+  // loop over cx
+  // 4CDC
+  unsigned char byte5 = *ds++;
+
+  bx = bx ^ byte5;
+
+
+  // stosb
+  printf("%s 0x4CDF unimplemented,\n", __func__);
+  exit(1);
+}
+
+// 0x4C95
+void sub_4C95(struct resource *r)
+{
+  // Segment and offset (will be later loaded into ds:si)
+  // of resource r.
+  // word_4F15 = bx; // 0 ? (offset)
+  // word_4F17 = cx; // 0x2979 (Segment)
+
+  viewport_save();
+
+  // 01DD:4CA0  A1114F  mov  ax,[4F11]  ds:[4F11]=0FC4
+  //unsigned char *ds = viewport_memory;
+  sub_4CB2(r);
+  /*
+01DD:4CA3  E80C00              call 00004CB2 ($+c)
+01DD:4CA6  E8B7C3              call 00001060 ($-3c49)
+01DD:4CA9  E86400              call 00004D10 ($+64)
+01DD:4CAC  E87700              call 00004D26 ($+77)
+01DD:4CAF  A1134F              mov  ax,[4F13]              ds:[4F13]=126D
+01DD:4CB2  06                  push es
+*/
+
+  printf("%s 0x4CA3 unimplemented,\n", __func__);
+  exit(1);
 }
 
 void init_viewport_memory()

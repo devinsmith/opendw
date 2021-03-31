@@ -22,6 +22,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include "resource.h"
 
 struct ui_header {
   int len; // 0x288A
@@ -97,6 +98,7 @@ void ui_set_byte_3236(uint8_t val);
 uint8_t ui_get_byte_3236();
 void init_viewport_memory();
 void viewport_save();
+void sub_4C95(struct resource *r);
 
 #ifdef __cplusplus
 }
