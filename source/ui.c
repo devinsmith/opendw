@@ -74,9 +74,6 @@ struct ui_point draw_point;
 // 0x320C
 struct ui_string_line ui_string = { 0 };
 
-// 0x2AAA
-uint8_t data_2AAA[0x19];
-
 // 0x2AC3
 uint8_t data_2AC3[0x19];
 
