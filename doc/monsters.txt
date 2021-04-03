@@ -1,3 +1,6 @@
+Monster graphics / sprites are stored in the DATA1 file.
+The following resources contain the different monster sprites
+
 168 (A8) - Wolf (wild dog?)
 210 (D2) - Pikeman
 222 (DE) - Fanatic
