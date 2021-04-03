@@ -3455,6 +3455,7 @@ static void op_89(void)
 }
 
 // 0x4C40
+// Random Encounter!
 static void sub_4C40()
 {
   uint8_t al, bl;
@@ -3473,6 +3474,14 @@ static void sub_4C40()
     cpu.bx = cpu.bx << 1;
     cpu.bx += 0x8A;
     al = 1;
+
+    // BX will contain the monster's graphic to load
+
+    // XXX TEMPORARY BEGIN
+    cpu.bx = 0xDE; // Load a specific resource
+    // XXX TEMPORARY END
+
+    printf("Loading Resource: %d\n", cpu.bx);
     r = resource_load(cpu.bx);
     if (r == NULL) {
       // 0x4C92

@@ -37,6 +37,7 @@ struct pic_data {
 uint8_t ui_drawn_yet = 0; // 0x268E
 
 static void draw_indexed_picture9();
+static void sub_1F54(uint8_t al);
 static void sub_27CC();
 
 void (*ui_draw_funcs[5])() = {
@@ -404,7 +405,11 @@ void draw_viewport()
 {
   int rows = 0x88;
   int cols = 0x50;
-  int line_num = 8;
+  int line_num = 8; // Can be increased on 10D2
+
+  // 2752 (0x0a)
+  //
+  sub_1F54(0x0a);
 
   uint8_t *framebuffer = vga->memory();
 
@@ -998,44 +1003,55 @@ void viewport_save()
   memcpy(viewport_mem_save, viewport_memory, viewport_mem_sz);
 }
 
-static void sub_4CB2(struct resource *r)
+static void sub_4CB2(unsigned char *es, struct resource *r)
 {
   unsigned char *ds = r->bytes;
 
   // Offsets, x, y, num rows, num cols ?
-  unsigned short byte1 = *ds++; // dx
-  unsigned short byte2 = *ds++; // di
-  unsigned short byte3 = *ds++; // ax
-  byte3 -= byte1;
-  unsigned char cx = byte3;
-  byte1 += 5;
+  unsigned short xpos = *ds++; // dx
+  unsigned short ypos = *ds++; // di
+  unsigned short runlen = *ds++; // ax
+  runlen -= xpos;
+  unsigned char cx = runlen;
+  xpos += 5;
 
-  unsigned short byte4 = *ds++; // bp
+  unsigned short numruns = *ds++; // bp
   unsigned short bx = 0;
 
-  byte4 = byte4 << 1;
-  byte2 = byte2 << 1;
-  uint16_t di = byte2; // save di
+  uint16_t di = ypos; // save di
 
   // 4FBE
-  uint16_t offset = get_offset(byte2);
-  byte2 += byte1;
+  uint16_t offset = get_offset(ypos);
+  offset += xpos;
 
   // Save cx
 
   // loop over cx
   // 4CDC
-  unsigned char byte5 = *ds++;
+  unsigned char *p = es + offset;
+  for (int i = 0; i < numruns; i++) {
+    for (int j = 0; j < runlen; j++) {
+      // 4CDC
+      unsigned char data = *ds;
+      unsigned char dval = *p;
 
-  bx = bx ^ byte5;
+      bx = bx ^ data;
+      dval = dval & get_and_table(bx);
+      dval = dval | get_or_table(bx);
 
-
-  // stosb
-  printf("%s 0x4CDF unimplemented,\n", __func__);
-  exit(1);
+      *p = dval;
+      p++;
+      ds++;
+    }
+    ypos++;
+    offset = get_offset(ypos);
+    offset += xpos;
+    p = es + offset;
+  }
 }
 
 // 0x4C95
+// Draw random encounter (graphic in resource r)
 void sub_4C95(struct resource *r)
 {
   // Segment and offset (will be later loaded into ds:si)
@@ -1046,18 +1062,16 @@ void sub_4C95(struct resource *r)
   viewport_save();
 
   // 01DD:4CA0  A1114F  mov  ax,[4F11]  ds:[4F11]=0FC4
-  //unsigned char *ds = viewport_memory;
-  sub_4CB2(r);
+  sub_4CB2(viewport_memory, r);
+  draw_viewport();
   /*
-01DD:4CA3  E80C00              call 00004CB2 ($+c)
-01DD:4CA6  E8B7C3              call 00001060 ($-3c49)
 01DD:4CA9  E86400              call 00004D10 ($+64)
 01DD:4CAC  E87700              call 00004D26 ($+77)
 01DD:4CAF  A1134F              mov  ax,[4F13]              ds:[4F13]=126D
 01DD:4CB2  06                  push es
 */
 
-  printf("%s 0x4CA3 unimplemented,\n", __func__);
+  printf("%s 0x4CA9 unimplemented,\n", __func__);
   exit(1);
 }
 
