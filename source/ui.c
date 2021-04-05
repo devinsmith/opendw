@@ -997,6 +997,7 @@ void sub_37C8()
 // 0x4CFA
 void viewport_save()
 {
+  // repe movsw
   memcpy(viewport_mem_save, viewport_memory, viewport_mem_sz);
 }
 
@@ -1009,24 +1010,17 @@ static void sub_4CB2(unsigned char *es, struct resource *r)
   unsigned short ypos = *ds++; // di
   unsigned short runlen = *ds++; // ax
   runlen -= xpos;
-  unsigned char cx = runlen;
   xpos += 5;
 
   unsigned short numruns = *ds++; // bp
   unsigned short bx = 0;
 
-  uint16_t di = ypos; // save di
-
-  // 4FBE
-  uint16_t offset = get_offset(ypos);
-  offset += xpos;
-
-  // Save cx
-
-  // loop over cx
   // 4CDC
-  unsigned char *p = es + offset;
-  for (int i = 0; i < numruns; i++) {
+  for (int i = ypos; i < numruns; i++) {
+    uint16_t offset = get_offset(i);
+    offset += xpos;
+
+    unsigned char *p = es + offset;
     for (int j = 0; j < runlen; j++) {
       // 4CDC
       unsigned char data = *ds;
@@ -1040,11 +1034,19 @@ static void sub_4CB2(unsigned char *es, struct resource *r)
       p++;
       ds++;
     }
-    ypos++;
-    offset = get_offset(ypos);
-    offset += xpos;
-    p = es + offset;
   }
+}
+
+// 0x4D10
+void viewport_restore()
+{
+  memcpy(viewport_memory, viewport_mem_save, viewport_mem_sz);
+}
+
+// 0x4D26
+void sub_4D26()
+{
+  memset(viewport_mem_save, 0x66, viewport_mem_sz);
 }
 
 // 0x4C95
@@ -1061,15 +1063,11 @@ void sub_4C95(struct resource *r)
   // 01DD:4CA0  A1114F  mov  ax,[4F11]  ds:[4F11]=0FC4
   sub_4CB2(viewport_memory, r);
   draw_viewport();
-  /*
-01DD:4CA9  E86400              call 00004D10 ($+64)
-01DD:4CAC  E87700              call 00004D26 ($+77)
-01DD:4CAF  A1134F              mov  ax,[4F13]              ds:[4F13]=126D
-01DD:4CB2  06                  push es
-*/
+  viewport_restore();
 
-  printf("%s 0x4CA9 unimplemented,\n", __func__);
-  exit(1);
+  sub_4D26();
+
+  sub_4CB2(viewport_mem_save, r);
 }
 
 void init_viewport_memory()
