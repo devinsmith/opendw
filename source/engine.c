@@ -155,6 +155,10 @@ unsigned char data_49CA[] = { 0x00, 0x00, 0xCE, 0x00, 0x00, 0xD9, 0x00, 0x00, 0x
 unsigned char byte_4F0F;
 unsigned char byte_4F10 = 0;
 
+// 0x4F19 - 0x4F2A ? (how big is this really?)
+unsigned char data_4F19[17] = { 0 };
+uint8_t byte_4F2B = 0;
+
 // Another function pointer.
 void (*word_5038)(unsigned char *dest, unsigned int offset);
 
@@ -261,7 +265,6 @@ unsigned char *data_5866; // data
 // 0x5897
 unsigned char data_5897[256];
 
-uint8_t byte_4F2B = 0;
 
 // 0x4C31 - 0x4C34
 unsigned char word_4C31[4];
@@ -426,6 +429,7 @@ static void op_2F();
 static void op_30();
 static void op_31();
 static void op_32();
+static void op_34();
 static void op_38();
 static void op_39();
 static void op_3D();
@@ -559,7 +563,7 @@ struct op_call_table targets[] = {
   { op_31, "0x3EC1" },
   { op_32, "0x3EEB" },
   { NULL, "0x3F11" },
-  { NULL, "0x3F4D" },
+  { op_34, "0x3F4D" },
   { NULL, "0x3F66" },
   { NULL, "0x3F8C" },
   { NULL, "0x3FAD" },
@@ -1508,6 +1512,40 @@ static void op_32()
     // rcl byte [3AE6], 1
     word_3AE6 = (word_3AE6 & 0xFF00) | (((word_3AE6 & 0xFF) << 1) | cpu.cf);
   }
+
+}
+
+// 0x3F23
+static void sub_3F23()
+{
+  cpu.ax = word_3AE2;
+  word_11C0 = cpu.ax;
+  printf("%s: 0x3F29 unimplemented (0x%04X)\n", __func__, cpu.ax);
+  exit(1);
+}
+
+
+// 0x3F4D
+static void op_34()
+{
+  uint8_t al, ah;
+
+  al = *cpu.pc++;
+  word_11C2 = (word_11C2 & 0xFF00) | al;
+
+  // al = ah
+  al = (cpu.ax & 0xFF00) >> 8;
+  ah = al;
+
+  if (byte_3AE1 != ah) {
+    al = *cpu.pc++;
+  }
+  word_11C2 = (al << 8) | (word_11C2 & 0xFF);
+  al = ah;
+  word_11C4 = (ah << 8) | al;
+
+  sub_3F23();
+  return;
 
 }
 
@@ -3454,18 +3492,42 @@ static void op_89(void)
   word_3AE2 = cpu.ax; // key pressed
 }
 
+// 0x4D37
+static void sub_4D37(int al, int index, struct resource *r)
+{
+  int cl = al;
+  int si = index;
+  uint8_t dl;
+
+  si = si << 1;
+
+  cpu.dx = r->bytes[si];
+  cpu.dx += (r->bytes[si + 1]) << 8;
+  dl = cpu.dx & 0xFF;
+
+  cpu.ax = cpu.dx;
+
+  if (cpu.dx != 0) {
+    data_4F19[index + 8] = cl;   // bx + 4F21
+    dl = 0xFF; // also set cpu.dx ?
+  }
+  data_4F19[index + 12] = dl; // bx + 4F25
+  data_4F19[index * 2] = cpu.ax & 0xFF;
+  data_4F19[(index * 2) + 1] = (cpu.ax & 0xFF00) >> 8;
+}
+
 // 0x4C40
 // Random Encounter!
 static void sub_4C40()
 {
   uint8_t al, bl;
-  struct resource *r;
+  struct resource *r, *r2;
 
   if ((cpu.ax & 0xFF) == byte_4F0F) {
     return;
   }
 
-  // 0x4C47
+  // 0x4C47 (al contains random encounter id)
   byte_4F0F = (cpu.ax & 0xFF);
   sub_4D82();
   bl = byte_4F0F;
@@ -3478,22 +3540,35 @@ static void sub_4C40()
     // BX will contain the monster's graphic to load
 
     // XXX TEMPORARY BEGIN
-    cpu.bx = 0xC4; // Load a specific resource
+    cpu.bx = 0xC8; // Load a specific resource
     // XXX TEMPORARY END
 
     printf("Loading Resource: %d\n", cpu.bx);
     r = resource_load(cpu.bx);
-    if (r == NULL) {
-      // 0x4C92
-    }
-    sub_4C95(r);
+    if (r != NULL) {
+      sub_4C95(r);
+      sub_128D(r->index);
 
+      uint16_t tag = r->tag;
+      tag++;
+
+      r2 = resource_load(tag);
+      if (r2 == NULL) {
+        // 4C91
+        return;
+      }
+
+      // 4F10 = r2->index;
+      // 4F29 = r2->bytes
+      for (int bx = 3; bx >= 0; bx--) {
+        sub_4D37(0, bx, r2);
+      }
+      byte_4F2B = 0xFF;
+      return;
+    }
   }
   // 0x4C92 ?
-
-  printf("%s 0x4C92 unimplemented,\n", __func__);
-  exit(1);
-
+  sub_37C8();
 }
 
 // 0x498E
@@ -5182,6 +5257,8 @@ static void sub_11A0()
   uint32_t result;
 
   word_11C4 = 0;
+
+  // 11A6
   cpu.ax = word_11C2;
   result = cpu.ax * word_11C0;
   word_11C6 = result & 0xFFFF;

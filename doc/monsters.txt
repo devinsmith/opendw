@@ -3,5 +3,6 @@ The following resources contain the different monster sprites
 
 168 (A8) - Wolf (wild dog?)
 196 (C4) - Spider / Rock Spiders
+200 (C8) - Innocent Man
 210 (D2) - Pikeman
-222 (DE) - Fanatic
+222 (DE) - Fanatic / Loon
