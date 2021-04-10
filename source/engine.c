@@ -360,6 +360,7 @@ struct virtual_cpu cpu;
 struct mouse_status mouse;
 
 static void run_script(uint8_t script_index, uint16_t src_offset);
+static void sub_11A0(int set_11C4);
 static uint8_t sub_1CF8();
 static uint8_t bit_extract(int n);
 static void sub_3150(unsigned char byte);
@@ -1520,8 +1521,20 @@ static void sub_3F23()
 {
   cpu.ax = word_3AE2;
   word_11C0 = cpu.ax;
-  printf("%s: 0x3F29 unimplemented (0x%04X)\n", __func__, cpu.ax);
-  exit(1);
+
+  sub_11A0(word_11C4);
+  cpu.ax = word_11C8;
+  // XXX: Fix this endian save
+  set_game_state(57, cpu.ax & 0xFF);
+  set_game_state(58, (cpu.ax & 0xFF00) >> 8);
+  cpu.ax = word_11C6;
+  set_game_state(55, cpu.ax & 0xFF);
+  set_game_state(56, (cpu.ax & 0xFF00) >> 8);
+
+  word_3AE2 = (word_3AE2 & 0xFF00) | (cpu.ax & 0xFF);
+  if (byte_3AE1 != 0) {
+    word_3AE2 = cpu.ax;
+  }
 }
 
 
@@ -3004,6 +3017,26 @@ static void sub_4B60()
   // 0x4BE7
 }
 
+// 0x4D97
+static void sub_4D97(uint16_t index)
+{
+  // 4D97
+  if (data_4F19[index + 12] == 0) { // 4F25
+    return;
+  }
+  // 4D9E
+  if (data_4F19[index + 8] != 0) { // 4F21
+    data_4F19[index + 8]--;
+    return;
+  }
+  // 0x4DAA
+  cpu.bx = index << 1;
+  cpu.si = data_4F19[cpu.bx];
+  cpu.si += data_4F19[cpu.bx + 1] << 8;
+  printf("%s: 0x4DAA unimplemented\n", __func__);
+  exit(1);
+}
+
 // 0x4D5C
 static void sub_4D5C()
 {
@@ -3013,8 +3046,14 @@ static void sub_4D5C()
   if (byte_4F2B == 0)
     return;
 
-  printf("%s: 0x4D6A unimplemented\n", __func__);
-  exit(1);
+  // 4D6A
+  timers.timer2 = 2;
+  cpu.ax = (cpu.ax & 0xFF00) | 0x0A;
+  sub_2752(0x0A);
+
+  for (int index = 3; index <= 0; index--) {
+    sub_4D97(index);
+  }
 }
 
 // 0x1A72
@@ -3520,7 +3559,7 @@ static void sub_4D37(int al, int index, struct resource *r)
 // Random Encounter!
 static void sub_4C40()
 {
-  uint8_t al, bl;
+  uint8_t bl;
   struct resource *r, *r2;
 
   if ((cpu.ax & 0xFF) == byte_4F0F) {
@@ -3535,7 +3574,7 @@ static void sub_4C40()
     cpu.bx = bl;
     cpu.bx = cpu.bx << 1;
     cpu.bx += 0x8A;
-    al = 1;
+    //al = 1;
 
     // BX will contain the monster's graphic to load
 
@@ -5252,11 +5291,11 @@ static int sub_1C57()
   return cpu.ax;
 }
 
-static void sub_11A0()
+static void sub_11A0(int set_11C4)
 {
   uint32_t result;
 
-  word_11C4 = 0;
+  word_11C4 = set_11C4;
 
   // 11A6
   cpu.ax = word_11C2;
@@ -5344,7 +5383,7 @@ static void sub_1BF8(uint8_t color, uint8_t y_adjust)
     cpu.bx += 2;
     push_word(cpu.bx);
     word_11C2 = 0x17;
-    sub_11A0();
+    sub_11A0(0);
     cpu.bx = pop_word();
     if (sub_1C57() != 0) {
       sub_11CE();
