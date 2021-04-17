@@ -24,6 +24,8 @@ extern "C" {
 unsigned char *get_player_data_base();
 unsigned char *get_player_data(int player);
 
+const char *player_property_name(int prop_idx);
+
 #ifdef __cplusplus
 }
 #endif

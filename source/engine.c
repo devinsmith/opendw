@@ -450,6 +450,7 @@ static void op_4B();
 static void op_4C();
 static void op_4D();
 static void op_4F();
+static void op_51();
 static void op_52();
 static void op_53();
 static void op_54();
@@ -593,7 +594,7 @@ struct op_call_table targets[] = {
   { NULL, "0x414B" },
   { op_4F, "0x4155" },
   { NULL, "0x4161" },
-  { NULL, "0x418B" },
+  { op_51, "0x418B" },
   { op_52, "0x41B9" },
   { op_53, "0x41C0" },
   { op_54, "0x41E1" },
@@ -851,6 +852,7 @@ static void op_04(void)
   push_byte(al);
 }
 
+// Populate word_3AE4 with game_state[arg1]
 static void op_05(void)
 {
   uint8_t al = *cpu.pc++;
@@ -1935,6 +1937,35 @@ static void op_4F()
   set_game_state(cpu.bx, val);
 }
 
+// 0x418B
+static void op_51()
+{
+  cpu.ax = *cpu.pc++;
+  cpu.ax += *cpu.pc++ << 8;
+
+  cpu.di = cpu.ax;
+  cpu.ax = 0;
+
+  uint8_t cl = 0xFF;
+  uint8_t bl;
+
+  // 4197 (zero out high word 3AE3)
+  word_3AE2 = (word_3AE2 & 0xFF); // XXX ? Correct.
+  cpu.bx = word_3AE4;
+  bl = cpu.bx & 0xFF;
+  // 419E
+  word_3AE2 = cpu.ax & 0xFF;
+  word_3AE4 = (word_3AE4 & 0xFF00) | bl;
+
+  bl--;
+  if (bl == 0xFF)
+    return;
+
+  printf("AX: 0x%04X\n", cpu.ax);
+  printf("%s: 0x418D unimplemented\n", __func__);
+  exit(1);
+}
+
 // 0x41B9
 static void op_52(void)
 {
@@ -2180,24 +2211,26 @@ static void get_character_data(void)
 {
   int chr_idx;
 
-  uint8_t al = game_state.unknown[6];
-  cpu.ax = (cpu.ax & 0xFF00) | al;
+  uint8_t player_number = game_state.unknown[6];
+  cpu.ax = (cpu.ax & 0xFF00) | player_number;
   cpu.di = cpu.ax;
   cpu.bx = 0xC960;
 
   uint8_t bh = (cpu.bx & 0xFF00) >> 8;
-  chr_idx = game_state.unknown[cpu.di + 0xA]; // Character selector ?
+  chr_idx = game_state.unknown[cpu.di + 0xA]; // Character offset selector ?
   bh += chr_idx;
   cpu.bx = bh << 8 | (cpu.bx & 0xFF);
 
-  al = *cpu.pc++; // Character property offset
-  printf("%s - Player number: %d 0x%02X\n", __func__, chr_idx, al);
+  uint8_t al = *cpu.pc++; // Character property offset
+  printf("%s - Player number: %d Property: %s (0x%02X)\n", __func__,
+      player_number, player_property_name(al), al);
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.bx += cpu.ax;
 
   unsigned char *c960 = get_player_data_base();
   cpu.cx = c960[cpu.bx - 0xC960];
 
+  // Property is now in cpu.cx, but is this a byte or word property?
   word_3AE2 = cpu.cx & 0xFF;
   if (byte_3AE1 != 0) {
     // 0x3AE3
@@ -5105,6 +5138,9 @@ void run_engine()
 void set_game_state(int offset, unsigned char value)
 {
   printf("%s - [%d] = 0x%02X\n", __func__, offset, value);
+  if (offset == 31) {
+    printf("   SETTING MONSTER?\n");
+  }
   game_state.unknown[offset] = value;
 }
 

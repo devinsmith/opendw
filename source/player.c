@@ -282,3 +282,23 @@ unsigned char *get_player_data(int player)
   size_t offset = player * SIZE_OF_PLAYER;
   return data_C960 + offset;
 }
+
+const char *player_property_name(int prop_idx)
+{
+  switch (prop_idx) {
+  case 0x0C:
+    return "Strength";
+    break;
+  case 0x0D:
+    return "Max Strength";
+    break;
+  case 0x0E:
+    return "Dexterity";
+    break;
+  case 0x0F:
+    return "Max Dexterity";
+    break;
+  }
+
+  return "Unknown Property";
+}
