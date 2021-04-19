@@ -2,7 +2,7 @@
 
 .PHONY: all clean
 
-SRCS = bufio.c compress.c engine.c main.c offsets.c \
+SRCS = bufio.c compress.c engine.c log.c main.c offsets.c \
 			 player.c resource.c state.c tables.c ui.c utils.c
 
 # VGA drivers

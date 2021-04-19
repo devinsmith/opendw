@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 
+#include "log.h"
 #include "state.h"
 #include "ui.h"
 
@@ -27,9 +28,9 @@ struct game_state game_state = {0};
 
 void set_game_state(int offset, unsigned char value)
 {
-  printf("%s - [%d] = 0x%02X\n", __func__, offset, value);
+  log_trace("%s: [%d] = 0x%02X", __func__, offset, value);
   if (offset == 31) {
-    printf("   SETTING MONSTER?\n");
+    log_trace("   SETTING MONSTER?\n");
   }
   game_state.unknown[offset] = value;
 }
