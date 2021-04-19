@@ -19,6 +19,7 @@
 #include "engine.h"
 #include "offsets.h"
 #include "resource.h"
+#include "state.h"
 #include "tables.h"
 #include "utils.h"
 #include "ui.h"

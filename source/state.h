@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Devin Smith <devin@devinsmith.net>
+ * Copyright (c) 2021 Devin Smith <devin@devinsmith.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,26 +14,28 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef DW_ENGINE_H
-#define DW_ENGINE_H
+#ifndef DW_STATE_H
+#define DW_STATE_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern unsigned char byte_104E;
-extern unsigned char byte_2476;
-extern unsigned char data_2AAA[32];
-extern unsigned char word_4C31[4];
-extern unsigned char byte_4F0F;
-extern unsigned char byte_4F10;
+// Managing game state.
+//
 
-void reset_game_state();
-void run_engine();
-void sub_4D82();
+// We should break this apart.
+struct game_state {
+  // 0xC6 - 0x?? - New character name.
+  unsigned char unknown[256];
+};
+
+extern struct game_state game_state;
+
+void set_game_state(int offset, unsigned char value);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* DW_ENGINE_H */
+#endif /* DW_STATE_H */

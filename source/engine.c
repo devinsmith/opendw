@@ -22,6 +22,7 @@
 #include "engine.h"
 #include "player.h"
 #include "resource.h"
+#include "state.h"
 #include "tables.h"
 #include "ui.h"
 #include "utils.h"
@@ -296,15 +297,6 @@ struct len_bytes {
   uint16_t len;
   uint8_t bytes[40];
 };
-
-// We should break this apart.
-struct game_state {
-  // 0xC6 - 0x?? - New character name.
-  unsigned char unknown[256];
-};
-
-// 0x3860
-static struct game_state game_state = {0};
 
 // Small stack, hopefully we don't use much of it.
 #define STACK_SIZE 32
@@ -5124,15 +5116,6 @@ void run_engine()
   run_script(code_res->index, 0);
 
   free(data_D760);
-}
-
-void set_game_state(int offset, unsigned char value)
-{
-  printf("%s - [%d] = 0x%02X\n", __func__, offset, value);
-  if (offset == 31) {
-    printf("   SETTING MONSTER?\n");
-  }
-  game_state.unknown[offset] = value;
 }
 
 // 0x1ABD

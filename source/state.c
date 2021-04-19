@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Devin Smith <devin@devinsmith.net>
+ * Copyright (c) 2021 Devin Smith <devin@devinsmith.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,26 +14,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef DW_ENGINE_H
-#define DW_ENGINE_H
+#include <stdio.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "state.h"
+#include "ui.h"
 
-extern unsigned char byte_104E;
-extern unsigned char byte_2476;
-extern unsigned char data_2AAA[32];
-extern unsigned char word_4C31[4];
-extern unsigned char byte_4F0F;
-extern unsigned char byte_4F10;
+// The game state is a 256 byte "scratch/work" area for the game engine
+// to manage and keep track of various aspects of the game.
+//
+// It starts at address 0x3860
+struct game_state game_state = {0};
 
-void reset_game_state();
-void run_engine();
-void sub_4D82();
-
-#ifdef __cplusplus
+void set_game_state(int offset, unsigned char value)
+{
+  printf("%s - [%d] = 0x%02X\n", __func__, offset, value);
+  if (offset == 31) {
+    printf("   SETTING MONSTER?\n");
+  }
+  game_state.unknown[offset] = value;
 }
-#endif
-
-#endif /* DW_ENGINE_H */
