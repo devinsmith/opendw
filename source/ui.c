@@ -831,6 +831,16 @@ void ui_rect_shrink()
   draw_rect.w--;
 }
 
+// Uses carry flag as a boolean
+// 0x2752
+int sub_2752(uint8_t input)
+{
+  if (ui_drawn_yet == 0)
+    return 0;
+
+  return ui_adjust_rect(input);
+}
+
 // 0x2759
 int ui_adjust_rect(uint8_t input)
 {

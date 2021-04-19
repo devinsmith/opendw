@@ -94,6 +94,7 @@ void ui_rect_shrink();
 
 int ui_adjust_rect(uint8_t input);
 
+int sub_2752(uint8_t input);
 void ui_set_byte_3236(uint8_t val);
 uint8_t ui_get_byte_3236();
 void init_viewport_memory();

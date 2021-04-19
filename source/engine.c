@@ -2961,15 +2961,6 @@ static void load_word3AE2_resource(void)
   word_3AE2 = (ah & byte_3AE1) | (cpu.ax & 0x00FF);
 }
 
-// Uses carry flag as a boolean
-static int sub_2752(uint8_t input)
-{
-  if (ui_drawn_yet == 0)
-    return 0;
-
-  return ui_adjust_rect(input);
-}
-
 // 0x4C07
 static void sub_4C07()
 {
