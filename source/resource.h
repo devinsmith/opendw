@@ -21,6 +21,8 @@
 extern "C" {
 #endif
 
+#include <stddef.h>
+
 /* Resource file maps to "data1" and "data2" files. */
 enum resource_section {
   RESOURCE_SCRIPT = 0x00,
