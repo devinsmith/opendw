@@ -32,7 +32,7 @@ struct game_state {
 
 extern struct game_state game_state;
 
-void set_game_state(int offset, unsigned char value);
+void set_game_state(const char *func_src, int offset, unsigned char value);
 
 #ifdef __cplusplus
 }

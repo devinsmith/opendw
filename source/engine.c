@@ -90,7 +90,6 @@ uint8_t byte_1F08 = 0;
 // 0x246D
 uint16_t word_246D;
 
-struct ui_rect data_268F;
 unsigned char byte_2476;
 
 uint16_t word_2AA2;
@@ -814,6 +813,7 @@ static void set_word_mode()
 // 0x3B0E
 static void set_byte_mode()
 {
+  printf("%s - setting 3AE1 to 0\n", __func__);
   word_3AE2 &= 0xFF;
   byte_3AE1 = 0;
 }
@@ -879,7 +879,7 @@ static void op_08(void)
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.bx = cpu.ax;
   al = word_3AE4;
-  set_game_state(cpu.bx, al);
+  set_game_state(__func__, cpu.bx, al);
 }
 
 // 0x3B67
@@ -1010,7 +1010,7 @@ static void op_10(void)
 {
   uint8_t al, ah;
 
-  al = *cpu.pc++;
+  al = *cpu.pc++; // 0x41
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.di = cpu.ax;
   cpu.bx = game_state.unknown[cpu.di];
@@ -1035,22 +1035,23 @@ static void op_11(void)
   cpu.bx = cpu.ax;
   uint8_t ah = (cpu.ax & 0xFF00) >> 8;
   printf("op_11: 0x%04X ah: 0x%02X\n", cpu.bx, ah);
-  set_game_state(cpu.bx, ah);
+  set_game_state(__func__, cpu.bx, ah);
   if (byte_3AE1 != ah) {
-    set_game_state(cpu.bx + 1, ah);
+    set_game_state(__func__, cpu.bx + 1, ah);
   }
 }
 
 // 0x3C59
+// sets game state (arg) with word_3AE2
 static void op_12(void)
 {
   uint8_t al = *cpu.pc++;
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.bx = cpu.ax;
   cpu.cx = word_3AE2;
-  set_game_state(cpu.bx, (cpu.cx & 0xFF));
+  set_game_state(__func__, cpu.bx, (cpu.cx & 0xFF));
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
-    set_game_state(cpu.bx + 1, (cpu.cx & 0xFF00) >> 8);
+    set_game_state(__func__, cpu.bx + 1, (cpu.cx & 0xFF00) >> 8);
   }
 }
 
@@ -1063,9 +1064,9 @@ static void op_13(void)
   cpu.cx = word_3AE2;
   cpu.bx += word_3AE4;
   printf("op_13: 0x%04X\n", cpu.bx);
-  set_game_state(cpu.bx, (cpu.cx & 0x00FF));
+  set_game_state(__func__, cpu.bx, (cpu.cx & 0x00FF));
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
-    set_game_state(cpu.bx + 1, (cpu.cx & 0xFF00) >> 8);
+    set_game_state(__func__, cpu.bx + 1, (cpu.cx & 0xFF00) >> 8);
   }
 }
 
@@ -1196,9 +1197,9 @@ static void op_19()
 
   cpu.cx = game_state.unknown[cpu.di];
   cpu.cx += (game_state.unknown[cpu.di + 1] << 8);
-  set_game_state(cpu.bx, cpu.cx & 0xFF);
+  set_game_state(__func__, cpu.bx, cpu.cx & 0xFF);
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
-    set_game_state(cpu.bx + 1, (cpu.cx & 0xFF00) >> 8);
+    set_game_state(__func__, cpu.bx + 1, (cpu.cx & 0xFF00) >> 8);
   }
 }
 
@@ -1209,11 +1210,11 @@ static void op_1A(void)
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.di = cpu.ax;
   al = *cpu.pc++;
-  set_game_state(cpu.di, al);
+  set_game_state(__func__, cpu.di, al);
   cpu.ax = (cpu.ax & 0xFF00) | al;
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
     al = *cpu.pc++;
-    set_game_state(cpu.di + 1, al);
+    set_game_state(__func__, cpu.di + 1, al);
     cpu.ax = (cpu.ax & 0xFF00) | al;
   }
 }
@@ -1283,10 +1284,10 @@ static void op_23(void)
   uint8_t al = *cpu.pc++;
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.di = cpu.ax;
-  set_game_state(cpu.di, game_state.unknown[cpu.di] + 1);
+  set_game_state(__func__, cpu.di, game_state.unknown[cpu.di] + 1);
   if (game_state.unknown[cpu.di] == 0) {
     if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
-      set_game_state(cpu.di + 1, game_state.unknown[cpu.di + 1] + 1);
+      set_game_state(__func__, cpu.di + 1, game_state.unknown[cpu.di + 1] + 1);
     }
   }
 }
@@ -1325,9 +1326,9 @@ static void op_26(void)
   uint8_t cl, ch;
   cl = cpu.cx & 0x00FF;
   ch = (cpu.cx & 0xFF00) >> 8;
-  set_game_state(cpu.di, cl);
+  set_game_state(__func__, cpu.di, cl);
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
-    set_game_state(cpu.di + 1, ch);
+    set_game_state(__func__, cpu.di + 1, ch);
   }
 }
 
@@ -1519,11 +1520,11 @@ static void sub_3F23()
   sub_11A0(word_11C4);
   cpu.ax = word_11C8;
   // XXX: Fix this endian save
-  set_game_state(57, cpu.ax & 0xFF);
-  set_game_state(58, (cpu.ax & 0xFF00) >> 8);
+  set_game_state(__func__, 57, cpu.ax & 0xFF);
+  set_game_state(__func__, 58, (cpu.ax & 0xFF00) >> 8);
   cpu.ax = word_11C6;
-  set_game_state(55, cpu.ax & 0xFF);
-  set_game_state(56, (cpu.ax & 0xFF00) >> 8);
+  set_game_state(__func__, 55, cpu.ax & 0xFF);
+  set_game_state(__func__, 56, (cpu.ax & 0xFF00) >> 8);
 
   word_3AE2 = (word_3AE2 & 0xFF00) | (cpu.ax & 0xFF);
   if (byte_3AE1 != 0) {
@@ -1835,7 +1836,7 @@ static void op_48()
   cpu.bx = cpu.ax;
 
   if (game_state.unknown[cpu.bx] < 0x80) {
-    set_game_state(cpu.bx, game_state.unknown[cpu.bx] | 0x80);
+    set_game_state(__func__, cpu.bx, game_state.unknown[cpu.bx] | 0x80);
     sub_4AC0();
   }
 }
@@ -1926,7 +1927,7 @@ static void op_4F()
 
   uint8_t val = game_state.unknown[cpu.bx];
   val = val & al;
-  set_game_state(cpu.bx, val);
+  set_game_state(__func__, cpu.bx, val);
 }
 
 // 0x418B
@@ -1953,7 +1954,10 @@ static void op_51()
   if (bl == 0xFF)
     return;
 
-  printf("AX: 0x%04X\n", cpu.ax);
+  uint8_t al = cpu.base_pc[cpu.di + bl];
+
+  printf("DI: 0x%04X\n", cpu.di);
+  printf("AL: 0x%02X\n", al);
   printf("%s: 0x418D unimplemented\n", __func__);
   exit(1);
 }
@@ -2473,25 +2477,25 @@ static void op_6A(void)
 static void sub_45D0(uint8_t al)
 {
   if (al == 0) {
-    set_game_state(0, game_state.unknown[0] + 1);
+    set_game_state(__func__, 0, game_state.unknown[0] + 1);
     return;
   }
 
   al--;
   if (al == 0) {
     // 0x45E6
-    set_game_state(1, game_state.unknown[1] + 1);
+    set_game_state(__func__, 1, game_state.unknown[1] + 1);
     return;
   }
 
   al--;
   if (al == 0) {
     // 0x45EB
-    set_game_state(0, game_state.unknown[0] - 1);
+    set_game_state(__func__, 0, game_state.unknown[0] - 1);
     return;
   }
 
-  set_game_state(1, game_state.unknown[1] - 1);
+  set_game_state(__func__, 1, game_state.unknown[1] - 1);
 }
 
 // 0x45A8
@@ -2528,73 +2532,11 @@ static void op_6F(void)
 
   // 0x4620
   // copy contents of 11CA, 11CB, 11CC into game_state.
-  set_game_state(cpu.di++, word_11CA & 0xFF);
-  set_game_state(cpu.di++, (word_11CA & 0xFF00) >> 8);
-  set_game_state(cpu.di++, (word_11CC & 0xFF));
+  set_game_state(__func__, cpu.di++, word_11CA & 0xFF);
+  set_game_state(__func__, cpu.di++, (word_11CA & 0xFF00) >> 8);
+  set_game_state(__func__, cpu.di++, (word_11CC & 0xFF));
 }
 
-// 0x25E0
-static void draw_rectangle(void)
-{
-  int identical = 1;
-  int needs_resize = 0;
-
-  data_268F.x = *cpu.pc++;
-  data_268F.y = *cpu.pc++;
-  data_268F.w = *cpu.pc++;
-  data_268F.h = *cpu.pc++;
-
-  ui_draw_string();
-  if (ui_drawn_yet != 0) {
-    ui_rect_expand();
-    if (draw_rect.x < data_268F.x ||
-        draw_rect.y > data_268F.y ||
-        draw_rect.w < data_268F.w ||
-        draw_rect.h > data_268F.h) {
-      needs_resize = 1;
-      identical = 1;
-      // 0x2632
-    } else {
-      // 2623
-      identical = memcmp(&data_268F, &draw_rect, sizeof(data_268F));
-    }
-  }
-  // 0x2632
-  if (needs_resize) {
-    ui_rect_shrink();
-    ui_draw();
-  }
-
-  if (identical != 0) {
-    // 0x2638
-    memcpy(&draw_rect, &data_268F, sizeof(data_268F));
-    draw_point.x = draw_rect.x;
-    draw_point.y = draw_rect.y;
-
-    // 0x32BF, 0x32C1, 0x80
-    printf("sub_269F(%d, %d, 0x80)\n", draw_point.x, draw_point.y);
-    // 0x269F
-    ui_draw_box_segment(0x80);
-
-    // loc_2668
-    // Draw left and right sides.
-    while (draw_point.y < draw_rect.h - 8) {
-      draw_point.x = draw_rect.x;
-      draw_point.y += 8;
-      ui_draw_chr_piece(0x83);
-      draw_point.x = draw_rect.w - 1;
-      ui_draw_chr_piece(0x84);
-    }
-    draw_point.x = draw_rect.x;
-    ui_draw_box_segment(0x85);
-  }
-
-  // 0x2683
-  ui_drawn_yet = 0xFF;
-  ui_rect_shrink();
-  draw_pattern(&draw_rect);
-  vga->update();
-}
 
 // 0x46A1
 static void sub_46A1(void)
@@ -2636,10 +2578,10 @@ static void op_71(void)
     al = word_11C8;
     if (al != game_state.unknown[0x3E]) {
       // 0x467B
-      set_game_state(0x3E, 0);
+      set_game_state(__func__, 0x3E, 0);
       if (al != 0) {
         // 0x4684
-        set_game_state(0x3F, al);
+        set_game_state(__func__, 0x3F, al);
         cpu.ax = (cpu.ax & 0xFF00) | al;
         cpu.ax++;
         al = cpu.ax & 0xFF;
@@ -2671,14 +2613,20 @@ static void op_73(void)
   uint8_t al;
 
   al = game_state.unknown[0x3F];
-  set_game_state(0x3E, al);
+  set_game_state(__func__, 0x3E, al);
 }
 
 // 0x47C0
 static void op_74(void)
 {
+  uint16_t x, y, w, h;
+
   // draws frame, reads next 4 bytes to get rectangle dimensions.
-  draw_rectangle();
+  x = *cpu.pc++;
+  y = *cpu.pc++;
+  w = *cpu.pc++;
+  h = *cpu.pc++;
+  draw_rectangle(x, y, w, h);
 }
 
 // 0x47D1
@@ -3104,7 +3052,7 @@ static void sub_1A72()
   } while (cpu.bx != 0xFFFF);
   // 0x1AAC
   cpu.ax = pop_word();
-  set_game_state(6, cpu.ax & 0xFF);
+  set_game_state(__func__, 6, cpu.ax & 0xFF);
   cpu.ax = pop_word();
   draw_point.y = (cpu.ax & 0xFF00) >> 8;
   draw_point.x = (cpu.ax & 0xFF);
@@ -3579,6 +3527,7 @@ static void sub_4C40()
   struct resource *r, *r2;
 
   if ((cpu.ax & 0xFF) == byte_4F0F) {
+    // No monster, 0xFF is not a monster.
     return;
   }
 
@@ -3629,7 +3578,7 @@ static void sub_4C40()
 // 0x498E
 static void op_8A()
 {
-  cpu.ax = word_3AE2;
+  cpu.ax = word_3AE2; // Random encounter ?
   sub_4C40();
 }
 
@@ -3750,14 +3699,14 @@ static void sub_1E49()
         continue;
         // 1E54
     } else {
-      set_game_state(0xC6 + cpu.bx, al);
+      set_game_state(__func__, 0xC6 + cpu.bx, al);
       byte_1F07++;
       sub_1EBB();
     }
   }
   // 1E99
   al = 0;
-  set_game_state(0xC6 + cpu.bx, al);
+  set_game_state(__func__, 0xC6 + cpu.bx, al);
   sub_1EBE();
   al = 0x8D;
   sub_3150(al);
@@ -3827,7 +3776,7 @@ static void sub_57DB()
   // 0x57F0
   while (cpu.di < 4) {
     al = r->bytes[cpu.di];
-    set_game_state(cpu.di + 0x21, al);
+    set_game_state(__func__, cpu.di + 0x21, al);
     cpu.di++;
   }
   // 0x57FF
@@ -4135,7 +4084,7 @@ static void sub_5764()
       cpu.bx += 0x46;
       al = 1;
       struct resource *r = resource_load(cpu.bx);
-      set_game_state(0x56, r->index);
+      set_game_state(__func__, 0x56, r->index);
       sub_57DB();
       // 579E
       sub_4FD9();
@@ -4143,22 +4092,22 @@ static void sub_5764()
       cpu.cx = 2;
       cpu.di = 0x3919;
       cpu.ax = 0;
-      set_game_state(0xb9, 0);
-      set_game_state(0xba, 0);
-      set_game_state(0xbb, 0);
-      set_game_state(0xbc, 0);
+      set_game_state(__func__, 0xb9, 0);
+      set_game_state(__func__, 0xba, 0);
+      set_game_state(__func__, 0xbb, 0);
+      set_game_state(__func__, 0xbc, 0);
     }
     // 0x57AB
     sub_57DB();
     al = game_state.unknown[2];
-    set_game_state(4, al);
-    set_game_state(0x57, al);
+    set_game_state(__func__, 4, al);
+    set_game_state(__func__, 0x57, al);
   }
   // 0x57B7
   al = game_state.unknown[4];
   if (al != game_state.unknown[0x5B]) {
     // 0x57C0
-    set_game_state(0x5B, al);
+    set_game_state(__func__, 0x5B, al);
     al = game_state.unknown[0x5A];
     sub_128D(al);
     bl = game_state.unknown[4];
@@ -4167,7 +4116,7 @@ static void sub_5764()
     al = 1;
     struct resource *r = resource_load(cpu.bx);
     al = r->index;
-    set_game_state(0x5A, al); // index of something.
+    set_game_state(__func__, 0x5A, al); // index of something.
     cpu.ax = (cpu.ax & 0xFF00) | al;
   }
 }
@@ -4360,7 +4309,7 @@ static void start_the_game()
     bl = data_56C7[cpu.bx + 0xE];
     cpu.bx = bl;
   }
-  set_game_state(0x26, bl);
+  set_game_state(__func__, 0x26, bl);
   if ((game_state.unknown[0x23] & 8) == 0 && game_state.unknown[0xc1] == 0) {
     // 0x37C8
     // draw_viewport ??
@@ -4456,7 +4405,7 @@ static void start_the_game()
   } while (counter >= 0);
   // 0x52F8
   //
-  byte_4F0F = 0xFF;
+  byte_4F0F = 0xFF; // Monster index?
   sub_587E();
   update_viewport();
 }
@@ -4648,7 +4597,7 @@ static void op_98()
   al = game_state.unknown[6];
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.di = cpu.ax;
-  set_game_state(cpu.di + 0x18, (cpu.ax & 0xFF00) >> 8);
+  set_game_state(__func__, cpu.di + 0x18, (cpu.ax & 0xFF00) >> 8);
   cpu.bx = 0xC960;
 
   uint8_t bh = (cpu.bx & 0xFF00) >> 8;
@@ -4712,10 +4661,10 @@ static void op_9A(void)
   cpu.bx = cpu.ax;
   al = 0xFF;
   cpu.ax = (cpu.ax & 0xFF00) | al;
-  set_game_state(cpu.bx, al);
+  set_game_state(__func__, cpu.bx, al);
   uint8_t ah = (cpu.ax & 0xFF00) >> 8;
   if (byte_3AE1 != ah) {
-    set_game_state(cpu.bx + 1, al);
+    set_game_state(__func__, cpu.bx + 1, al);
   }
 }
 
@@ -4742,7 +4691,7 @@ static void sub_4A79(void)
 static void op_9B(void)
 {
   sub_4A79();
-  set_game_state(cpu.bx, game_state.unknown[cpu.bx] | (cpu.ax & 0xFF));
+  set_game_state(__func__, cpu.bx, game_state.unknown[cpu.bx] | (cpu.ax & 0xFF));
 }
 
 // 0x4181
@@ -5267,7 +5216,7 @@ void reset_game_state()
   while (counter >= 0) {
     al = game_state.unknown[0x18 + counter];
     if (al < 0x80) {
-      set_game_state(6, counter & 0xFF);
+      set_game_state(__func__, 6, counter & 0xFF);
       ah = 0;
       // si = ax
 
@@ -5278,12 +5227,12 @@ void reset_game_state()
       }
       al = val;
       sub_1ABD(al);
-      set_game_state(0x18 + counter, 0xFF);
+      set_game_state(__func__, 0x18 + counter, 0xFF);
     }
     counter--;
   }
   cpu.ax = pop_word();
-  set_game_state(6, cpu.ax & 0xFF);
+  set_game_state(__func__, 6, cpu.ax & 0xFF);
   cpu.ax = pop_word();
   draw_point.y = (cpu.ax & 0xFF00) >> 8;
   draw_point.x = cpu.ax & 0xFF;

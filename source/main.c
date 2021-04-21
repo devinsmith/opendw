@@ -137,17 +137,17 @@ main(int argc, char *argv[])
   load_chr_table();
 
   byte_4F0F = 0xFF;
-  set_game_state(87, 0xFF);
-  set_game_state(91, 0xFF);
-  set_game_state(86, 0xFF);
-  set_game_state(90, 0xFF);
-  set_game_state(8, 0xFF);
+  set_game_state("main", 87, 0xFF);
+  set_game_state("main", 91, 0xFF);
+  set_game_state("main", 86, 0xFF);
+  set_game_state("main", 90, 0xFF);
+  set_game_state("main", 8, 0xFF);
   byte_4F10 = 0xFF;
 
   // Not sure where this is done or where it goes.
   // Indicates that part of the UI is drawn?
   for (int i = 24; i < 31; i++) {
-    set_game_state(i, 0xFF);
+    set_game_state("main", i, 0xFF);
   }
 
   if (vga->initialize(GAME_WIDTH, GAME_HEIGHT) != 0) {

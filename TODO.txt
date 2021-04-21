@@ -1,3 +1,5 @@
+op_51 extracts data from ES segment, but it's not clear where ES is setup
+
 More drawing routines (sub_CF8)
 There is still some UI glitches with the viewport (e.g. water displaying instead of land).
 

@@ -48,6 +48,7 @@ void (*ui_draw_funcs[5])() = {
   sub_27CC
 };
 
+static struct ui_rect data_268F;
 // 0x2697
 struct ui_rect draw_rect;
 
@@ -129,7 +130,12 @@ unsigned char ui_header_loading[] = {
   0xCC, 0xEF, 0xE1, 0xE4, 0xE9, 0xEE, 0xE7, 0xAE, 0xAE, 0xAE
 };
 
-struct ui_header ui_header;
+struct ui_header {
+  int len; // 0x288A
+  unsigned char data[16]; // 0x288B
+};
+
+static struct ui_header ui_header;
 
 // 0x3598
 static uint8_t prev_bg_index = 0;
@@ -991,6 +997,69 @@ void update_viewport()
     vidx--;
   }
   draw_viewport();
+}
+
+// 0x25E0
+void draw_rectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
+{
+  int identical = 1;
+  int needs_resize = 0;
+
+  data_268F.x = x;
+  data_268F.y = y;
+  data_268F.w = w;
+  data_268F.h = h;
+
+  ui_draw_string();
+  if (ui_drawn_yet != 0) {
+    ui_rect_expand();
+    if (draw_rect.x < data_268F.x ||
+        draw_rect.y > data_268F.y ||
+        draw_rect.w < data_268F.w ||
+        draw_rect.h > data_268F.h) {
+      needs_resize = 1;
+      identical = 1;
+      // 0x2632
+    } else {
+      // 2623
+      identical = memcmp(&data_268F, &draw_rect, sizeof(data_268F));
+    }
+  }
+  // 0x2632
+  if (needs_resize) {
+    ui_rect_shrink();
+    ui_draw();
+  }
+
+  if (identical != 0) {
+    // 0x2638
+    memcpy(&draw_rect, &data_268F, sizeof(data_268F));
+    draw_point.x = draw_rect.x;
+    draw_point.y = draw_rect.y;
+
+    // 0x32BF, 0x32C1, 0x80
+    printf("sub_269F(%d, %d, 0x80)\n", draw_point.x, draw_point.y);
+    // 0x269F
+    ui_draw_box_segment(0x80);
+
+    // loc_2668
+    // Draw left and right sides.
+    while (draw_point.y < draw_rect.h - 8) {
+      draw_point.x = draw_rect.x;
+      draw_point.y += 8;
+      ui_draw_chr_piece(0x83);
+      draw_point.x = draw_rect.w - 1;
+      ui_draw_chr_piece(0x84);
+    }
+    draw_point.x = draw_rect.x;
+    ui_draw_box_segment(0x85);
+  }
+
+  // 0x2683
+  ui_drawn_yet = 0xFF;
+  ui_rect_shrink();
+  draw_pattern(&draw_rect);
+  vga->update();
 }
 
 // 0x37C8
