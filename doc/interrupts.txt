@@ -1,0 +1,23 @@
+Critical error handler: 0x0616 (INT 0x24)
+=========================================
+Appears to abort the program (dragon.com) on error, but it's unused
+by dosbox emulation (as far as I can tell).
+
+Tick handler: 0x4B10 (INT 0x1C)
+===============================
+Invoked on hardware int 08
+
+First invokes existing tick handler then stores values into
+timer variables.
+
+System timer handler (title screen) (0x5C7B)
+============================================
+Responsible for playing opening music
+
+System timer handler (game) (0xFEA5)
+============================================
+Unknown
+
+
+
+
