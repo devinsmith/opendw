@@ -1414,6 +1414,7 @@ static void op_30()
 {
   uint8_t ah, al;
 
+  printf("%s\n", __func__);
   // shr byte [word_3AE6], 1
   uint8_t cf = 0;
   cf = word_3AE6 & CARRY_FLAG_MASK;
@@ -2691,7 +2692,7 @@ static void write_character_name()
 }
 
 // 0x4817
-// Random encounter?
+// Random encounter, this will set the ui header.
 static void op_7C(void)
 {
   // si
