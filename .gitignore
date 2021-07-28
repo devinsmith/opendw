@@ -60,5 +60,5 @@ data2
 dragon.com
 *.swp
 
-cmake-*
+cmake-build-*
 build/
