@@ -34,12 +34,9 @@ END_TEST
 
 Suite* bitinfo_suite()
 {
-  Suite *s;
-  TCase *tc_core;
+  Suite *s = suite_create("BitExtractor");
 
-  s = suite_create("BitExtractor");
-
-  tc_core = tcase_create("Core");
+  TCase *tc_core = tcase_create("Core");
   tcase_add_test(tc_core, test_be);
   suite_add_tcase(s, tc_core);
 
@@ -48,15 +45,11 @@ Suite* bitinfo_suite()
 
 int main(int argc, char *argv[])
 {
-  int number_failed;
-  Suite *s;
-  SRunner *sr;
-
-  s = bitinfo_suite();
-  sr = srunner_create(s);
+  Suite *s = bitinfo_suite();
+  SRunner *sr = srunner_create(s);
 
   srunner_run_all(sr, CK_NORMAL);
-  number_failed = srunner_ntests_failed(sr);
+  int number_failed = srunner_ntests_failed(sr);
   srunner_free(sr);
   return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -5,8 +5,6 @@ find_package(Check REQUIRED)
 # Check requires threads.
 find_package(Threads REQUIRED)
 
-enable_testing()
-
 set(SOURCES test_bithelp.cpp)
 
 add_executable(test_bithelp ${SOURCES})
@@ -14,6 +12,7 @@ target_include_directories(test_bithelp PRIVATE ${CMAKE_SOURCE_DIR}/src/lib ${CH
 target_link_libraries(test_bithelp PUBLIC dragon ${CHECK_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 add_test(NAME test_bithelp COMMAND test_bithelp)
+
 #if(MSVC)
 #  target_compile_options(test_bithelp PRIVATE /W4 /WX)
 #else()
