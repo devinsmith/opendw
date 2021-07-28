@@ -19,6 +19,9 @@ files should be all lowercase (e.g. DRAGON.COM -> dragon.com). The files
 dragon.com, data1, and data2 should be in the same directory with the build.
 
 # Building
+
+Install dependencies first:
+
 VoidLinux
 
 ```
@@ -30,6 +33,18 @@ Debian
 ```
 sudo apt install libsdl2-dev
 ```
+
+Then use CMake to build:
+
+```
+mkdir build
+cd build
+cmake ..
+make
+```
+
+The `sdldragon` binary will be in build/src/fe/sdldragon
+
 
 # Screenshot
 
