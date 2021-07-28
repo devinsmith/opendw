@@ -41,7 +41,17 @@ struct mouse_status {
   uint16_t y; // 0x3558
 };
 
-extern struct vga_driver *vga;
+void register_vga_driver(struct vga_driver *driver);
+
+int vga_initialize(int game_width, int game_height);
+uint8_t* vga_memory();
+void vga_update();
+uint16_t vga_getkey();
+void vga_waitkey();
+void vga_end();
+
+// Intended for use by various vga drivers.
+void video_setup();
 
 #ifdef __cplusplus
 }

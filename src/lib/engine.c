@@ -3137,7 +3137,7 @@ static uint16_t sub_2D0B()
   }
   // 0x2D31
   do {
-    cpu.ax = vga->getkey();
+    cpu.ax = vga_getkey();
     if (cpu.ax == 0) {
       return cpu.ax;
     }
@@ -4925,7 +4925,7 @@ static void sub_280E()
   // check length against previous length (max length?)
   // XXX: Unknown.
   ui_header_draw();
-  vga->update();
+  vga_update();
 }
 
 // 0x3150

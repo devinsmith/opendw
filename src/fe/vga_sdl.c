@@ -218,4 +218,7 @@ struct vga_driver sdl_driver = {
   get_key
 };
 
-struct vga_driver *vga = &sdl_driver;
+void video_setup()
+{
+  register_vga_driver(&sdl_driver);
+}

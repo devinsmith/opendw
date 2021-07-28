@@ -414,7 +414,7 @@ void draw_viewport()
   //
   sub_1F54(0x0a);
 
-  uint8_t *framebuffer = vga->memory();
+  uint8_t *framebuffer = vga_memory();
 
   // 0x88 x 0x50
   /* see 0x1060 */
@@ -435,7 +435,7 @@ void draw_viewport()
     }
     line_num++;
   }
-  vga->update();
+  vga_update();
 }
 
 /* 0x35A0 -> 0x3679 */
@@ -446,7 +446,7 @@ void draw_ui_piece(const struct pic_data *pic)
   uint16_t fb_off = starting_off;
   printf("Line number: %d - FB offset: 0x%04x\n", pic->y_pos, fb_off);
   unsigned char *src = pic->data;
-  uint8_t *framebuffer = vga->memory();
+  uint8_t *framebuffer = vga_memory();
 
   for (int y = 0; y < pic->height; y++) {
     for (int x = 0; x < pic->width; x++) {
@@ -464,7 +464,7 @@ void draw_ui_piece(const struct pic_data *pic)
     starting_off += 0x140;
     fb_off = starting_off;
   }
-  vga->update();
+  vga_update();
 }
 
 /* 0x36C8 */
@@ -485,7 +485,7 @@ void ui_draw_solid_color(uint8_t color_idx, uint16_t inset,
   uint16_t fb_off = get_line_offset(line_num);
   inset = inset << 2;
   fb_off += inset;
-  uint8_t *framebuffer = vga->memory();
+  uint8_t *framebuffer = vga_memory();
 
   for (uint16_t i = 0; i < count; i++) {
     framebuffer[fb_off++] = color;
@@ -500,7 +500,7 @@ static void draw_character(int x, int y, const unsigned char *chdata)
   uint8_t color = COLOR_WHITE; // bh.
   uint8_t ah = (current_background >> 8) & 0xFF;
 
-  uint8_t *framebuffer = vga->memory();
+  uint8_t *framebuffer = vga_memory();
   uint16_t fb_off = get_line_offset(y);
   fb_off += (x << 3); // 8 bytes
 
@@ -550,7 +550,7 @@ void draw_pattern(struct ui_rect *rect)
 
   uint16_t ax = 0xFFFF; // word_359A (color)
 
-  uint8_t *framebuffer = vga->memory();
+  uint8_t *framebuffer = vga_memory();
 
   // 0x3417
   int x_pos = rect->x << 3;
@@ -642,7 +642,7 @@ void ui_draw()
       }
     }
   }
-  vga->update();
+  vga_update();
 }
 
 // 0x2824
@@ -770,7 +770,7 @@ void ui_draw_box_segment(uint8_t chr)
   chr++;
   ui_draw_chr_piece(chr);
 
-  vga->update();
+  vga_update();
 }
 
 // 0x3578
@@ -816,7 +816,7 @@ void ui_draw_string(void)
 
   // 0x318A
   byte_3236 = draw_point.x;
-  vga->update();
+  vga_update();
 }
 
 // 0x2720
@@ -1059,7 +1059,7 @@ void draw_rectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
   ui_drawn_yet = 0xFF;
   ui_rect_shrink();
   draw_pattern(&draw_rect);
-  vga->update();
+  vga_update();
 }
 
 // 0x37C8

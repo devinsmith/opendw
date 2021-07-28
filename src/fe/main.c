@@ -61,7 +61,7 @@ title_build(const struct resource *output)
   unsigned char *src = output->bytes;
   int i, counter = 64000;
   int hi, lo;
-  uint8_t *framebuffer = vga->memory();
+  uint8_t *framebuffer = vga_memory();
 
   for (i = 0; i < counter; i += 2) {
 
@@ -90,10 +90,10 @@ run_title(void)
   dump_hex(title_res->bytes, 32);
   title_build(title_res);
 
-  vga->update();
+  vga_update();
   resource_index_release(title_res->index);
 
-  vga->waitkey();
+  vga_waitkey();
 }
 
 int check_file(const char *fname)
@@ -131,6 +131,9 @@ main(int argc, char *argv[])
     goto done;
   }
 
+  // Register our VGA driver.
+  video_setup();
+
   setup_memory();
 
   init_offsets();
@@ -150,7 +153,7 @@ main(int argc, char *argv[])
     set_game_state("main", i, 0xFF);
   }
 
-  if (vga->initialize(GAME_WIDTH, GAME_HEIGHT) != 0) {
+  if (vga_initialize(GAME_WIDTH, GAME_HEIGHT) != 0) {
     goto done;
   }
 
@@ -174,6 +177,6 @@ main(int argc, char *argv[])
 done:
   unload_chr_table();
   rm_exit();
-  vga->end();
+  vga_end();
   return 0;
 }

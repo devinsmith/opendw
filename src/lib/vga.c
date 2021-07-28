@@ -14,10 +14,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "vga.h"
+
+static struct vga_driver *vga = NULL;
 
 #define VGA_WIDTH 320
 #define VGA_HEIGHT 200
@@ -42,35 +44,60 @@ display_end(void)
   free(framebuffer);
 }
 
-static void
-display_update(void)
-{
-}
-
-static void waitkey()
-{
-}
-
 static uint8_t *
 get_fb_mem()
 {
   return framebuffer;
 }
 
-static uint16_t
-get_key()
+void register_vga_driver(struct vga_driver *driver)
 {
+  vga = driver;
+}
+
+int vga_initialize(int game_width, int game_height)
+{
+  if (vga != NULL && vga->initialize != NULL) {
+    return vga->initialize(game_width, game_height);
+  }
+  return display_start(game_width, game_height);
+}
+
+uint8_t* vga_memory()
+{
+  if (vga != NULL && vga->memory != NULL) {
+    return vga->memory();
+  }
+  return get_fb_mem();
+}
+
+void vga_update()
+{
+  if (vga != NULL && vga->update != NULL) {
+    vga->update();
+  }
+}
+
+uint16_t vga_getkey()
+{
+  if (vga != NULL && vga->getkey != NULL) {
+    return vga->getkey();
+  }
   return 0;
 }
 
-struct vga_driver null_driver = {
-  "null",
-  display_start,
-  display_end,
-  display_update,
-  waitkey,
-  get_fb_mem,
-  get_key
-};
+void vga_waitkey()
+{
+  if (vga != NULL && vga->waitkey != NULL) {
+    vga->waitkey();
+  }
+}
 
-struct vga_driver *vga = &null_driver;
+void vga_end()
+{
+  if (vga != NULL && vga->end != NULL) {
+    vga->end();
+  } else {
+    display_end();
+  }
+}
