@@ -59,3 +59,5 @@ data1
 data2
 dragon.com
 *.swp
+
+cmake-*
