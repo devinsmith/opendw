@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bithelp.h"
 #include "engine.h"
 #include "player.h"
 #include "resource.h"
@@ -54,13 +55,6 @@ uint16_t word_11CC = 0;
 
 uint8_t byte_1CE1 = 0;
 uint8_t byte_1CE2 = 0;
-
-// 0x1CE3
-// Represents number of bits that are remaining to be read from bit_buffer.
-uint8_t num_bits = 0;
-// 0x1CE5
-// Will contain actual remaining bits.
-uint8_t bit_buffer = 0;
 
 uint8_t byte_1BE5 = 0;
 
@@ -127,14 +121,9 @@ uint16_t saved_stack = 0;
 
 uint16_t word_3ADB = 0;
 
-struct bit_extractor {
-  unsigned char *data;
-  uint16_t offset;
-};
-
 // "Bit extraction"
 // 0x1CEF
-struct bit_extractor bit_extractor_info;
+struct bit_extractor bit_extractor_info = { 0 };
 
 /* 0x3ADD */
 const struct resource *running_script = NULL;
@@ -353,7 +342,6 @@ struct mouse_status mouse;
 static void run_script(uint8_t script_index, uint16_t src_offset);
 static void sub_11A0(int set_11C4);
 static uint8_t sub_1CF8();
-static uint8_t bit_extract(int n);
 static void sub_3150(unsigned char byte);
 static void sub_316C();
 static void append_string(unsigned char byte);
@@ -4710,8 +4698,9 @@ static void sub_1C79(unsigned char *src_ptr, uint16_t offset)
 {
   uint8_t ret, bl;
 
-  num_bits = 0;
+  bit_extractor_info.num_bits = 0;
   cpu.bx = offset;
+  bit_extractor_info.bit_buffer = 0;
   bit_extractor_info.data = src_ptr;
   bit_extractor_info.offset = offset;
 
@@ -4789,7 +4778,7 @@ unsigned char alphabet[] = {
 static uint8_t sub_1CF8()
 {
   while (1) {
-    uint8_t ret = bit_extract(5);
+    uint8_t ret = bit_extract(&bit_extractor_info, 5);
     if (ret == 0)
       return 0;
 
@@ -4803,7 +4792,7 @@ static uint8_t sub_1CF8()
     }
 
     if (ret > 0x1E) {
-      ret = bit_extract(6);
+      ret = bit_extract(&bit_extractor_info, 6);
       ret += 0x1E;
     }
 
@@ -4819,42 +4808,6 @@ static uint8_t sub_1CF8()
     // test al, al
     return al;
   }
-}
-
-// Extract "n" bits out of each byte.
-// bit_buffer contains leftover bit buffer.
-//
-// 0x1D86 -> 1D8C(6)
-// 0x1D8A -> 1D8C(5)
-// 0x1D8C (num_bits passed in BL)
-static uint8_t bit_extract(int n)
-{
-  int counter = n;
-  int al = 0;
-  int dl = num_bits;
-  while (counter > 0) {
-    dl--;
-    if (dl < 0) {
-      dl = bit_extractor_info.data[bit_extractor_info.offset];
-      bit_buffer = dl;
-      dl = 7;
-      bit_extractor_info.offset++;
-    }
-    // 0x1D96
-    uint8_t tmp = bit_buffer;
-    bit_buffer = bit_buffer << 1;
-
-    // rcl al, 1
-    int carry = 0;
-    if (tmp > bit_buffer) {
-      carry = 1;
-    }
-    al = al << 1;
-    al += carry;
-    counter--;
-  }
-  num_bits = dl; // leftover bits
-  return al;
 }
 
 // 0x3191

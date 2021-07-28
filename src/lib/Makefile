@@ -2,7 +2,7 @@
 
 .PHONY: all clean
 
-SRCS = bufio.c compress.c engine.c log.c offsets.c \
+SRCS = bithelp.c bufio.c compress.c engine.c log.c offsets.c \
 			 player.c resource.c state.c tables.c ui.c utils.c
 
 DEP_INCLUDES = -I.
