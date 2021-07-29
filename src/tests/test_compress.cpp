@@ -19,7 +19,7 @@
 
 #include <check.h>
 
-#include "bithelp.h"
+#include "compress.h"
 
 START_TEST(test_be_basic)
 {
@@ -55,18 +55,39 @@ START_TEST(test_be_multibyte)
     ck_assert_int_eq(be.num_bits, 6);
     ck_assert_int_eq(be.offset, 2);
     ck_assert_int_eq(be.bit_buffer, (uint8_t)(test_data[1] << 2));
+}
+END_TEST
+
+START_TEST(test_extract_letter)
+{
+  unsigned char test_data[] = { 0xf2, 0x9d };
+
+  bit_extractor be { 0 };
+  be.data = test_data;
+
+  uint8_t letter = extract_letter(&be);
+  ck_assert_int_eq(letter, 'I' | 0x80);
+  ck_assert_int_eq(be.num_bits, 6);
+  ck_assert_int_eq(be.offset, 2);
+  ck_assert_int_eq(be.bit_buffer, (uint8_t)(test_data[1] << 2));
+
+  letter = extract_letter(&be);
+  ck_assert_int_eq(letter, 'n' | 0x80);
+  ck_assert_int_eq(be.num_bits, 1);
+  ck_assert_int_eq(be.offset, 2);
+  ck_assert_int_eq(be.bit_buffer, (uint8_t)(test_data[1] << 7));
 
 }
 END_TEST
 
-
-Suite* bitinfo_suite()
+Suite* compress_suite()
 {
-  Suite *s = suite_create("BitExtractor");
+  Suite *s = suite_create("compress");
 
-  TCase *tc_core = tcase_create("Core");
+  TCase *tc_core = tcase_create("core");
   tcase_add_test(tc_core, test_be_basic);
   tcase_add_test(tc_core, test_be_multibyte);
+  tcase_add_test(tc_core, test_extract_letter);
   suite_add_tcase(s, tc_core);
 
   return s;
@@ -74,7 +95,7 @@ Suite* bitinfo_suite()
 
 int main(int argc, char *argv[])
 {
-  Suite *s = bitinfo_suite();
+  Suite *s = compress_suite();
   SRunner *sr = srunner_create(s);
 
   srunner_run_all(sr, CK_NORMAL);

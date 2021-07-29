@@ -4,7 +4,7 @@ set(TARGET_NAME dragon)
 
 # C and C++ sources are freely mixed.
 set(SOURCES
-  bithelp.c bufio.c compress.c engine.c log.c offsets.c player.c
+  bufio.c compress.c engine.c log.c offsets.c player.c
   resource.c state.c tables.c ui.c utils.c vga.c)
 
 add_library(${TARGET_NAME} STATIC ${SOURCES})

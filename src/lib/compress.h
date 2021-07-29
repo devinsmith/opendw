@@ -23,6 +23,39 @@
 extern "C" {
 #endif
 
+// Container for extracting bits from a buffer.
+struct bit_extractor {
+    // 0x1CE3
+    // Represents number of bits that are remaining to be read from bit_buffer.
+    uint8_t num_bits;
+
+    // 0x1CE4
+    // Uppercase flag
+    uint8_t upper_case;
+
+    // 0x1CE5
+    // Will contain actual remaining bits.
+    uint8_t bit_buffer;
+
+    unsigned char *data;
+    uint16_t offset;
+};
+
+/*!***************************************************************************
+ * @short  Extract n number of bits from bit_extractor.
+ * @param  be  Bit extractor to extract bits from.
+ * @param  n   Number of bits to extract, n must be <= 8.
+ * @return Extracted bit value.
+ *****************************************************************************/
+uint8_t bit_extract(struct bit_extractor *be, int n);
+
+/*!***************************************************************************
+ * @short  Extracts a single letter from a bit_extractor container.
+ * @param  be  Bit extractor to extract letter from.
+ * @return Extracted letter.
+ *****************************************************************************/
+uint8_t extract_letter(struct bit_extractor *be);
+
 /*!***************************************************************************
  * @short  Decompress data1 content.
  * @param  input  Buffered reader to read from.

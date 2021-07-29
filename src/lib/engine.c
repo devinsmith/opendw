@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bithelp.h"
+#include "compress.h"
 #include "engine.h"
 #include "player.h"
 #include "resource.h"
@@ -62,7 +62,6 @@ uint8_t byte_1BE5 = 0;
 // Typically will be (player number * 0x200) + 0xC960
 uint16_t player_base_offset = 0;
 
-uint8_t byte_1CE4 = 0;
 uint8_t byte_1E1F = 0;
 uint8_t byte_1E20 = 0;
 
@@ -340,8 +339,8 @@ struct virtual_cpu cpu;
 struct mouse_status mouse;
 
 static void run_script(uint8_t script_index, uint16_t src_offset);
+uint8_t extract_letter(struct bit_extractor *be);
 static void sub_11A0(int set_11C4);
-static uint8_t sub_1CF8();
 static void sub_3150(unsigned char byte);
 static void sub_316C();
 static void append_string(unsigned char byte);
@@ -4703,12 +4702,11 @@ static void sub_1C79(unsigned char *src_ptr, uint16_t offset)
   bit_extractor_info.bit_buffer = 0;
   bit_extractor_info.data = src_ptr;
   bit_extractor_info.offset = offset;
-
-  byte_1CE4 = 0;
+  bit_extractor_info.upper_case = 0;
 
   // 0x1C8B
   while (1) {
-    ret = sub_1CF8(); // check for 0
+    ret = extract_letter(&bit_extractor_info); // check for 0
     if (ret == 0) {
       // 1CE6
       cpu.bx = bit_extractor_info.offset;
@@ -4740,7 +4738,7 @@ static void sub_1C79(unsigned char *src_ptr, uint16_t offset)
           byte_1CE2 = bl;
         }
         // 0x1CC2
-        ret = sub_1CF8(); // check for 0
+        ret = extract_letter(&bit_extractor_info); // check for 0
         if (ret == 0) {
           // 1CE6
           cpu.bx = bit_extractor_info.offset;
@@ -4759,57 +4757,6 @@ static void sub_1C79(unsigned char *src_ptr, uint16_t offset)
     } else {
       sub_3150(ret);
     }
-  }
-}
-
-// 0x1D2A - 0x1D85
-// Characters of the alphabet OR'd with 0x80
-unsigned char alphabet[] = {
-  0xa0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xeb, 0xec,
-  0xed, 0xee, 0xef, 0xf0, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf9, 0xae,
-  0xa2, 0xa7, 0xac, 0xa1, 0x8d, 0xea, 0xf1, 0xf8, 0xfa, 0xb0, 0xb1, 0xb2,
-  0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0x30, 0x31, 0x32, 0x33, 0x34,
-  0x35, 0x36, 0x37, 0x38, 0x39, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
-  0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x50, 0x51, 0x52, 0x53,
-  0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0xa8, 0xa9, 0xaf, 0xdc, 0xa3,
-  0xaa, 0xbf, 0xbc, 0xbe, 0xba, 0xbb, 0xad, 0xa5
-};
-
-static uint8_t sub_1CF8()
-{
-  while (1) {
-    uint8_t ret = bit_extract(&bit_extractor_info, 5);
-    if (ret == 0)
-      return 0;
-
-    if (ret == 0x1E) {
-      // Next byte should be an uppercase letter.
-
-      // stc
-      // rcr byte [byte_1CE4], 1
-      // rotate carry right bit.
-      byte_1CE4 = byte_1CE4 >> 1;
-      byte_1CE4 += 0x80;
-      continue;
-    }
-
-    if (ret > 0x1E) {
-      ret = bit_extract(&bit_extractor_info, 6);
-      ret += 0x1E;
-    }
-
-    // ret != 0x1E
-
-    // 0x1D0A
-    // offset
-    uint8_t al = alphabet[ret - 1];
-    byte_1CE4 = byte_1CE4 >> 1;
-    if (byte_1CE4 >= 0x40 && al >= 0xE1 && al <= 0xFA) {
-      // Make uppercase.
-      al = al & 0xDF;
-    }
-    // test al, al
-    return al;
   }
 }
 

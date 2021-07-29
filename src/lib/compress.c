@@ -196,3 +196,90 @@ void decompress_data1(struct buf_rdr *input, struct buf_wri *output, int size)
   free(dictionary);
 }
 
+// Extract "n" bits out of each byte.
+// bit_buffer contains leftover bit buffer.
+// bits are shifted left, with carry which becomes output.
+//
+// 0x1D86 -> 1D8C(6)
+// 0x1D8A -> 1D8C(5)
+// 0x1D8C (num_bits passed in BL)
+uint8_t bit_extract(struct bit_extractor *be, int n)
+{
+  int al = 0;
+
+  for (int i = 0; i < n; i++) {
+    if (be->num_bits == 0) {
+      be->bit_buffer = be->data[be->offset];
+      be->num_bits = 8;
+      be->offset++;
+    }
+    // 0x1D96
+    uint8_t tmp = be->bit_buffer;
+    be->bit_buffer = be->bit_buffer << 1;
+    be->num_bits--;
+
+    // rcl al, 1
+    int carry = 0;
+    if (tmp > be->bit_buffer) {
+      carry = 1;
+    }
+    al = al << 1;
+    al += carry;
+  }
+  return al;
+}
+
+// 0x1D2A - 0x1D85
+// Characters of the alphabet OR'd with 0x80
+static unsigned char alphabet[] = {
+        0xa0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xeb, 0xec,
+        0xed, 0xee, 0xef, 0xf0, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf9, 0xae,
+        0xa2, 0xa7, 0xac, 0xa1, 0x8d, 0xea, 0xf1, 0xf8, 0xfa, 0xb0, 0xb1, 0xb2,
+        0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0x30, 0x31, 0x32, 0x33, 0x34,
+        0x35, 0x36, 0x37, 0x38, 0x39, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
+        0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x50, 0x51, 0x52, 0x53,
+        0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0xa8, 0xa9, 0xaf, 0xdc, 0xa3,
+        0xaa, 0xbf, 0xbc, 0xbe, 0xba, 0xbb, 0xad, 0xa5
+};
+
+// 0x1CF8
+uint8_t extract_letter(struct bit_extractor *be)
+{
+  while (1) {
+    uint8_t ret = bit_extract(be, 5);
+    if (ret == 0)
+      return 0;
+
+    if (ret == 0x1E) {
+      // Next byte should be an uppercase letter.
+
+      // stc
+      // rcr byte [byte_1CE4], 1
+      // rotate carry right bit.
+      be->upper_case = be->upper_case >> 1;
+      be->upper_case += 0x80;
+      continue;
+    }
+
+    // 0x1F ?
+    if (ret > 0x1E) {
+      ret = bit_extract(be, 6);
+      ret += 0x1E;
+    }
+
+    // ret != 0x1E
+
+    // 0x1D0A
+    // offset
+    uint8_t al = alphabet[ret - 1];
+    be->upper_case = be->upper_case >> 1;
+
+    // If we need an uppercase letter and al is 'a' through 'z'
+    if (be->upper_case >= 0x40 && al >= 0xE1 && al <= 0xFA) {
+      // Make uppercase.
+      al = al & 0xDF;
+    }
+    // test al, al
+    return al;
+  }
+}
