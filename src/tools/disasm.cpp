@@ -20,18 +20,210 @@
 #include <cstring>
 #include <stdint.h>
 
-#include <vector>
+#include <engine.h>
+
+static int read_string_bytes(const unsigned char *args);
+static int read_word(const unsigned char *args);
 
 struct op_code {
   const char *name;
-  uint8_t op;
-  int args;
+  int (*func)(const unsigned char *args);
+  int arg_count;
 };
 
 op_code op_codes[] = {
-  { ".word", 0x00, 0 },
-  { ".byte", 0x01, 0 },
-  { nullptr, 0, 0 }
+  { ".word", nullptr, 0 }, // op_00
+  { ".byte", nullptr, 0 }, // op_01
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { "jnc", read_word, 0 }, // op_41
+  { "jc", read_word, 0 },  // op_42
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { "call", read_word, 2 }, // op_53
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { "draw_rectangle", nullptr, 4 }, // op_74
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { "op_78", read_string_bytes, 0 }, // op_78
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { "ui_header", read_string_bytes, 0 }, // op_7B
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 }
 };
 
 struct script_file {
@@ -70,6 +262,49 @@ static script_file read_file(const char *fname)
   return script;
 }
 
+struct len_string {
+  int len;
+  char string[255];
+};
+len_string str;
+
+static void pop_len_string(unsigned char ch)
+{
+  str.string[str.len] = ch & 0x7f;
+  str.len++;
+}
+
+static int read_string_bytes(const unsigned char *args)
+{
+  str.len = 0;
+  str.string[0] = '\0';
+
+  uint16_t count = extract_string(args, 0, pop_len_string);
+
+  printf("$(\"");
+  for (int i = 0; i < str.len; i++) {
+    char ch = str.string[i];
+    if (ch == '\r') {
+      printf("\\r");
+    } else {
+      printf("%c", ch);
+    }
+  }
+  printf("\")");
+
+  return count;
+}
+
+static int read_word(const unsigned char *args)
+{
+  uint16_t word = *args++;
+  word += *args++ << 8;
+
+  printf("0x%04x", word);
+
+  return 2;
+}
+
 int main(int argc, char *argv[])
 {
   if (argc != 2) {
@@ -105,20 +340,26 @@ int main(int argc, char *argv[])
       break;
     }
 
-    printf("0x%04X: %s(", (uint16_t)i, code->name);
+    printf("0x%04X: %s ", (uint16_t)i, code->name);
     iter++;
     i++;
 
-    for (int j = 0; j < code->args; j++) {
-      unsigned char arg = *iter;
-      if (j != 0) {
-        printf(",");
+    if (code->func != nullptr) {
+      int arg_count = code->func(iter);
+      i += arg_count;
+      iter += arg_count;
+    } else {
+      for (int j = 0; j < code->arg_count; j++) {
+        unsigned char arg = *iter;
+        if (j != 0) {
+          printf(", ");
+        }
+        printf("0x%02x", arg);
+        iter++;
+        i++;
       }
-      printf("0x%02x", arg);
-      iter++;
-      i++;
     }
-    printf(")\n");
+    printf("\n");
   }
 
   delete[] script.bytes;
