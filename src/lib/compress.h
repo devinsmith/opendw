@@ -37,7 +37,7 @@ struct bit_extractor {
     // Will contain actual remaining bits.
     uint8_t bit_buffer;
 
-    unsigned char *data;
+    const unsigned char *data;
     uint16_t offset;
 };
 

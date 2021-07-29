@@ -339,13 +339,11 @@ struct virtual_cpu cpu;
 struct mouse_status mouse;
 
 static void run_script(uint8_t script_index, uint16_t src_offset);
-uint8_t extract_letter(struct bit_extractor *be);
 static void sub_11A0(int set_11C4);
 static void sub_3150(unsigned char byte);
 static void sub_316C();
 static void append_string(unsigned char byte);
 static void sub_280E();
-static void sub_1C79(unsigned char *src_ptr, uint16_t offset);
 static void sub_1BF8(uint8_t color, uint8_t y_adjust);
 static void sub_27E3(unsigned char *base_ptr, uint16_t offset);
 static void sub_2CF5();
@@ -2639,14 +2637,14 @@ static void op_77()
 // 0x47EC
 static void op_78(void)
 {
-  sub_1C79(cpu.base_pc, cpu.pc - cpu.base_pc);
+  cpu.bx = extract_string(cpu.base_pc, cpu.pc - cpu.base_pc, sub_3150);
   cpu.pc = cpu.base_pc + cpu.bx;
 }
 
 // 0x4801
 static void op_7A()
 {
-  sub_1C79(word_3ADF->bytes, word_3AE2);
+  cpu.bx = extract_string(word_3ADF->bytes, word_3AE2, sub_3150);
   word_3AE2 = cpu.bx;
 }
 
@@ -3296,7 +3294,7 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
 
     printf("%s: cpu.bx = 0x%04X\n", __func__, cpu.bx);
 
-    sub_1C79(data_2A68, (cpu.bx - 0x2A68));
+    cpu.bx = extract_string(data_2A68, (cpu.bx - 0x2A68), sub_3150);
     ui_draw_string();
 
     bl = draw_point.y;
@@ -3702,7 +3700,7 @@ static void sub_1E49()
 
 static void sub_1C70(unsigned char *src_ptr)
 {
-  sub_1C79(src_ptr, 0);
+  cpu.bx = extract_string(src_ptr, 0, sub_3150);
   cpu.cf = 0;
 }
 
@@ -4693,12 +4691,13 @@ static void op_9D(void)
   sub_40D1();
 }
 
-static void sub_1C79(unsigned char *src_ptr, uint16_t offset)
+// Extract string from stream, call func for each character
+// 0x1C79
+uint16_t extract_string(const unsigned char *src_ptr, uint16_t offset, void (*func)(unsigned char))
 {
   uint8_t ret, bl;
 
   bit_extractor_info.num_bits = 0;
-  cpu.bx = offset;
   bit_extractor_info.bit_buffer = 0;
   bit_extractor_info.data = src_ptr;
   bit_extractor_info.offset = offset;
@@ -4709,8 +4708,7 @@ static void sub_1C79(unsigned char *src_ptr, uint16_t offset)
     ret = extract_letter(&bit_extractor_info); // check for 0
     if (ret == 0) {
       // 1CE6
-      cpu.bx = bit_extractor_info.offset;
-      return;
+      return bit_extractor_info.offset;
     }
     if ((game_state.unknown[8] & 0x80) == 0)
     {
@@ -4718,6 +4716,8 @@ static void sub_1C79(unsigned char *src_ptr, uint16_t offset)
       game_state.unknown[8] = ret;
       ret &= 0x7F;
     }
+
+    // Check for escape codes.
     // 1C9E
     if (ret == 0xAF || ret == 0xDC) {
       do {
@@ -4741,8 +4741,7 @@ static void sub_1C79(unsigned char *src_ptr, uint16_t offset)
         ret = extract_letter(&bit_extractor_info); // check for 0
         if (ret == 0) {
           // 1CE6
-          cpu.bx = bit_extractor_info.offset;
-          return;
+          return bit_extractor_info.offset;
         }
         if (ret == byte_1CE1) {
           break;
@@ -4751,11 +4750,11 @@ static void sub_1C79(unsigned char *src_ptr, uint16_t offset)
           continue;
         }
         if (byte_1CE2 != 0) {
-          sub_3150(ret);
+          func(ret);
         }
       } while (1);
     } else {
-      sub_3150(ret);
+      func(ret);
     }
   }
 }
@@ -4862,11 +4861,18 @@ static void sub_316C()
 
 static void sub_27E3(unsigned char *base_ptr, uint16_t offset)
 {
+  // Indicate that we are interested in setting the header.
   word_3163 = ui_header_set_byte;
   ui_string.len = 0;
   ui_header_reset();
-  sub_1C79(base_ptr, offset);
+
+  // Extract string (this will call word_3163, a.k.a. ui_header_set_byte)
+  cpu.bx = extract_string(base_ptr, offset, sub_3150);
+
+  // Reset function ptr.
   sub_316C();
+
+  // Flush to screen
   sub_280E();
 }
 

@@ -17,6 +17,8 @@
 #ifndef DW_ENGINE_H
 #define DW_ENGINE_H
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -31,6 +33,8 @@ extern unsigned char byte_4F10;
 void reset_game_state();
 void run_engine();
 void sub_4D82();
+
+uint16_t extract_string(const unsigned char *src_ptr, uint16_t offset, void (*func)(unsigned char));
 
 #ifdef __cplusplus
 }
