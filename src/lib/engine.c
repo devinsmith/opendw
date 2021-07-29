@@ -137,7 +137,7 @@ unsigned char data_4A99[] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 // 0x49AB (compressed Yes/No bytes)
 unsigned char data_49AB[] = { 0xFE, 0x6, 0x97, 0x7F, 0x2B, 0xC0 };
 
-// 0x49CA (keys ?)
+// 0x49CA (keys: 0xCE = 'N', 0xD9 = 'Y', unknown about other bytes)
 unsigned char data_49CA[] = { 0x00, 0x00, 0xCE, 0x00, 0x00, 0xD9, 0x00, 0x00, 0xFF };
 
 unsigned char byte_4F0F;
@@ -452,7 +452,7 @@ static void op_74();
 static void op_75();
 static void op_76();
 static void op_77();
-static void op_78();
+static void set_msg();
 static void op_7A();
 static void read_header_bytes(void); // 7B
 static void op_7C();
@@ -468,7 +468,7 @@ static void op_88();
 static void op_89();
 static void op_8A();
 static void op_8B();
-static void op_8C();
+static void prompt_no_yes();
 static void op_8D();
 static void op_90();
 static void op_91();
@@ -609,7 +609,7 @@ struct op_call_table targets[] = {
   { op_75, "0x47D1" },
   { op_76, "0x47D9" },
   { op_77, "0x47E3" },
-  { op_78, "0x47EC" },
+  { set_msg, "0x47EC" },
   { NULL, "0x47FA" },
   { op_7A, "0x4801" },
   { read_header_bytes, "0x482D" },
@@ -629,7 +629,7 @@ struct op_call_table targets[] = {
   { op_89, "0x4977" },
   { op_8A, "0x498E" },
   { op_8B, "0x499B" },
-  { op_8C, "0x49A5" },
+  { prompt_no_yes, "0x49A5" },
   { op_8D, "0x49D3" },
   { NULL, "0x0000" },
   { NULL, "0x49DD" },
@@ -2631,11 +2631,12 @@ static void op_76(void)
 static void op_77()
 {
   draw_pattern(&draw_rect);
-  op_78();
+  set_msg();
 }
 
+// Extracts a string (likely for drawing on the screen)
 // 0x47EC
-static void op_78(void)
+static void set_msg(void)
 {
   cpu.bx = extract_string(cpu.base_pc, cpu.pc - cpu.base_pc, sub_3150);
   cpu.pc = cpu.base_pc + cpu.bx;
@@ -4405,8 +4406,12 @@ static void op_8B()
   start_the_game();
 }
 
+// Prompt (N)o or (Y)es
+// A Y sets carry and zero flag to 1.
+// A N sets carry flag to 1 and zero flag to 0
+// Any other value sets both carry and zero flag to 0.
 // 0x49A5
-static void op_8C()
+static void prompt_no_yes()
 {
   sub_1C70(data_49AB);
   cpu.bx = 0x49CA;
