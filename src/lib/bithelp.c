@@ -18,26 +18,25 @@
 
 // Extract "n" bits out of each byte.
 // bit_buffer contains leftover bit buffer.
+// bits are shifted left, with carry which becomes output.
 //
 // 0x1D86 -> 1D8C(6)
 // 0x1D8A -> 1D8C(5)
 // 0x1D8C (num_bits passed in BL)
 uint8_t bit_extract(struct bit_extractor *be, int n)
 {
-  int counter = n;
   int al = 0;
-  int dl = be->num_bits;
-  while (counter > 0) {
-    dl--;
-    if (dl < 0) {
-      dl = be->data[be->offset];
-      be->bit_buffer = dl;
-      dl = 7;
+
+  for (int i = 0; i < n; i++) {
+    if (be->num_bits == 0) {
+      be->bit_buffer = be->data[be->offset];
+      be->num_bits = 8;
       be->offset++;
     }
     // 0x1D96
     uint8_t tmp = be->bit_buffer;
     be->bit_buffer = be->bit_buffer << 1;
+    be->num_bits--;
 
     // rcl al, 1
     int carry = 0;
@@ -46,9 +45,7 @@ uint8_t bit_extract(struct bit_extractor *be, int n)
     }
     al = al << 1;
     al += carry;
-    counter--;
   }
-  be->num_bits = dl; // leftover bits
   return al;
 }
 

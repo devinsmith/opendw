@@ -21,7 +21,7 @@
 
 #include "bithelp.h"
 
-START_TEST(test_be)
+START_TEST(test_be_basic)
 {
   unsigned char test_data[] = { 0xf2 };
 
@@ -29,15 +29,44 @@ START_TEST(test_be)
   be.data = test_data;
   uint8_t val = bit_extract(&be, 5);
   ck_assert_int_eq(val, 0x1e);
+  // Bytes left over: 3
+  ck_assert_int_eq(be.num_bits, 3);
+  // Advanced 1 byte.
+  ck_assert_int_eq(be.offset, 1);
+  // Buffer contains left over.
+  ck_assert_int_eq(be.bit_buffer, (uint8_t)(test_data[0] << 5));
 }
 END_TEST
+
+START_TEST(test_be_multibyte)
+{
+    unsigned char test_data[] = { 0xf2, 0x9d };
+
+    bit_extractor be { 0 };
+    be.data = test_data;
+    uint8_t val = bit_extract(&be, 5);
+    ck_assert_int_eq(val, 0x1e);
+    ck_assert_int_eq(be.num_bits, 3);
+    ck_assert_int_eq(be.offset, 1);
+    ck_assert_int_eq(be.bit_buffer, (uint8_t)(test_data[0] << 5));
+
+    val = bit_extract(&be, 5);
+    ck_assert_int_eq(val, 0x0A);
+    ck_assert_int_eq(be.num_bits, 6);
+    ck_assert_int_eq(be.offset, 2);
+    ck_assert_int_eq(be.bit_buffer, (uint8_t)(test_data[1] << 2));
+
+}
+END_TEST
+
 
 Suite* bitinfo_suite()
 {
   Suite *s = suite_create("BitExtractor");
 
   TCase *tc_core = tcase_create("Core");
-  tcase_add_test(tc_core, test_be);
+  tcase_add_test(tc_core, test_be_basic);
+  tcase_add_test(tc_core, test_be_multibyte);
   suite_add_tcase(s, tc_core);
 
   return s;
