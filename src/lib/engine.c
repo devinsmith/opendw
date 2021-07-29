@@ -4763,7 +4763,7 @@ static void sub_1C79(unsigned char *src_ptr, uint16_t offset)
 }
 
 // 0x1D2A - 0x1D85
-// Some type of character alphabet?
+// Characters of the alphabet OR'd with 0x80
 unsigned char alphabet[] = {
   0xa0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xeb, 0xec,
   0xed, 0xee, 0xef, 0xf0, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf9, 0xae,
@@ -4783,6 +4783,8 @@ static uint8_t sub_1CF8()
       return 0;
 
     if (ret == 0x1E) {
+      // Next byte should be an uppercase letter.
+
       // stc
       // rcr byte [byte_1CE4], 1
       // rotate carry right bit.
@@ -4803,6 +4805,7 @@ static uint8_t sub_1CF8()
     uint8_t al = alphabet[ret - 1];
     byte_1CE4 = byte_1CE4 >> 1;
     if (byte_1CE4 >= 0x40 && al >= 0xE1 && al <= 0xFA) {
+      // Make uppercase.
       al = al & 0xDF;
     }
     // test al, al
