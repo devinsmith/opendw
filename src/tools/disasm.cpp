@@ -21,9 +21,11 @@
 #include <stdint.h>
 
 #include <engine.h>
+#include <utils.h>
 
 static int read_string_bytes(const unsigned char *args);
 static int read_word(const unsigned char *args);
+static int wait_event(const unsigned char *args);
 
 struct op_code {
   const char *name;
@@ -34,10 +36,10 @@ struct op_code {
 op_code op_codes[] = {
   { ".word", nullptr, 0 }, // op_00
   { ".byte", nullptr, 0 }, // op_01
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 }, // op_02
+  { nullptr, nullptr, 0 }, // op_03
+  { nullptr, nullptr, 0 }, // op_04
+  { "set_gamestate", nullptr, 1 }, // op_05
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -100,6 +102,8 @@ op_code op_codes[] = {
   { "jnc", read_word, 0 }, // op_41
   { "jc", read_word, 0 },  // op_42
   { nullptr, nullptr, 0 },
+  { "jnz", read_word, 0 }, // op_44
+  { "jz", read_word, 0 }, // op_45
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -112,9 +116,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "jmp", read_word, 0 }, // op_52
   { "call", read_word, 2 }, // op_53
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -124,7 +126,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_5C", read_word, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -152,7 +154,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { "op_78", read_string_bytes, 0 }, // op_78
+  { "draw_msg", read_string_bytes, 0 }, // op_78
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "ui_header", read_string_bytes, 0 }, // op_7B
@@ -169,10 +171,10 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
+  { "wait_event", wait_event, 0 }, // op_89, XXX: Sometimes takes 3 args?
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "prompt 'Y', 'N'", nullptr, 0 }, // op_8C
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -303,6 +305,35 @@ static int read_word(const unsigned char *args)
   printf("0x%04x", word);
 
   return 2;
+}
+
+static int wait_event(const unsigned char *args)
+{
+  int count = 0;
+
+  //dump_hex(args, 16);
+  //printf("\n");
+  //exit(1);
+
+  // XXX: This seems to be a variable number of arguments,
+  // this can't be correct.
+  read_word(args);
+  printf(", ");
+  args += 2;
+  printf("%c, ", *args++ & 0x7f);
+  read_word(args);
+  printf(", ");
+  args += 2;
+  printf("%c, ", *args++ & 0x7f);
+  read_word(args);
+  printf(", ");
+  args += 2;
+  printf("0x%02x", *args++);
+
+
+  count = 9;
+
+  return count;
 }
 
 int main(int argc, char *argv[])
