@@ -51,7 +51,10 @@ Other flags can be passed to CMake:
 * `ENABLE_TESTS=ON/OFF` toggles building unit tests (Requires Check). OFF by default.
 * `ENABLE_TOOLS=ON/OFF` toggles building some extra tools for extracting resources. OFF by default.
 
-# Screenshot
+# Screenshots
 
 ![Title screen](img/dw.png)
+![Party](img/choose_party.png)
+![Opening](img/opening.png)
+![Encounter](img/encounter.png)
 
