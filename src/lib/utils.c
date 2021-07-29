@@ -21,12 +21,12 @@
 
 #include "utils.h"
 
-void dump_hex(void *vp, size_t len)
+void dump_hex(const void *vp, size_t len)
 {
   char linebuf[80];
   int i;
   int linebuf_dirty = 0;
-  unsigned char *p = (unsigned char *)vp;
+  const unsigned char *p = (const unsigned char *)vp;
 
   memset(linebuf, ' ', sizeof(linebuf));
   linebuf[70] = '\0';

@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-void dump_hex(void *vp, size_t len);
+void dump_hex(const void *vp, size_t len);
 void hexdump(void *ptr, int buflen);
 
 #ifdef __cplusplus
