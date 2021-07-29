@@ -13,6 +13,7 @@ This game can be purchased at [GOG](https://www.gog.com/game/dragon_wars).
 - Executable (DRAGON.COM).
 - Original data files (DATA1 and DATA2).
 - SDL2.
+- *Optionally* [Check](https://libcheck.github.io/check/) (building unit tests only).
 
 Under Linux/Unix operating systems, this engine expects that the original game
 files should be all lowercase (e.g. DRAGON.COM -> dragon.com). The files
@@ -45,6 +46,10 @@ make
 
 The `sdldragon` binary will be in build/src/fe/sdldragon
 
+Other flags can be passed to CMake:
+
+* `ENABLE_TESTS=ON/OFF` toggles building unit tests (Requires Check). OFF by default.
+* `ENABLE_TOOLS=ON/OFF` toggles building some extra tools for extracting resources. OFF by default.
 
 # Screenshot
 
