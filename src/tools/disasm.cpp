@@ -23,9 +23,15 @@
 #include <engine.h>
 #include <utils.h>
 
+static int set_byte(const unsigned char *args);
+static int set_word(const unsigned char *args);
 static int read_string_bytes(const unsigned char *args);
 static int read_word(const unsigned char *args);
 static int wait_event(const unsigned char *args);
+static int read_by_mode(const unsigned char *args);
+static int handle_if(const unsigned char *args);
+
+static bool word_mode = false;
 
 struct op_code {
   const char *name;
@@ -34,12 +40,47 @@ struct op_code {
 };
 
 op_code op_codes[] = {
-  { ".word", nullptr, 0 }, // op_00
-  { ".byte", nullptr, 0 }, // op_01
+  { ".word", set_word, 0 }, // op_00
+  { ".byte", set_byte, 0 }, // op_01
   { nullptr, nullptr, 0 }, // op_02
   { nullptr, nullptr, 0 }, // op_03
-  { nullptr, nullptr, 0 }, // op_04
+  { "push byte_3AE9", nullptr, 0 }, // op_04
   { "set_gamestate", nullptr, 1 }, // op_05
+  { "set loop =", nullptr, 1 }, // op_06
+  { "word_3AE4 = 0", nullptr, 0 }, // op_07
+  { "set_gamestate: idx =", nullptr, 1 }, // op_08
+  { "op_09", read_by_mode, 0 }, // op_09
+  { "load_gamestate", nullptr, 1 }, // op_0A
+  { "op_0B", nullptr, 1 }, // op_0B
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { "op_11", nullptr, 1 }, // op_11
+  { nullptr, nullptr, 0 },
+  { "op_13", nullptr, 1 }, // op_13
+  { "op_14", read_word, 0 }, // op_14
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { "op_19", nullptr, 2 }, // op_19
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 }, // op_20
+  { nullptr, nullptr, 0 }, 
+  { nullptr, nullptr, 0 },
+  { "inc [mem]", nullptr, 1 }, // op_23
+  { nullptr, nullptr, 0 },
+  { "inc reg", nullptr, 0 }, // op_25
+  { "op_26", nullptr, 1 }, // op_26
+  { nullptr, nullptr, 0 },
+  { "dec [mem]", nullptr, 0 }, // op_28
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -47,6 +88,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
+  { "op_30", read_by_mode, 0 }, // op_30
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -54,51 +96,15 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
+  { "op_38", read_by_mode, 0 }, // op_38
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "check_gamestate", nullptr, 1 }, // op_3F
+  { "op_40", nullptr, 1 }, // op_40
   { "jnc", read_word, 0 }, // op_41
   { "jc", read_word, 0 },  // op_42
   { nullptr, nullptr, 0 },
@@ -107,10 +113,10 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "loop", read_word, 0 }, // op_49
+  { "if ", handle_if, 0 }, // op_4A
+  { "stc", nullptr, 0 }, // op_4B, set carry
+  { "clc", nullptr, 0 }, // op_4C, clear carry
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -118,6 +124,17 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { "jmp", read_word, 0 }, // op_52
   { "call", read_word, 2 }, // op_53
+  { "ret", nullptr, 0 }, // op_54
+  { "peek_and_pop", nullptr, 0 }, // op_55
+  { "push (word|byte)", nullptr, 0 }, // op_56
+  { nullptr, nullptr, 0 },
+  { "load_resource", nullptr, 3 }, // op_58, loads 3 bytes, but 1 is byte, 1 is word.
+  { nullptr, nullptr, 0 },
+  { "pop 3words", nullptr, 0 }, // op_5A
+  { nullptr, nullptr, 0 },
+  { "op_5C", read_word, 0 }, // op_5C
+  { "get_char_data", nullptr, 1 }, // op_5D
+  { "set_char_prop", nullptr, 1 }, // op_5E
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -125,21 +142,10 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { "op_5C", read_word, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_66", nullptr, 1 }, // op_66
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_69", nullptr, 1 }, // op_69
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -153,28 +159,29 @@ op_code op_codes[] = {
   { "draw_rectangle", nullptr, 4 }, // op_74
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { "draw_msg", read_string_bytes, 0 }, // op_78
+  { "draw_and_set", read_string_bytes, 0 }, // op_77
+  { "set_msg", read_string_bytes, 0 }, // op_78
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "ui_header", read_string_bytes, 0 }, // op_7B
   { nullptr, nullptr, 0 },
+  { "write_character_name", nullptr, 0 }, // op_7D
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
+  { "write_number", nullptr, 0 }, // op_83
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "wait_escape", nullptr, 0 }, // op_88
   { "wait_event", wait_event, 0 }, // op_89, XXX: Sometimes takes 3 args?
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "prompt 'Y', 'N'", nullptr, 0 }, // op_8C
+  { "op_8D", nullptr, 0 }, // op_8D: Read string??
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -184,10 +191,9 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "load_char_data", nullptr, 1 }, // op_97
+  { "op_98", nullptr, 1 }, // op_98
+  { "test word_3AE2", nullptr, 0 }, // op_99
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -311,7 +317,7 @@ static int wait_event(const unsigned char *args)
 {
   int count = 0;
 
-  //dump_hex(args, 16);
+  //dump_hex(args, 32);
   //printf("\n");
   //exit(1);
 
@@ -326,14 +332,58 @@ static int wait_event(const unsigned char *args)
   args += 2;
   printf("%c, ", *args++ & 0x7f);
   read_word(args);
-  printf(", ");
   args += 2;
-  printf("0x%02x", *args++);
+  count = 8;
 
-
-  count = 9;
+  // Read until we reach 0xff
+  unsigned char ch = *args++;
+  while (ch != 0xff) {
+    printf(", 0x%02X", ch);
+    count++;
+    ch = *args++;
+  }
+  count++;
+  printf(", 0x%02x", ch);
 
   return count;
+}
+
+static int set_word(const unsigned char *args)
+{
+  word_mode = true;
+  return 0;
+}
+
+static int set_byte(const unsigned char *args)
+{
+  word_mode = false;
+  return 0;
+}
+
+static int read_by_mode(const unsigned char *args)
+{
+  if (word_mode) {
+    uint16_t word = *args++;
+    word += *args++ << 8;
+
+    printf("0x%04x", word);
+  } else {
+    printf("0x%02x", *args++);
+  }
+
+  return word_mode ? 2 : 1;
+}
+
+static int handle_if(const unsigned char *args)
+{
+  unsigned char ch = *args++;
+  printf("byte_3AE4 != 0x%02X ", ch);
+  uint16_t word = *args++;
+  word += *args++ << 8;
+
+  printf("jmp 0x%04x", word);
+
+  return 3;
 }
 
 int main(int argc, char *argv[])
