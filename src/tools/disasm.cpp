@@ -30,6 +30,7 @@ static int read_word(const unsigned char *args);
 static int wait_event(const unsigned char *args);
 static int read_by_mode(const unsigned char *args);
 static int handle_if(const unsigned char *args);
+static int op_1A(const unsigned char *args);
 
 static bool word_mode = false;
 
@@ -43,7 +44,7 @@ op_code op_codes[] = {
   { ".word", set_word, 0 }, // op_00
   { ".byte", set_byte, 0 }, // op_01
   { nullptr, nullptr, 0 }, // op_02
-  { nullptr, nullptr, 0 }, // op_03
+  { "op_03", nullptr, 0 }, // op_03
   { "push byte_3AE9", nullptr, 0 }, // op_04
   { "set_gamestate", nullptr, 1 }, // op_05
   { "set loop =", nullptr, 1 }, // op_06
@@ -55,7 +56,7 @@ op_code op_codes[] = {
   { "op_0C", read_word, 0 }, // op_0C
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_0F", nullptr, 1 }, // op_0F
   { nullptr, nullptr, 0 },
   { "op_11", nullptr, 1 }, // op_11
   { "op_12", nullptr, 1 }, // op_12
@@ -63,10 +64,10 @@ op_code op_codes[] = {
   { "op_14", read_word, 0 }, // op_14
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "store_data_resource", nullptr, 1 }, // op_17
   { nullptr, nullptr, 0 },
   { "op_19", nullptr, 2 }, // op_19
-  { nullptr, nullptr, 0 },
+  { "op_1A", op_1A, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -102,7 +103,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_3E", read_by_mode, 0 }, // op_3E
   { "check_gamestate", nullptr, 1 }, // op_3F
   { "op_40", nullptr, 1 }, // op_40
   { "jnc", read_word, 0 }, // op_41
@@ -173,7 +174,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { "write_number", nullptr, 0 }, // op_83
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "resource_release", nullptr, 0 }, // op_85
   { "load_resource_word", nullptr, 0 }, // op_86
   { nullptr, nullptr, 0 },
   { "wait_escape", nullptr, 0 }, // op_88
@@ -187,14 +188,14 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_93", nullptr, 0 }, // op_93
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "load_char_data", nullptr, 1 }, // op_97
   { "op_98", nullptr, 1 }, // op_98
   { "test word_3AE2", nullptr, 0 }, // op_99
-  { nullptr, nullptr, 0 },
+  { "op_9A", nullptr, 1 }, // op_9A
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -384,6 +385,17 @@ static int handle_if(const unsigned char *args)
   printf("jmp 0x%04x", word);
 
   return 3;
+}
+
+static int op_1A(const unsigned char *args)
+{
+  printf("0x%02x, ", *args++);
+  printf("0x%02x", *args++);
+
+  if (word_mode)
+    printf(", 0x%02x", *args++);
+
+  return word_mode ? 3 : 2;
 }
 
 int main(int argc, char *argv[])
