@@ -69,18 +69,18 @@ op_code op_codes[] = {
   { "op_19", nullptr, 2 }, // op_19
   { "op_1A", op_1A, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_1C", op_1A, 0 }, // op_1C
+  { "memcpy 0x700", nullptr, 0 }, // op_1D
   { nullptr, nullptr, 0 },
   { "op_1F", nullptr, 0 }, // op_1F
   { nullptr, nullptr, 0 }, // op_20
-  { nullptr, nullptr, 0 }, 
+  { "op_21", nullptr, 0 }, // op_21
   { nullptr, nullptr, 0 },
   { "inc [mem]", nullptr, 1 }, // op_23
   { nullptr, nullptr, 0 },
   { "inc reg", nullptr, 0 }, // op_25
   { "op_26", nullptr, 1 }, // op_26
-  { nullptr, nullptr, 0 },
+  { "op_27", nullptr, 0 }, // op_27
   { "dec [mem]", nullptr, 0 }, // op_28
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -99,7 +99,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { "op_38", read_by_mode, 0 }, // op_38
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_3A", nullptr, 1 }, // op_3A
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -112,7 +112,7 @@ op_code op_codes[] = {
   { "jnz", read_word, 0 }, // op_44
   { "jz", read_word, 0 }, // op_45
   { "js", read_word, 0 }, // op_46
-  { nullptr, nullptr, 0 },
+  { "jns", read_word, 0 }, // op_47 jump not signed
   { nullptr, nullptr, 0 },
   { "loop", read_word, 0 }, // op_49
   { "if ", handle_if, 0 }, // op_4A
@@ -169,7 +169,7 @@ op_code op_codes[] = {
   { "write_character_name", nullptr, 0 }, // op_7D
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_80", nullptr, 1 }, // op_80
   { "op_81", nullptr, 0 }, // op_81
   { nullptr, nullptr, 0 },
   { "write_number", nullptr, 0 }, // op_83
@@ -199,7 +199,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_9E", nullptr, 0 }, // op_9E
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
