@@ -31,9 +31,10 @@ static int wait_event(const unsigned char *args);
 static int read_by_mode(const unsigned char *args);
 static int handle_if(const unsigned char *args);
 static int op_0A(const unsigned char *args);
-static int op_1A(const unsigned char *args);
 static int op_11(const unsigned char *args);
 static int op_12(const unsigned char *args);
+static int op_1A(const unsigned char *args);
+static int op_1C(const unsigned char *args);
 
 static bool word_mode = false;
 
@@ -72,7 +73,7 @@ op_code op_codes[] = {
   { "op_19", nullptr, 2 }, // op_19
   { "gamestate[", op_1A, 0 },
   { nullptr, nullptr, 0 },
-  { "op_1C", op_1A, 0 }, // op_1C
+  { "word_3ADF[", op_1C, 0 }, // op_1C
   { "memcpy 0x700", nullptr, 0 }, // op_1D
   { nullptr, nullptr, 0 },
   { "op_1F", nullptr, 0 }, // op_1F
@@ -80,7 +81,7 @@ op_code op_codes[] = {
   { "op_21", nullptr, 0 }, // op_21
   { nullptr, nullptr, 0 },
   { "inc [mem]", nullptr, 1 }, // op_23
-  { nullptr, nullptr, 0 },
+  { "inc word_3AE2", nullptr, 0 }, // op_24
   { "inc reg", nullptr, 0 }, // op_25
   { "op_26", nullptr, 1 }, // op_26
   { "op_27", nullptr, 0 }, // op_27
@@ -176,7 +177,7 @@ op_code op_codes[] = {
   { "op_81", nullptr, 0 }, // op_81
   { nullptr, nullptr, 0 },
   { "write_number", nullptr, 0 }, // op_83
-  { nullptr, nullptr, 0 },
+  { "malloc(word_3AE2)", nullptr, 0 }, // op_84
   { "resource_release", nullptr, 0 }, // op_85
   { "word_3AE2 = load_resource(word_3AE2)", nullptr, 0 }, // op_86
   { nullptr, nullptr, 0 },
@@ -235,17 +236,77 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 }
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { "nop", nullptr, 0 } // op_FF
 };
 
 struct script_file {
   unsigned char *bytes = nullptr;
   size_t len = 0;
 };
-
-#ifndef nitems
-#define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
-#endif /* nitems */
 
 // Most scripts are small, and this game is from 1989,
 // so we can read it all in one shot.
@@ -410,6 +471,20 @@ static int op_1A(const unsigned char *args)
   return word_mode ? 3 : 2;
 }
 
+static int op_1C(const unsigned char *args)
+{
+  uint16_t word = *args++;
+  word += *args++ << 8;
+
+  printf("0x%04x] = ", word);
+  printf("0x%02x", *args++);
+
+  if (word_mode)
+    printf("\n        word_3ADF[0x%02X] = 0x%02x", word + 1, *args++);
+
+  return word_mode ? 4 : 3;
+}
+
 static int op_11(const unsigned char *args)
 {
   unsigned char idx = *args++;
@@ -443,18 +518,10 @@ int main(int argc, char *argv[])
 
   printf("Disassembling %s (%zu bytes)\n", argv[1], script.len);
 
-  int num_ops = nitems(op_codes);
-  printf("Known ops: %d\n", num_ops);
-
   unsigned char *iter = script.bytes;
   size_t i = 0;
   while (i < script.len) {
     unsigned char op = *iter;
-
-    if (op > num_ops) {
-      fprintf(stderr, "Cannot proceed, unhandled op: 0x%02X, index out of bounds\n", op);
-      break;
-    }
 
     op_code *code = &op_codes[op];
     if (code->name == nullptr) {
