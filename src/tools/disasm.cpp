@@ -52,13 +52,13 @@ op_code op_codes[] = {
   { "op_09", read_by_mode, 0 }, // op_09
   { "load_gamestate", nullptr, 1 }, // op_0A
   { "op_0B", nullptr, 1 }, // op_0B
-  { nullptr, nullptr, 0 },
+  { "op_0C", read_word, 0 }, // op_0C
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "op_11", nullptr, 1 }, // op_11
-  { nullptr, nullptr, 0 },
+  { "op_12", nullptr, 1 }, // op_12
   { "op_13", nullptr, 1 }, // op_13
   { "op_14", read_word, 0 }, // op_14
   { nullptr, nullptr, 0 },
@@ -71,7 +71,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_1F", nullptr, 0 }, // op_1F
   { nullptr, nullptr, 0 }, // op_20
   { nullptr, nullptr, 0 }, 
   { nullptr, nullptr, 0 },
@@ -110,7 +110,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { "jnz", read_word, 0 }, // op_44
   { "jz", read_word, 0 }, // op_45
-  { nullptr, nullptr, 0 },
+  { "js", read_word, 0 }, // op_46
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "loop", read_word, 0 }, // op_49
@@ -127,7 +127,7 @@ op_code op_codes[] = {
   { "ret", nullptr, 0 }, // op_54
   { "peek_and_pop", nullptr, 0 }, // op_55
   { "push (word|byte)", nullptr, 0 }, // op_56
-  { nullptr, nullptr, 0 },
+  { "op_57_res", nullptr, 3 }, // op_57
   { "load_resource", nullptr, 3 }, // op_58, loads 3 bytes, but 1 is byte, 1 is word.
   { nullptr, nullptr, 0 },
   { "pop 3words", nullptr, 0 }, // op_5A
@@ -157,7 +157,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "draw_rectangle", nullptr, 4 }, // op_74
-  { nullptr, nullptr, 0 },
+  { "draw_ui_full", nullptr, 0 }, // op_74
   { nullptr, nullptr, 0 },
   { "draw_and_set", read_string_bytes, 0 }, // op_77
   { "set_msg", read_string_bytes, 0 }, // op_78
@@ -169,12 +169,12 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_81", nullptr, 0 }, // op_81
   { nullptr, nullptr, 0 },
   { "write_number", nullptr, 0 }, // op_83
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "load_resource_word", nullptr, 0 }, // op_86
   { nullptr, nullptr, 0 },
   { "wait_escape", nullptr, 0 }, // op_88
   { "wait_event", wait_event, 0 }, // op_89, XXX: Sometimes takes 3 args?
