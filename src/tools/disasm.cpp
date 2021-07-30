@@ -30,7 +30,10 @@ static int read_word(const unsigned char *args);
 static int wait_event(const unsigned char *args);
 static int read_by_mode(const unsigned char *args);
 static int handle_if(const unsigned char *args);
+static int op_0A(const unsigned char *args);
 static int op_1A(const unsigned char *args);
+static int op_11(const unsigned char *args);
+static int op_12(const unsigned char *args);
 
 static bool word_mode = false;
 
@@ -50,16 +53,16 @@ op_code op_codes[] = {
   { "set loop =", nullptr, 1 }, // op_06
   { "word_3AE4 = 0", nullptr, 0 }, // op_07
   { "set_gamestate: idx =", nullptr, 1 }, // op_08
-  { "op_09", read_by_mode, 0 }, // op_09
-  { "load_gamestate", nullptr, 1 }, // op_0A
+  { "word_3AE2 =", read_by_mode, 0 }, // op_09
+  { "word_3AE2 = gamestate[", op_0A, 1 }, // op_0A
   { "op_0B", nullptr, 1 }, // op_0B
   { "op_0C", read_word, 0 }, // op_0C
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "op_0F", nullptr, 1 }, // op_0F
   { nullptr, nullptr, 0 },
-  { "op_11", nullptr, 1 }, // op_11
-  { "op_12", nullptr, 1 }, // op_12
+  { "gamestate[", op_11, 1 }, // op_11
+  { "gamestate[", op_12, 1 }, // op_12
   { "op_13", nullptr, 1 }, // op_13
   { "op_14", read_word, 0 }, // op_14
   { nullptr, nullptr, 0 },
@@ -67,7 +70,7 @@ op_code op_codes[] = {
   { "store_data_resource", nullptr, 1 }, // op_17
   { nullptr, nullptr, 0 },
   { "op_19", nullptr, 2 }, // op_19
-  { "op_1A", op_1A, 0 },
+  { "gamestate[", op_1A, 0 },
   { nullptr, nullptr, 0 },
   { "op_1C", op_1A, 0 }, // op_1C
   { "memcpy 0x700", nullptr, 0 }, // op_1D
@@ -175,7 +178,7 @@ op_code op_codes[] = {
   { "write_number", nullptr, 0 }, // op_83
   { nullptr, nullptr, 0 },
   { "resource_release", nullptr, 0 }, // op_85
-  { "load_resource_word", nullptr, 0 }, // op_86
+  { "word_3AE2 = load_resource(word_3AE2)", nullptr, 0 }, // op_86
   { nullptr, nullptr, 0 },
   { "wait_escape", nullptr, 0 }, // op_88
   { "wait_event", wait_event, 0 }, // op_89, XXX: Sometimes takes 3 args?
@@ -290,7 +293,7 @@ static int read_string_bytes(const unsigned char *args)
 
   uint16_t count = extract_string(args, 0, pop_len_string);
 
-  printf("$(\"");
+  printf(" $(\"");
   for (int i = 0; i < str.len; i++) {
     char ch = str.string[i];
     if (ch == '\r') {
@@ -309,7 +312,7 @@ static int read_word(const unsigned char *args)
   uint16_t word = *args++;
   word += *args++ << 8;
 
-  printf("0x%04x", word);
+  printf(" 0x%04x", word);
 
   return 2;
 }
@@ -367,9 +370,9 @@ static int read_by_mode(const unsigned char *args)
     uint16_t word = *args++;
     word += *args++ << 8;
 
-    printf("0x%04x", word);
+    printf(" 0x%04x", word);
   } else {
-    printf("0x%02x", *args++);
+    printf(" 0x%02x", *args++);
   }
 
   return word_mode ? 2 : 1;
@@ -387,15 +390,41 @@ static int handle_if(const unsigned char *args)
   return 3;
 }
 
+static int op_0A(const unsigned char *args)
+{
+  unsigned char ch = *args++;
+  printf("0x%02X]", ch);
+
+  return 1;
+}
+
 static int op_1A(const unsigned char *args)
 {
-  printf("0x%02x, ", *args++);
+  unsigned char idx = *args++;
+  printf("0x%02x] = ", idx);
   printf("0x%02x", *args++);
 
   if (word_mode)
-    printf(", 0x%02x", *args++);
+    printf("\n        gamestate[0x%02X] = 0x%02x", idx + 1, *args++);
 
   return word_mode ? 3 : 2;
+}
+
+static int op_11(const unsigned char *args)
+{
+  unsigned char idx = *args++;
+  printf("0x%02x] = 0", idx);
+
+  if (word_mode)
+    printf("\n        gamestate[0x%02X] = 0", idx + 1);
+
+  return 1;
+}
+
+static int op_12(const unsigned char *args)
+{
+  printf("0x%02x] = word_3AE2", *args++);
+  return 1;
 }
 
 int main(int argc, char *argv[])
@@ -433,7 +462,7 @@ int main(int argc, char *argv[])
       break;
     }
 
-    printf("0x%04X: %s ", (uint16_t)i, code->name);
+    printf("0x%04X: %s", (uint16_t)i, code->name);
     iter++;
     i++;
 
@@ -445,9 +474,9 @@ int main(int argc, char *argv[])
       for (int j = 0; j < code->arg_count; j++) {
         unsigned char arg = *iter;
         if (j != 0) {
-          printf(", ");
+          printf(",");
         }
-        printf("0x%02x", arg);
+        printf(" 0x%02x", arg);
         iter++;
         i++;
       }
