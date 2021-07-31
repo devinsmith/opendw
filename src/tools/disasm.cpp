@@ -135,9 +135,9 @@ op_code op_codes[] = {
   { "op_57_res", nullptr, 3 }, // op_57
   { "load_resource", nullptr, 3 }, // op_58, loads 3 bytes, but 1 is byte, 1 is word.
   { nullptr, nullptr, 0 },
-  { "pop 3words", nullptr, 0 }, // op_5A
+  { "loop ret", nullptr, 0 }, // op_5A
   { nullptr, nullptr, 0 },
-  { "op_5C", read_word, 0 }, // op_5C
+  { "loop call", read_word, 0 }, // op_5C
   { "get_char_data", nullptr, 1 }, // op_5D
   { "set_char_prop", nullptr, 1 }, // op_5E
   { nullptr, nullptr, 0 },
