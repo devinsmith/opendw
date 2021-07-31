@@ -4924,7 +4924,12 @@ static void run_script(uint8_t script_index, uint16_t src_offset)
   cpu.pc = running_script->bytes + src_offset;
   cpu.base_pc = running_script->bytes;
 
+  uint16_t offset;
+
   while (!done) {
+    // For debugging:
+    // offset = (uint16_t)(cpu.pc - cpu.base_pc);
+
     prev_op = op_code;
     // 0x3ACF
     // es lodsb
