@@ -134,7 +134,7 @@ op_code op_codes[] = {
   { "push (word|byte)", nullptr, 0 }, // op_56
   { "op_57_res", nullptr, 3 }, // op_57
   { "load_resource", nullptr, 3 }, // op_58, loads 3 bytes, but 1 is byte, 1 is word.
-  { nullptr, nullptr, 0 },
+  { "jmp ?", nullptr, 0 }, // op_59
   { "loop ret", nullptr, 0 }, // op_5A
   { nullptr, nullptr, 0 },
   { "loop call", read_word, 0 }, // op_5C
@@ -153,7 +153,7 @@ op_code op_codes[] = {
   { "op_69", nullptr, 1 }, // op_69
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_6C", nullptr, 0 }, // op_6C
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -184,7 +184,7 @@ op_code op_codes[] = {
   { "wait_escape", nullptr, 0 }, // op_88
   { "wait_event", wait_event, 0 }, // op_89, XXX: Sometimes takes 3 args?
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "start_game", nullptr, 0 }, // op_8B
   { "prompt 'Y', 'N'", nullptr, 0 }, // op_8C
   { "op_8D", nullptr, 0 }, // op_8D: Read string??
   { nullptr, nullptr, 0 },
