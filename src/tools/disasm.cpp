@@ -30,7 +30,7 @@ static int read_word(const unsigned char *args);
 static int wait_event(const unsigned char *args);
 static int read_by_mode(const unsigned char *args);
 static int handle_if(const unsigned char *args);
-static int op_0A(const unsigned char *args);
+static int read_byte_array_index(const unsigned char *args);
 static int op_11(const unsigned char *args);
 static int op_12(const unsigned char *args);
 static int op_1A(const unsigned char *args);
@@ -50,12 +50,12 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 }, // op_02
   { "op_03", nullptr, 0 }, // op_03
   { "push byte_3AE9", nullptr, 0 }, // op_04
-  { "set_gamestate", nullptr, 1 }, // op_05
+  { "word_3AE4 = gamestate[", read_byte_array_index, 1 }, // op_05
   { "set loop =", nullptr, 1 }, // op_06
   { "word_3AE4 = 0", nullptr, 0 }, // op_07
   { "set_gamestate: idx =", nullptr, 1 }, // op_08
   { "word_3AE2 =", read_by_mode, 0 }, // op_09
-  { "word_3AE2 = gamestate[", op_0A, 1 }, // op_0A
+  { "word_3AE2 = gamestate[", read_byte_array_index, 1 }, // op_0A
   { "op_0B", nullptr, 1 }, // op_0B
   { "op_0C", read_word, 0 }, // op_0C
   { nullptr, nullptr, 0 },
@@ -451,7 +451,7 @@ static int handle_if(const unsigned char *args)
   return 3;
 }
 
-static int op_0A(const unsigned char *args)
+static int read_byte_array_index(const unsigned char *args)
 {
   unsigned char ch = *args++;
   printf("0x%02X]", ch);
