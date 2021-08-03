@@ -162,8 +162,8 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "draw_rectangle", nullptr, 4 }, // op_74
-  { "draw_ui_full", nullptr, 0 }, // op_74
-  { nullptr, nullptr, 0 },
+  { "draw_ui_full", nullptr, 0 }, // op_75
+  { "draw_pattern", nullptr, 0 }, // op_76
   { "draw_and_set", read_string_bytes, 0 }, // op_77
   { "set_msg", read_string_bytes, 0 }, // op_78
   { nullptr, nullptr, 0 },
@@ -173,7 +173,7 @@ op_code op_codes[] = {
   { "write_character_name", nullptr, 0 }, // op_7D
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { "op_80", nullptr, 1 }, // op_80
+  { "advance_cursor", nullptr, 1 }, // op_80
   { "op_81", nullptr, 0 }, // op_81
   { nullptr, nullptr, 0 },
   { "write_number", nullptr, 0 }, // op_83
