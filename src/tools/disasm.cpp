@@ -15,6 +15,7 @@
 
 // Dragon Wars script disassembler.
 
+#include <cctype>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -381,34 +382,34 @@ static int read_word(const unsigned char *args)
 static int wait_event(const unsigned char *args)
 {
   int count = 0;
+  uint16_t word;
 
-  //dump_hex(args, 32);
-  //printf("\n");
-  //exit(1);
+  word = *args++;
+  word += *args++ << 8;
+  printf(" 0x%04X", word);
 
-  // XXX: This seems to be a variable number of arguments,
-  // this can't be correct.
-  read_word(args);
-  printf(", ");
-  args += 2;
-  printf("%c, ", *args++ & 0x7f);
-  read_word(args);
-  printf(", ");
-  args += 2;
-  printf("%c, ", *args++ & 0x7f);
-  read_word(args);
-  args += 2;
-  count = 8;
+  uint8_t ch = *args++;
+  count = 2;
 
-  // Read until we reach 0xff
-  unsigned char ch = *args++;
   while (ch != 0xff) {
-    printf(", 0x%02X", ch);
-    count++;
+    bool printable = isprint(ch & 0x7f);
+    if (!printable) {
+      if (ch == 0x9B) {
+        printf(", ESC");
+      } else {
+        printf(", 0x%02x", ch);
+      }
+    } else {
+      printf(", %c,", ch & 0x7f);
+      read_word(args);
+      args += 2;
+      count += 2;
+    }
     ch = *args++;
+    count++;
   }
+  printf(", 0xff");
   count++;
-  printf(", 0x%02x", ch);
 
   return count;
 }
