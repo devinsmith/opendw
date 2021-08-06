@@ -36,6 +36,7 @@ static int op_11(const unsigned char *args);
 static int op_12(const unsigned char *args);
 static int op_1A(const unsigned char *args);
 static int op_1C(const unsigned char *args);
+static int load_resource(const unsigned char *args);
 
 static bool word_mode = false;
 
@@ -48,7 +49,7 @@ struct op_code {
 op_code op_codes[] = {
   { ".word", set_word, 0 }, // op_00
   { ".byte", set_byte, 0 }, // op_01
-  { nullptr, nullptr, 0 }, // op_02
+  { "op_02", nullptr, 0 }, // op_02
   { "op_03", nullptr, 0 }, // op_03
   { "push byte_3AE9", nullptr, 0 }, // op_04
   { "word_3AE4 = gamestate[", read_byte_array_index, 1 }, // op_05
@@ -59,7 +60,7 @@ op_code op_codes[] = {
   { "word_3AE2 = gamestate[", read_byte_array_index, 1 }, // op_0A
   { "op_0B", nullptr, 1 }, // op_0B
   { "op_0C", read_word, 0 }, // op_0C
-  { nullptr, nullptr, 0 },
+  { "op_0D", read_word, 0 }, // op_0D
   { nullptr, nullptr, 0 },
   { "op_0F", nullptr, 1 }, // op_0F
   { nullptr, nullptr, 0 },
@@ -70,50 +71,50 @@ op_code op_codes[] = {
   { "op_15", read_word, 0 }, // op_15
   { nullptr, nullptr, 0 },
   { "store_data_resource", nullptr, 1 }, // op_17
-  { nullptr, nullptr, 0 },
+  { "op_18", nullptr, 2 }, // op_18
   { "op_19", nullptr, 2 }, // op_19
-  { "gamestate[", op_1A, 0 },
-  { nullptr, nullptr, 0 },
+  { "gamestate[", op_1A, 0 }, // op_1A
+  { "op_1B", nullptr, 0 }, // op_1B
   { "word_3ADF[", op_1C, 0 }, // op_1C
   { "memcpy 0x700", nullptr, 0 }, // op_1D
   { nullptr, nullptr, 0 },
   { "op_1F", nullptr, 0 }, // op_1F
-  { nullptr, nullptr, 0 }, // op_20
+  { "NOP_XXX", nullptr, 0 }, // op_20
   { "op_21", nullptr, 0 }, // op_21
-  { nullptr, nullptr, 0 },
+  { "word_3AE2 = word_3AE4", nullptr, 0 }, // op_22
   { "inc [mem]", nullptr, 1 }, // op_23
   { "inc word_3AE2", nullptr, 0 }, // op_24
   { "inc reg", nullptr, 0 }, // op_25
   { "op_26", nullptr, 1 }, // op_26
   { "op_27", nullptr, 0 }, // op_27
   { "dec [mem]", nullptr, 0 }, // op_28
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_29", nullptr, 0 }, // op_29
+  { "op_2A", nullptr, 0 }, // op_2A
+  { "op_2B", nullptr, 0 }, // op_2B
+  { "op_2C", nullptr, 0 }, // op_2C
+  { "op_2D", nullptr, 0 }, // op_2D
+  { "op_2E", nullptr, 0 }, // op_2E
+  { "op_2F", nullptr, 1 }, // op_2F
   { "op_30", read_by_mode, 0 }, // op_30
+  { "op_31", nullptr, 1 }, // op_31
+  { "op_32", read_by_mode, 0 }, // op_32
   { nullptr, nullptr, 0 },
+  { "op_34", nullptr, 1 }, // op_34
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_36", nullptr, 0 }, // op_36
+  { "op_37", nullptr, 0 }, // op_37
   { "op_38", read_by_mode, 0 }, // op_38
   { "op_39", nullptr, 1 },
   { "op_3A", nullptr, 1 }, // op_3A
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_3B", nullptr, 0 }, // op_3B
+  { "op_3C", nullptr, 0 }, // op_3C
+  { "op_3D", nullptr, 1 }, // op_3D
   { "op_3E", read_by_mode, 0 }, // op_3E
   { "check_gamestate", nullptr, 1 }, // op_3F
   { "op_40", nullptr, 1 }, // op_40
   { "jnc", read_word, 0 }, // op_41
   { "jc", read_word, 0 },  // op_42
-  { nullptr, nullptr, 0 },
+  { "jmp_XXX", read_word, 0 }, // op_43
   { "jnz", read_word, 0 }, // op_44
   { "jz", read_word, 0 }, // op_45
   { "js", read_word, 0 }, // op_46
@@ -125,7 +126,7 @@ op_code op_codes[] = {
   { "clc", nullptr, 0 }, // op_4C, clear carry
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_4F", nullptr, 1 }, // op_4F
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "jmp", read_word, 0 }, // op_52
@@ -134,7 +135,7 @@ op_code op_codes[] = {
   { "peek_and_pop", nullptr, 0 }, // op_55
   { "push (word|byte)", nullptr, 0 }, // op_56
   { "op_57_res", nullptr, 3 }, // op_57
-  { "load_resource", nullptr, 3 }, // op_58, loads 3 bytes, but 1 is byte, 1 is word.
+  { "load_resource", load_resource, 3 }, // op_58, loads 3 bytes, but 1 is byte, 1 is word.
   { "jmp ?", nullptr, 0 }, // op_59
   { "loop ret", nullptr, 0 }, // op_5A
   { nullptr, nullptr, 0 },
@@ -143,23 +144,23 @@ op_code op_codes[] = {
   { "set_char_prop", nullptr, 1 }, // op_5E
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_61", nullptr, 1 }, // op_61
   { nullptr, nullptr, 0 },
   { "op_63", read_word, 0 }, // op_63
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_64", nullptr, 0 }, // op_64
+  { "op_65", nullptr, 0 }, // op_65
   { "op_66", nullptr, 1 }, // op_66
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_67", nullptr, 0 }, // op_67
+  { "op_68", nullptr, 1 }, // op_68
   { "op_69", nullptr, 1 }, // op_69
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "op_6C", nullptr, 0 }, // op_6C
+  { "op_6D", nullptr, 0 }, // op_6D
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "load_world", nullptr, 0 }, // op_71
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "draw_rectangle", nullptr, 4 }, // op_74
@@ -168,11 +169,11 @@ op_code op_codes[] = {
   { "draw_and_set", read_string_bytes, 0 }, // op_77
   { "set_msg", read_string_bytes, 0 }, // op_78
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "extract_string", nullptr, 0 }, // op_7A
   { "ui_header", read_string_bytes, 0 }, // op_7B
   { nullptr, nullptr, 0 },
   { "write_character_name", nullptr, 0 }, // op_7D
-  { nullptr, nullptr, 0 },
+  { "op_7E", nullptr, 1 }, // op_7e: XXX ?
   { nullptr, nullptr, 0 },
   { "advance_cursor", nullptr, 1 }, // op_80
   { "op_81 word_3AE2", nullptr, 0 }, // op_81
@@ -183,20 +184,20 @@ op_code op_codes[] = {
   { "word_3AE2 = load_resource(word_3AE2)", nullptr, 0 }, // op_86
   { nullptr, nullptr, 0 },
   { "wait_escape", nullptr, 0 }, // op_88
-  { "wait_event", wait_event, 0 }, // op_89, XXX: Sometimes takes 3 args?
-  { nullptr, nullptr, 0 },
+  { "wait_event", wait_event, 0 }, // op_89
+  { "random_encounter?", nullptr, 0 }, // op_8A
   { "start_game", nullptr, 0 }, // op_8B
   { "prompt 'Y', 'N'", nullptr, 0 }, // op_8C
   { "op_8D", nullptr, 0 }, // op_8D: Read string??
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_8F", nullptr, 0 }, // op_8F
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "op_93", nullptr, 0 }, // op_93
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "pop byte", nullptr, 0 }, // op_94
+  { "ui_draw_string", nullptr, 0 }, // op_95
+  { "draw_padded_string", nullptr, 0 }, // op_96
   { "load_char_data", nullptr, 1 }, // op_97
   { "op_98", nullptr, 1 }, // op_98
   { "test word_3AE2", nullptr, 0 }, // op_99
@@ -206,10 +207,12 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { "op_9E", nullptr, 0 }, // op_9E
   { nullptr, nullptr, 0 },
+  { "op_A0", nullptr, 0 }, // op_A0
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
+  { "op_A5", nullptr, 0 }, // op_A5 ?
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -228,6 +231,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
+  { "op_B8", nullptr, 0 }, // op_B8
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -235,6 +239,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
+  { "op_C0", nullptr, 0 }, // op_C0
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -250,6 +255,8 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
+  { "op_D0", nullptr, 0 }, // op_D0
+  { "op_D1", nullptr, 0 }, // op_D1
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -262,6 +269,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
+  { "op_DE", nullptr, 0 }, // op_DE
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -271,14 +279,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_E8", nullptr, 0 }, // op_E8
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -393,14 +394,14 @@ static int wait_event(const unsigned char *args)
 
   while (ch != 0xff) {
     bool printable = isprint(ch & 0x7f);
-    if (!printable) {
-      if (ch == 0x9B) {
-        printf(", ESC");
-      } else {
-        printf(", 0x%02x", ch);
-      }
+    if (!printable && ch != 0x9B) {
+      printf(", 0x%02x", ch);
     } else {
-      printf(", %c,", ch & 0x7f);
+      if (ch == 0x9B) {
+        printf(", \"ESC\",");
+      } else {
+        printf(", '%c',", ch & 0x7f);
+      }
       read_word(args);
       args += 2;
       count += 2;
@@ -501,6 +502,18 @@ static int op_12(const unsigned char *args)
 {
   printf("0x%02x] = word_3AE2", *args++);
   return 1;
+}
+
+static int load_resource(const unsigned char *args)
+{
+  uint8_t res = *args++;
+  uint16_t offset = *args++;
+  offset += *args++ << 8;
+
+  printf(" res: 0x%02x, ", res);
+  printf("offset: 0x%04x", offset);
+
+  return 3;
 }
 
 int main(int argc, char *argv[])
