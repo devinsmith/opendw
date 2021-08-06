@@ -346,7 +346,7 @@ static void sub_316C();
 static void append_string(unsigned char byte);
 static void sub_280E();
 static void sub_1BF8(uint8_t color, uint8_t y_adjust);
-static void sub_27E3(unsigned char *base_ptr, uint16_t offset);
+static void set_ui_header(unsigned char *base_ptr, uint16_t offset);
 static void sub_2CF5();
 static void sub_3165();
 static void sub_4A7D();
@@ -2686,7 +2686,7 @@ static void op_7C(void)
   unsigned char *dest = word_3ADF->bytes;
   uint16_t dest_offset = word_3AE2;
   printf("%s - 0x%04X\n", __func__, dest_offset);
-  sub_27E3(dest, dest_offset);
+  set_ui_header(dest, dest_offset);
   word_3AE2 = cpu.bx;
 }
 
@@ -4251,9 +4251,10 @@ static void start_the_game()
   int counter;
 
   sub_4D82();
+
+  // Load level.
   sub_5764();
-  cpu.bx = word_5864;
-  sub_27E3(data_5866, word_5864);
+  set_ui_header(data_5866, word_5864);
   cpu.bx = game_state.unknown[3];
   cpu.bx = cpu.bx << 1;
 
@@ -4866,7 +4867,8 @@ static void sub_316C()
   word_3163 = append_string;
 }
 
-static void sub_27E3(unsigned char *base_ptr, uint16_t offset)
+// 0x27E3
+static void set_ui_header(unsigned char *base_ptr, uint16_t offset)
 {
   // Indicate that we are interested in setting the header.
   word_3163 = ui_header_set_byte;
@@ -4900,7 +4902,7 @@ static void sub_3150(unsigned char byte)
 // 0x482D
 static void read_header_bytes(void)
 {
-  sub_27E3(cpu.base_pc, cpu.pc - cpu.base_pc);
+  set_ui_header(cpu.base_pc, cpu.pc - cpu.base_pc);
   cpu.pc = cpu.base_pc + cpu.bx;
 }
 
