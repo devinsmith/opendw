@@ -2269,7 +2269,7 @@ static void sub_4A7D()
   cpu.bx += cpu.ax;
 
   cpu.di &= 7;
-  al = data_4A99[cpu.di];
+  al = data_4A99[cpu.di]; // levels?
   cpu.ax = al;
 }
 
@@ -3721,7 +3721,7 @@ void sub_4D82()
 }
 
 // 0x5879
-static void sub_5879()
+static void advance_data_ptr()
 {
   cpu.di += cpu.bx;
   cpu.bx = 0;
@@ -3749,6 +3749,7 @@ static void sub_5868(struct resource *res)
 }
 
 // 0x57DB
+// Read's level data.
 static void sub_57DB()
 {
   uint8_t al;
@@ -3760,9 +3761,11 @@ static void sub_57DB()
 
   struct resource *r = resource_get_by_index(al);
   data_5521 = r->bytes;
-  data_5866 = r->bytes;
+  data_5866 = r->bytes; // UI header.
   cpu.di = 0;
+
   // 0x57F0
+  // Read first 4 bytes of level data.
   while (cpu.di < 4) {
     al = r->bytes[cpu.di];
     set_game_state(__func__, cpu.di + 0x21, al);
@@ -3777,7 +3780,7 @@ static void sub_57DB()
     data_5897[cpu.bx] = al;
     cpu.bx++;
   } while (al < 0x80);
-  sub_5879();
+  advance_data_ptr();
 
   // 0x5810
   cpu.si = 0;
@@ -3803,10 +3806,13 @@ static void sub_57DB()
   sub_5868(r);
   cpu.si = 8;
   sub_5868(r);
+
   // 0x583C
+  // Index of compressed level string (e.g. "Purgatory")
   cpu.ax = r->bytes[cpu.bx + cpu.di];
   cpu.ax += (r->bytes[cpu.bx + cpu.di + 1]) << 8;
   word_5864 = cpu.ax;
+
   cpu.di += 2;
   al = game_state.unknown[0x22];
   cpu.ax = al;
