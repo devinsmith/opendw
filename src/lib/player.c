@@ -237,7 +237,7 @@ struct player_record {
   struct spell_info spells;
 
   unsigned char unknown[8];
-  unsigned char status; // bitfield (0 = Ok, 1 = dead, 2 = chained, 4 = poisened)
+  unsigned char status; // bitfield (0 = Ok, 1 = dead, 2 = chained, 4 = poisoned)
   unsigned char unknown_byte; // always 0 ? 0x4D ?
   unsigned char gender; // 0 = male, 1 = female
   unsigned short level;
