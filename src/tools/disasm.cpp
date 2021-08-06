@@ -67,7 +67,7 @@ op_code op_codes[] = {
   { "gamestate[", op_12, 1 }, // op_12
   { "op_13", nullptr, 1 }, // op_13
   { "op_14", read_word, 0 }, // op_14
-  { nullptr, nullptr, 0 },
+  { "op_15", read_word, 0 }, // op_15
   { nullptr, nullptr, 0 },
   { "store_data_resource", nullptr, 1 }, // op_17
   { nullptr, nullptr, 0 },
@@ -103,7 +103,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "op_38", read_by_mode, 0 }, // op_38
-  { nullptr, nullptr, 0 },
+  { "op_39", nullptr, 1 },
   { "op_3A", nullptr, 1 }, // op_3A
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -139,13 +139,13 @@ op_code op_codes[] = {
   { "loop ret", nullptr, 0 }, // op_5A
   { nullptr, nullptr, 0 },
   { "loop call", read_word, 0 }, // op_5C
-  { "get_char_data", nullptr, 1 }, // op_5D
+  { "word_3AE2 = get_char_data", nullptr, 1 }, // op_5D
   { "set_char_prop", nullptr, 1 }, // op_5E
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_63", read_word, 0 }, // op_63
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "op_66", nullptr, 1 }, // op_66
@@ -175,8 +175,8 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "advance_cursor", nullptr, 1 }, // op_80
-  { "op_81", nullptr, 0 }, // op_81
-  { nullptr, nullptr, 0 },
+  { "op_81 word_3AE2", nullptr, 0 }, // op_81
+  { "op_82", nullptr, 1 }, // op_82
   { "write_number", nullptr, 0 }, // op_83
   { "malloc(word_3AE2)", nullptr, 0 }, // op_84
   { "resource_release", nullptr, 0 }, // op_85
