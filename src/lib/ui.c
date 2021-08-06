@@ -848,6 +848,7 @@ int sub_2752(uint8_t input)
 }
 
 // 0x2759
+// Checks boundaries of rectangle?
 int ui_adjust_rect(uint8_t input)
 {
   uint16_t ax, si;

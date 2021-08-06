@@ -269,7 +269,8 @@ struct timer_ctx {
 
 struct timer_ctx timers;
 
-unsigned char *data_2A68 = NULL;
+// 0x2A68
+unsigned char *escape_string_table = NULL;
 unsigned char *data_D760 = NULL;
 
 // XXX:How big should these be???
@@ -3280,7 +3281,7 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
     cpu.bx = cpu.bx & 0x3;
     al = draw_rect.w;
     al -= draw_rect.x;
-    al -= data_2A68[cpu.bx];
+    al -= escape_string_table[cpu.bx];
     if (al <= 0) {
       al = 0;
     }
@@ -3289,13 +3290,14 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
     draw_point.x = al;
     cpu.bx = cpu.bx << 1;
     bl = cpu.bx & 0xFF;
+    printf("%s: bl = 0x%02X\n", __func__, bl);
     // mov bx, [bx + 0x2A6C]
-    cpu.bx = data_2A68[bl + 4];
-    cpu.bx += data_2A68[bl + 5] << 8;
+    cpu.bx = escape_string_table[bl + 4];
+    cpu.bx += escape_string_table[bl + 5] << 8;
 
     printf("%s: cpu.bx = 0x%04X\n", __func__, cpu.bx);
 
-    cpu.bx = extract_string(data_2A68, (cpu.bx - 0x2A68), sub_3150);
+    cpu.bx = extract_string(escape_string_table, (cpu.bx - 0x2A68), sub_3150);
     ui_draw_string();
 
     bl = draw_point.y;
@@ -3303,7 +3305,7 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
     bl = bl >> 3;
     al = 0xFF;
     data_2AAA[bl] = 0xFF;
-    data_2AAA[bl + 25] = 0x9B;
+    data_2AAA[bl + 25] = 0x9B; // ESC?
   }
 
   // 0x2942
@@ -4928,7 +4930,7 @@ static void run_script(uint8_t script_index, uint16_t src_offset)
 
   while (!done) {
     // For debugging:
-    // offset = (uint16_t)(cpu.pc - cpu.base_pc);
+    offset = (uint16_t)(cpu.pc - cpu.base_pc);
 
     prev_op = op_code;
     // 0x3ACF
@@ -4964,8 +4966,10 @@ void run_engine()
 
   ui_set_background(0x0000); // Not correct.
 
+  // load common "ESC" string table (compressed bits).
+  escape_string_table = com_extract(0x2A68, 0x39);
+
   // load unknown data from COM file.
-  data_2A68 = com_extract(0x2A68, 0x39);
   data_5303 = com_extract(0x5303, 512); // XXX: Validate that this is 512 bytes
   data_D760 = com_extract(0xD760, 0x700);
   data_1E21 = com_extract(0x1E21, 0xEF);
