@@ -534,7 +534,6 @@ int main(int argc, char *argv[])
   if (argc == 3) {
     offset += atoi(argv[2]);
   }
-  printf("%d\n", argc);
 
   printf("Disassembling %s (%zu bytes)\n", argv[1], script.len);
 
