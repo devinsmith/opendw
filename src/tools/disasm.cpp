@@ -61,15 +61,15 @@ op_code op_codes[] = {
   { "op_0B", nullptr, 1 }, // op_0B
   { "op_0C", read_word, 0 }, // op_0C
   { "op_0D", read_word, 0 }, // op_0D
-  { nullptr, nullptr, 0 },
+  { "op_0E", nullptr, 0 }, // op_0E
   { "op_0F", nullptr, 1 }, // op_0F
-  { nullptr, nullptr, 0 },
+  { "op_10", nullptr, 2 }, // op_10
   { "gamestate[", op_11, 1 }, // op_11
   { "gamestate[", op_12, 1 }, // op_12
   { "op_13", nullptr, 1 }, // op_13
   { "op_14", read_word, 0 }, // op_14
   { "op_15", read_word, 0 }, // op_15
-  { nullptr, nullptr, 0 },
+  { "op_16", nullptr, 1 }, // op_16
   { "store_data_resource", nullptr, 1 }, // op_17
   { "op_18", nullptr, 2 }, // op_18
   { "op_19", nullptr, 2 }, // op_19
@@ -98,9 +98,9 @@ op_code op_codes[] = {
   { "op_30", read_by_mode, 0 }, // op_30
   { "op_31", nullptr, 1 }, // op_31
   { "op_32", read_by_mode, 0 }, // op_32
-  { nullptr, nullptr, 0 },
+  { "op_33", nullptr, 0 }, // op_33
   { "op_34", nullptr, 1 }, // op_34
-  { nullptr, nullptr, 0 },
+  { "op_35", nullptr, 0 }, // op_35
   { "op_36", nullptr, 0 }, // op_36
   { "op_37", nullptr, 0 }, // op_37
   { "op_38", read_by_mode, 0 }, // op_38
@@ -119,16 +119,16 @@ op_code op_codes[] = {
   { "jz", read_word, 0 }, // op_45
   { "js", read_word, 0 }, // op_46
   { "jns", read_word, 0 }, // op_47 jump not signed
-  { nullptr, nullptr, 0 },
+  { "op_48", nullptr, 1 }, // op_48
   { "loop", read_word, 0 }, // op_49
   { "if ", handle_if, 0 }, // op_4A
   { "stc", nullptr, 0 }, // op_4B, set carry
   { "clc", nullptr, 0 }, // op_4C, clear carry
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_4D", nullptr, 0 }, // op_4D
+  { "op_4E", nullptr, 0 }, // op_4E
   { "op_4F", nullptr, 1 }, // op_4F
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_51", read_word, 0 }, // op_51
   { "jmp", read_word, 0 }, // op_52
   { "call", read_word, 2 }, // op_53
   { "ret", nullptr, 0 }, // op_54
@@ -142,10 +142,10 @@ op_code op_codes[] = {
   { "loop call", read_word, 0 }, // op_5C
   { "word_3AE2 = get_char_data", nullptr, 1 }, // op_5D
   { "set_char_prop", nullptr, 1 }, // op_5E
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_5F", nullptr, 0 }, // op_5F
+  { "op_60", nullptr, 0 }, // op_60
   { "op_61", nullptr, 1 }, // op_61
-  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 }, // op_62
   { "op_63", read_word, 0 }, // op_63
   { "op_64", nullptr, 0 }, // op_64
   { "op_65", nullptr, 0 }, // op_65
@@ -171,7 +171,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { "extract_string", nullptr, 0 }, // op_7A
   { "ui_header", read_string_bytes, 0 }, // op_7B
-  { nullptr, nullptr, 0 },
+  { "ui_header_random_encounter", nullptr, 0 }, // op_7C
   { "write_character_name", nullptr, 0 }, // op_7D
   { "op_7E", nullptr, 1 }, // op_7e: XXX ?
   { nullptr, nullptr, 0 },
@@ -191,9 +191,9 @@ op_code op_codes[] = {
   { "op_8D", nullptr, 0 }, // op_8D: Read string??
   { nullptr, nullptr, 0 },
   { "op_8F", nullptr, 0 }, // op_8F
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_90", nullptr, 1 }, // op_90
+  { "op_91", nullptr, 0 }, // op_91
+  { "op_92", nullptr, 0 }, // op_92
   { "op_93", nullptr, 0 }, // op_93
   { "pop byte", nullptr, 0 }, // op_94
   { "ui_draw_string", nullptr, 0 }, // op_95
@@ -204,12 +204,12 @@ op_code op_codes[] = {
   { "op_9A", nullptr, 1 }, // op_9A
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_9D", nullptr, 2 }, // op_9D
   { "op_9E", nullptr, 0 }, // op_9E
   { nullptr, nullptr, 0 },
   { "op_A0", nullptr, 0 }, // op_A0
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_A2", nullptr, 0 }, // op_A2
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "op_A5", nullptr, 0 }, // op_A5 ?
@@ -221,14 +221,14 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
+  { "op_AE", nullptr, 0 }, // op_AE
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_B5", nullptr, 0 }, // op_B5
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "op_B8", nullptr, 0 }, // op_B8
@@ -247,7 +247,7 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_C8", nullptr, 0 }, // op_C8
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -261,13 +261,13 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
+  { "op_D6", nullptr, 0 }, // op_D6
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_DC", nullptr, 0 }, // op_DC
   { nullptr, nullptr, 0 },
   { "op_DE", nullptr, 0 }, // op_DE
   { nullptr, nullptr, 0 },
@@ -275,12 +275,19 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_E4", nullptr, 0 }, // op_E4
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "op_E8", nullptr, 0 }, // op_E8
   { nullptr, nullptr, 0 },
+  { "op_EA", nullptr, 0 }, // op_EA
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { nullptr, nullptr, 0 },
+  { "op_F0", nullptr, 0 }, // op_F0
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -292,16 +299,9 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_FC", nullptr, 0 }, // op_FC
+  { "op_FD", nullptr, 0 }, // op_FD
+  { "op_FE", nullptr, 0 }, // op_FE
   { "nop", nullptr, 0 } // op_FF
 };
 
@@ -518,7 +518,7 @@ static int load_resource(const unsigned char *args)
 
 int main(int argc, char *argv[])
 {
-  if (argc != 2) {
+  if (argc < 2) {
     fprintf(stderr, "Invalid argument, needs script file.\n");
     fprintf(stderr, "Example: ./disasm script.bin\n");
     exit(1);
@@ -530,10 +530,16 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
+  size_t offset = 0;
+  if (argc == 3) {
+    offset += atoi(argv[2]);
+  }
+  printf("%d\n", argc);
+
   printf("Disassembling %s (%zu bytes)\n", argv[1], script.len);
 
-  unsigned char *iter = script.bytes;
-  size_t i = 0;
+  unsigned char *iter = script.bytes + offset;
+  size_t i = offset;
   while (i < script.len) {
     unsigned char op = *iter;
 
