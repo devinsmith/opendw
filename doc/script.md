@@ -26,6 +26,7 @@ DATA1: Section 0 (initial game script) 1148 bytes.
        Section 71, 3689
 
        Section 3, 1706 (encounter)
+       Section 71, 0xe97 (Purgatory game start)
 
        Section ?, 395
 
