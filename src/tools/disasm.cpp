@@ -127,7 +127,7 @@ op_code op_codes[] = {
   { "op_4D", nullptr, 0 }, // op_4D
   { "op_4E", nullptr, 0 }, // op_4E
   { "op_4F", nullptr, 1 }, // op_4F
-  { nullptr, nullptr, 0 },
+  { "op_50", nullptr, 0 }, // op_50
   { "op_51", read_word, 0 }, // op_51
   { "jmp", read_word, 0 }, // op_52
   { "call", read_word, 2 }, // op_53
@@ -138,14 +138,14 @@ op_code op_codes[] = {
   { "load_resource", load_resource, 3 }, // op_58, loads 3 bytes, but 1 is byte, 1 is word.
   { "jmp ?", nullptr, 0 }, // op_59
   { "loop ret", nullptr, 0 }, // op_5A
-  { nullptr, nullptr, 0 },
+  { "op_5B", nullptr, 0 }, // op_5B
   { "loop call", read_word, 0 }, // op_5C
   { "word_3AE2 = get_char_data", nullptr, 1 }, // op_5D
   { "set_char_prop", nullptr, 1 }, // op_5E
   { "op_5F", nullptr, 0 }, // op_5F
   { "op_60", nullptr, 0 }, // op_60
   { "op_61", nullptr, 1 }, // op_61
-  { nullptr, nullptr, 0 }, // op_62
+  { "op_62", nullptr, 0 }, // op_62
   { "op_63", read_word, 0 }, // op_63
   { "op_64", nullptr, 0 }, // op_64
   { "op_65", nullptr, 0 }, // op_65
@@ -154,15 +154,15 @@ op_code op_codes[] = {
   { "op_68", nullptr, 1 }, // op_68
   { "op_69", nullptr, 1 }, // op_69
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_6B", nullptr, 0 }, // op_6B
   { "op_6C", nullptr, 0 }, // op_6C
   { "op_6D", nullptr, 0 }, // op_6D
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_6F", nullptr, 1 }, // op_6F
+  { "op_70", nullptr, 0 }, // op_70
   { "load_world", nullptr, 0 }, // op_71
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_73", nullptr, 0 }, // op_73
   { "draw_rectangle", nullptr, 4 }, // op_74
   { "draw_ui_full", nullptr, 0 }, // op_75
   { "draw_pattern", nullptr, 0 }, // op_76
@@ -202,49 +202,49 @@ op_code op_codes[] = {
   { "op_98", nullptr, 1 }, // op_98
   { "test word_3AE2", nullptr, 0 }, // op_99
   { "op_9A", nullptr, 1 }, // op_9A
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_9B", nullptr, 2 }, // op_9B
+  { "op_9C", nullptr, 0 }, // op_9C
   { "op_9D", nullptr, 2 }, // op_9D
   { "op_9E", nullptr, 0 }, // op_9E
-  { nullptr, nullptr, 0 },
+  { "op_9F", nullptr, 0 }, // op_9F
   { "op_A0", nullptr, 0 }, // op_A0
   { nullptr, nullptr, 0 },
   { "op_A2", nullptr, 0 }, // op_A2
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_A4", nullptr, 0 }, // op_A4
   { "op_A5", nullptr, 0 }, // op_A5 ?
+  { "op_A6", nullptr, 0 }, // op_A6
+  { "op_A7", nullptr, 0 }, // op_A7
+  { "op_A8", nullptr, 0 }, // op_A8
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_AC", nullptr, 0 }, // op_AC
   { nullptr, nullptr, 0 },
   { "op_AE", nullptr, 0 }, // op_AE
+  { "op_AF", nullptr, 0 }, // op_AF
+  { "op_B0", nullptr, 0 }, // op_B0
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_B2", nullptr, 0 }, // op_B2
+  { "op_B3", nullptr, 0 }, // op_B3
   { nullptr, nullptr, 0 },
   { "op_B5", nullptr, 0 }, // op_B5
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_B7", nullptr, 0 }, // op_B7
   { "op_B8", nullptr, 0 }, // op_B8
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_BC", nullptr, 0 }, // op_BC
+  { "op_BD", nullptr, 0 }, // op_BD
+  { "op_BE", nullptr, 0 }, // op_BE
   { nullptr, nullptr, 0 },
   { "op_C0", nullptr, 0 }, // op_C0
+  { "op_C1", nullptr, 0 }, // op_C1
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_C5", nullptr, 0 }, // op_C5
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "op_C8", nullptr, 0 }, // op_C8
@@ -254,10 +254,10 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_CF", nullptr, 0 }, // op_CF
   { "op_D0", nullptr, 0 }, // op_D0
   { "op_D1", nullptr, 0 }, // op_D1
-  { nullptr, nullptr, 0 },
+  { "op_D2", nullptr, 0 }, // op_D2
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
@@ -265,37 +265,37 @@ op_code op_codes[] = {
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_DA", nullptr, 0 }, // op_DA
   { nullptr, nullptr, 0 },
   { "op_DC", nullptr, 0 }, // op_DC
   { nullptr, nullptr, 0 },
   { "op_DE", nullptr, 0 }, // op_DE
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_E0", nullptr, 0 }, // op_E0
+  { "op_E1", nullptr, 0 }, // op_E1
+  { "op_E2", nullptr, 0 }, // op_E2
   { nullptr, nullptr, 0 },
   { "op_E4", nullptr, 0 }, // op_E4
-  { nullptr, nullptr, 0 },
+  { "op_E5", nullptr, 0 }, // op_E5
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "op_E8", nullptr, 0 }, // op_E8
   { nullptr, nullptr, 0 },
   { "op_EA", nullptr, 0 }, // op_EA
-  { nullptr, nullptr, 0 },
+  { "op_EB", nullptr, 0 }, // op_EB
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { "op_F0", nullptr, 0 }, // op_F0
+  { "op_F1", nullptr, 0 }, // op_F1
+  { nullptr, nullptr, 0 },
+  { "op_F3", nullptr, 0 }, // op_F3
+  { "op_F4", nullptr, 0 }, // op_F4
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
-  { nullptr, nullptr, 0 },
+  { "op_F8", nullptr, 0 }, // op_F8
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
   { nullptr, nullptr, 0 },
