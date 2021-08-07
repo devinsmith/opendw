@@ -2539,7 +2539,7 @@ static void sub_46A1(void)
   al = game_state.unknown[0x56];
   cpu.ax = (cpu.ax & 0xFF00) | al;
   // 0x3AA0
-  run_script(al, cpu.bx);
+  run_script(al, cpu.bx); // run level script?
 }
 
 
@@ -3750,7 +3750,7 @@ static void sub_5868(struct resource *res)
 
 // 0x57DB
 // Read's level data.
-static void sub_57DB()
+static void read_level_metadata()
 {
   uint8_t al;
 
@@ -3774,6 +3774,7 @@ static void sub_57DB()
   // 0x57FF
   cpu.bx = 0;
 
+  // Read next bytes into 0x5897 until we hit byte > 0x80
   do {
     // 0x5801
     al = r->bytes[cpu.bx + cpu.di];
@@ -3822,7 +3823,9 @@ static void sub_57DB()
   al = al << 1;
   al += game_state.unknown[0x21];
   cpu.ax = al;
+
   // 0x5858
+  // The final bytes loaded here are the offsets of the script.
   do {
     data_5A04[cpu.si] = cpu.di & 0xFF;
     data_5A04[cpu.si + 1] = (cpu.di & 0xFF00) >> 8;
@@ -3945,6 +3948,7 @@ static void sub_4FD9()
     cpu.dx = 0;
 
     // 0x500A
+    // Loop through level data, populate important events?
     do {
       do {
         push_word(cpu.dx);
@@ -4074,13 +4078,15 @@ static void sub_5764()
         exit(1);
       }
       // 0x578A
+      // Load level resource
       bl = game_state.unknown[2];
       cpu.bx = bl;
       cpu.bx += 0x46;
       al = 1;
       struct resource *r = resource_load(cpu.bx);
       set_game_state(__func__, 0x56, r->index);
-      sub_57DB();
+
+      read_level_metadata();
       // 579E
       sub_4FD9();
       // 0x57A1
@@ -4093,7 +4099,7 @@ static void sub_5764()
       set_game_state(__func__, 0xbc, 0);
     }
     // 0x57AB
-    sub_57DB();
+    read_level_metadata();
     al = game_state.unknown[2];
     set_game_state(__func__, 4, al);
     set_game_state(__func__, 0x57, al);

@@ -26,6 +26,8 @@
 // It starts at address 0x3860
 struct game_state game_state = {0};
 
+// Offsets 33, 34, 35, 36 hold first 4 bytes of level data.
+
 void set_game_state(const char *func_src, int offset, unsigned char value)
 {
   log_trace("%s: [%d] = 0x%02X (%s)", __func__, offset, value, func_src);
