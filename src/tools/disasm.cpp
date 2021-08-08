@@ -109,7 +109,7 @@ op_code op_codes[] = {
   { "op_3B", nullptr, 0 }, // op_3B
   { "op_3C", nullptr, 0 }, // op_3C
   { "op_3D", nullptr, 1 }, // op_3D
-  { "op_3E", read_by_mode, 0 }, // op_3E
+  { "cmp word_3EA2,", read_by_mode, 0 }, // op_3E
   { "check_gamestate", nullptr, 1 }, // op_3F
   { "op_40", nullptr, 1 }, // op_40
   { "jnc", read_word, 0 }, // op_41
@@ -136,7 +136,7 @@ op_code op_codes[] = {
   { "push (word|byte)", nullptr, 0 }, // op_56
   { "op_57_res", nullptr, 3 }, // op_57
   { "load_resource", load_resource, 3 }, // op_58, loads 3 bytes, but 1 is byte, 1 is word.
-  { "jmp ?", nullptr, 0 }, // op_59
+  { "retf", nullptr, 0 }, // op_59, return far
   { "loop ret", nullptr, 0 }, // op_5A
   { "op_5B", nullptr, 0 }, // op_5B
   { "loop call", read_word, 0 }, // op_5C
