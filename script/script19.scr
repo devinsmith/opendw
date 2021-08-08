@@ -25,7 +25,7 @@ Disassembling script19.bin (1394 bytes)
         gamestate[0x3E] = 0
 0x0072: draw_ui_full
 0x0073: clc
-0x0074: jmp ?
+0x0074: retf
 0x0075: draw_rectangle 0x0a, 0x30, 0x1e, 0x70
 0x007A: set_msg $("Several gladiators bearing recent battle scars block your way. "You may only enter once!"")
 0x00B5: jmp 0x006c
@@ -68,7 +68,7 @@ Disassembling script19.bin (1394 bytes)
         gamestate[0x3E] = 0
 0x023D: draw_ui_full
 0x023E: stc
-0x023F: jmp ?
+0x023F: retf
 0x0240: op_63 0x0244
 0x0243: loop ret
 0x0244: inc [mem] 0x41
@@ -88,7 +88,7 @@ Disassembling script19.bin (1394 bytes)
 0x0313: wait_escape
 0x0314: draw_ui_full
 0x0315: op_73
-0x0316: jmp ?
+0x0316: retf
 0x0317: draw_rectangle 0x04, 0x30, 0x24, 0x80
 0x031C: set_msg $("Stripped of all possessions and wealth, you've been dropped naked and defenseless into the slums of Purgatory by order of Namtar, the Beast From The Pit.")
 0x0382: wait_escape
@@ -96,7 +96,7 @@ Disassembling script19.bin (1394 bytes)
 0x03BD: wait_escape
 0x03BE: draw_ui_full
 0x03BF: op_73
-0x03C0: jmp ?
+0x03C0: retf
 0x03C1: op_73
 0x03C2: op_9D 0x25, 0x99
 0x03C5: jnz 0x0458
@@ -115,7 +115,7 @@ Disassembling script19.bin (1394 bytes)
 0x0437: set_msg $(""Enjoy your meager existence amongst us!"")
 0x0455: wait_escape
 0x0456: draw_ui_full
-0x0457: jmp ?
+0x0457: retf
 0x0458: draw_rectangle 0x04, 0x28, 0x24, 0x78
 0x045D: load_resource res: 0x08, offset: 0x0015
 0x0461: op_4D
@@ -140,7 +140,7 @@ Disassembling script19.bin (1394 bytes)
 0x0565: op_0D 0x0311
 0x0568: gamestate[0x3d] = 0
         gamestate[0x3E] = 0
-0x056A: jmp ?
+0x056A: retf
 0x056B: word_3AE2 = 0x5808
 0x056E: set_gamestate: idx = 0x0f
 0x0570: .word
