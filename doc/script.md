@@ -2,7 +2,8 @@
 
 Much of the Dragon Wars game is implemented by various game scripts that execute on a virtual CPU. This
 virtual CPU, can run in both 8 bit or 16 bit mode. The virtual CPU has at most 256 op codes. This virtual CPU
-is implemented inside engine.c
+is implemented inside engine.c. Op codes take a variable number of arguments and writing a disassembler is
+difficult because the word/byte mode may switch before a jump is taken.
 
 Not much is known about the CPU but it may be somewhat similar to the 65C816 processor considering the game
 was originally authored on the Apple II GS.
