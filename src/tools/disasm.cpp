@@ -111,7 +111,7 @@ op_code op_codes[] = {
   { "op_3D", nullptr, 1 }, // op_3D
   { "cmp word_3EA2,", read_by_mode, 0 }, // op_3E
   { "check_gamestate", nullptr, 1 }, // op_3F
-  { "op_40", nullptr, 1 }, // op_40
+  { "cmp word_3AE4,", nullptr, 1 }, // op_40
   { "jnc", read_word, 0 }, // op_41
   { "jc", read_word, 0 },  // op_42
   { "jmp_XXX", read_word, 0 }, // op_43
