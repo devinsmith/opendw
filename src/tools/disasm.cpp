@@ -32,6 +32,7 @@ static int wait_event(const unsigned char *args);
 static int read_by_mode(const unsigned char *args);
 static int handle_if(const unsigned char *args);
 static int read_byte_array_index(const unsigned char *args);
+static int op_0F(const unsigned char *args);
 static int op_11(const unsigned char *args);
 static int op_12(const unsigned char *args);
 static int op_1A(const unsigned char *args);
@@ -62,7 +63,7 @@ op_code op_codes[] = {
   { "op_0C", read_word, 0 }, // op_0C
   { "op_0D", read_word, 0 }, // op_0D
   { "op_0E", nullptr, 0 }, // op_0E
-  { "op_0F", nullptr, 1 }, // op_0F
+  { "var offset =", op_0F, 1 }, // op_0F
   { "op_10", nullptr, 2 }, // op_10
   { "gamestate[", op_11, 1 }, // op_11
   { "gamestate[", op_12, 1 }, // op_12
@@ -457,6 +458,19 @@ static int read_byte_array_index(const unsigned char *args)
 {
   unsigned char ch = *args++;
   printf("0x%02X]", ch);
+
+  return 1;
+}
+
+static int op_0F(const unsigned char *args)
+{
+  unsigned char ch = *args++;
+
+  printf(" gamestate[0x%02X]\n", ch);
+  printf("        offset += gamestate[0x%02X] << 8\n", ch + 1);
+  printf("        offset += word_3AE4\n");
+  printf("        word_3AE2 = resource_idx(gamestate[0x%02X])->bytes[offset]\n", ch + 2);
+  printf("        word_3AE2 += resource_idx(gamestate[0x%02X])->bytes[offset + 1] << 8", ch + 2);
 
   return 1;
 }
