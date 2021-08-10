@@ -37,6 +37,7 @@ static int op_11(const unsigned char *args);
 static int op_12(const unsigned char *args);
 static int op_1A(const unsigned char *args);
 static int op_1C(const unsigned char *args);
+static int op_9A(const unsigned char *args);
 static int load_resource(const unsigned char *args);
 
 static bool word_mode = false;
@@ -51,8 +52,8 @@ op_code op_codes[] = {
   { ".word", set_word, 0 }, // op_00
   { ".byte", set_byte, 0 }, // op_01
   { "op_02", nullptr, 0 }, // op_02
-  { "op_03", nullptr, 0 }, // op_03
-  { "push byte_3AE9", nullptr, 0 }, // op_04
+  { "data_res = resource_get(pop_byte())", nullptr, 0 }, // op_03
+  { "push_byte(running_script_idx)", nullptr, 0 }, // op_04
   { "word_3AE4 = gamestate[", read_byte_array_index, 1 }, // op_05
   { "set loop =", nullptr, 1 }, // op_06
   { "word_3AE4 = 0", nullptr, 0 }, // op_07
@@ -116,8 +117,8 @@ op_code op_codes[] = {
   { "jnc", read_word, 0 }, // op_41
   { "jc", read_word, 0 },  // op_42
   { "jmp_XXX", read_word, 0 }, // op_43
-  { "jnz", read_word, 0 }, // op_44
-  { "jz", read_word, 0 }, // op_45
+  { "jz", read_word, 0 }, // op_44
+  { "jnz", read_word, 0 }, // op_45
   { "js", read_word, 0 }, // op_46
   { "jns", read_word, 0 }, // op_47 jump not signed
   { "op_48", nullptr, 1 }, // op_48
@@ -195,14 +196,14 @@ op_code op_codes[] = {
   { "op_90", nullptr, 1 }, // op_90
   { "op_91", nullptr, 0 }, // op_91
   { "op_92", nullptr, 0 }, // op_92
-  { "op_93", nullptr, 0 }, // op_93
+  { "push_byte(word_3AE4 & 0xFF)", nullptr, 0 }, // op_93
   { "pop byte", nullptr, 0 }, // op_94
   { "ui_draw_string", nullptr, 0 }, // op_95
   { "draw_padded_string", nullptr, 0 }, // op_96
   { "load_char_data", nullptr, 1 }, // op_97
   { "op_98", nullptr, 1 }, // op_98
   { "test word_3AE2", nullptr, 0 }, // op_99
-  { "op_9A", nullptr, 1 }, // op_9A
+  { "gamestate[", op_9A, 1 }, // op_9A
   { "op_9B", nullptr, 2 }, // op_9B
   { "op_9C", nullptr, 0 }, // op_9C
   { "op_9D", nullptr, 2 }, // op_9D
@@ -508,6 +509,17 @@ static int op_11(const unsigned char *args)
 
   if (word_mode)
     printf("\n        gamestate[0x%02X] = 0", idx + 1);
+
+  return 1;
+}
+
+static int op_9A(const unsigned char *args)
+{
+  unsigned char idx = *args++;
+  printf("0x%02x] = 0xFF", idx);
+
+  if (word_mode)
+    printf("\n        gamestate[0x%02X] = 0xFF", idx + 1);
 
   return 1;
 }
