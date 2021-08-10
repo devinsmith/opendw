@@ -130,7 +130,7 @@ op_code op_codes[] = {
   { "clc", nullptr, 0 }, // op_4C, clear carry
   { "op_4D", nullptr, 0 }, // op_4D
   { "op_4E", nullptr, 0 }, // op_4E
-  { "op_4F", nullptr, 1 }, // op_4F
+  { "clear_bit game_state", nullptr, 1 }, // op_4F
   { "op_50", nullptr, 0 }, // op_50
   { "op_51", read_word, 0 }, // op_51
   { "jmp", read_word, 0 }, // op_52

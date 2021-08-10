@@ -190,7 +190,7 @@ Disassembling script0.bin (1148 bytes)
 
 0x0312: ui_header $("Loading...")
 0x031B: call 0x0463
-0x031E: op_0C 0x03cb
+0x031E: op_0C 0x03cb # Loads word_3AE2 with 0x3CB in this script, so 0xFF
 0x0321: test word_3AE2
 0x0322: js 0x0326
 0x0325: op_1F
@@ -436,11 +436,14 @@ Disassembling script0.bin (1148 bytes)
 0x0462: loop ret # Return back to 447.
 
 # Initializes some sort of game state.
+# Clears bits in game_state[0xa3-0xa5]
 0x0463: set loop = 0x09
 0x0465: word_3AE2 = 0x57
 0x0467: op_4F 0x99
 0x0469: inc word_3AE2
 0x046A: loop 0x0467
+
+# word_3AE2 is now 0x61
 0x046D: var al = game_state[6]
         for (game_state[6] < game_state[0x1F]; game_state[6]++) {
           call 0x0471
@@ -451,6 +454,7 @@ Disassembling script0.bin (1148 bytes)
 0x0471: word_3AE2 = get_char_data 0x4d
 0x0473: test word_3AE2
 0x0474: jz 0x047b
-0x0477: op_30 0x4e56
+0x0477: op_30 0x56
+0x0479: op_4E
 0x047A: test word_3AE2
 0x047B: loop ret
