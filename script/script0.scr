@@ -19,12 +19,20 @@ Disassembling script0.bin (1148 bytes)
 0x0090: call 0x03cc
 0x0093: draw_rectangle 0x04, 0x20, 0x24, 0x98
 0x0098: set_msg $("Current party...\r\r")
-0x00A6: loop call 0x00f6
+0x00A6: var al = game_state[6]
+        for (game_state[6] < game_state[0x1F]; game_state[6]++) {
+          call 0x00F6
+        }
+        game_state[6] = al
 0x00A9: word_3AE4 = gamestate[0x1F]
 0x00AB: cmp word_3AE4, 0x07
 0x00AD: jz 0x00cf
 0x00B0: gamestate[0x41] = 0
-0x00B2: loop call 0x00ed
+0x00B2: var al = game_state[6]
+        for (game_state[6] < game_state[0x1F]; game_state[6]++) {
+          call 0x00ED
+        }
+        game_state[6] = al
 0x00B5: word_3AE4 = gamestate[0x41]
 0x00B7: cmp word_3AE4, 0x04
 0x00B9: jc 0x00cf
@@ -64,14 +72,14 @@ Disassembling script0.bin (1148 bytes)
 0x015B: call 0x0161
 0x015E: jmp 0x0104
 0x0161: stc
-0x0162: op_66 0xc6
+0x0162: test game_state[0xC6]
 0x0164: jz 0x017c
 0x0167: word_3AE4 = 0
 0x0168: op_0B 0xc6
 0x016A: test word_3AE2
 0x016B: jz 0x0174
 0x016E: op_98 0x00
-0x0170: if byte_3AE4 != 0x0C jmp 0x0168
+0x0170: if ++byte_3AE4 != 0x0C jmp 0x0168
 0x0174: dec [mem]
 0x0175: load_char_data 0x00
 0x0177: op_38 0x7f
@@ -107,7 +115,7 @@ Disassembling script0.bin (1148 bytes)
 0x01FE: op_13 0x0b
 0x0200: inc reg
 0x0201: jmp 0x01eb
-0x0204: op_26 0x1f
+0x0204: dec game_state[0x1F]
 0x0206: wait_escape
 0x0207: jmp 0x0093
 0x020A: op_19 0x1f, 0x06
@@ -116,7 +124,7 @@ Disassembling script0.bin (1148 bytes)
 0x0211: op_98 0x00
 0x0213: loop 0x0211
 0x0216: set loop = 0x0b
-0x0218: set_gamestate: idx = 0x07
+0x0218: gamestate[0x07] = word_3AE4
 0x021A: op_69 0x0b
 0x021C: loop 0x0218
 0x021F: draw_rectangle 0x0c, 0x38, 0x1c, 0x68
@@ -164,7 +172,7 @@ Disassembling script0.bin (1148 bytes)
 
 # We jump here to Begin the game.
 0x02DF: draw_ui_full
-0x02E0: op_66 0x1f
+0x02E0: test game_state[0x1F]
 0x02E2: jnz 0x0312
 
 0x02E5: draw_rectangle 0x09, 0x40, 0x1f, 0x70
@@ -297,9 +305,9 @@ Disassembling script0.bin (1148 bytes)
         word_3AE2 += resource_idx(gamestate[0x98])->bytes[offset + 1] << 8
 0x03B2: store_data_resource 0x54
 0x03B4: loop 0x03b0
-0x03B7: op_26 0x55
-0x03B9: op_26 0x97
-0x03BB: op_66 0x55
+0x03B7: dec game_state[0x55]
+0x03B9: dec game_state[0x97]
+0x03BB: test game_state[0x55]
 0x03BD: jns 0x03b0
 0x03C0: word_3AE2 = gamestate[0x98]
 0x03C2: resource_release
@@ -358,7 +366,7 @@ Disassembling script0.bin (1148 bytes)
 0x0414: .word
 0x0415: set loop = 0x00
 0x0417: word_3AE2 = 0x0000
-0x041D: memcpy(data_res + word_3AE2, data_D760, 0x700);
+0x041A: memcpy(data_res + word_3AE2, data_D760, 0x700);
 
 # Restore script as data resource
 0x041B: .byte
@@ -371,40 +379,53 @@ Disassembling script0.bin (1148 bytes)
 0x0420: word_3AE2 = 0x00
 0x0422: store_data_resource 0x96
 0x0424: loop 0x0422
-0x0427: op_26 0x97
-0x0429: op_66 0x97
+0x0427: dec game_state[0x97]
+0x0429: test game_state[0x97]
 0x042B: jnz 0x0422
 
-
+# Zero out bytes 0x50 -> 0x255, keeping 0x00-0x4F from data_D760
 0x042E: set loop = 0x50
 0x0430: store_data_resource 0x96
-0x0432: if byte_3AE4 != 0x00 jmp 0x0430
+0x0432: if ++byte_3AE4 != 0x00 jmp 0x0430
+
+# Take our allocated memory and copy it back to data_D760
 0x0436: word_3AE4 = gamestate[0x98]
 0x0438: push_byte(word_3AE4 & 0xFF)
 0x0439: data_res = resource_get(pop_byte())
 0x043A: .word
 0x043B: set loop = 0xff
 0x043D: word_3AE2 = 0x0000
-0x0440: memcpy 0x700
+0x0440: memcpy(data_D760, data_res + word_3AE2, 0x700);
+
+# Since the allocated memory is copied back to data_D760, we can release it.
 0x0441: .byte
 0x0442: push_byte(running_script_idx)
 0x0443: data_res = resource_get(pop_byte())
 0x0444: word_3AE2 = gamestate[0x98]
 0x0446: resource_release
-0x0447: loop call 0x044f
+
+
+0x0447: var al = game_state[6]
+        for (game_state[6] < game_state[0x1F]; game_state[6]++) {
+          call 0x044F
+        }
+        game_state[6] = al
 0x044A: word_3ADF[0x03cb] = 0xff
 0x044E: ret
 
+# Copies character offset info to CA4C ?
 0x044F: set loop = 0x0b
 0x0451: word_3AE2 = 0x00
-0x0453: set_gamestate: idx = 0x07
+0x0453: gamestate[0x07] = word_3AE4
 0x0455: op_69 0x0b
 0x0457: loop 0x0453
+
+# Clear out some character properties, I think XP and gold
 0x045A: .word
 0x045B: word_3AE2 = 0x0000
 0x045E: set_char_prop 0x55
 0x0460: set_char_prop 0x57
-0x0462: loop ret
+0x0462: loop ret # Return back to 447.
 
 # Initializes some sort of game state.
 0x0463: set loop = 0x09
@@ -412,7 +433,11 @@ Disassembling script0.bin (1148 bytes)
 0x0467: op_4F 0x99
 0x0469: inc word_3AE2
 0x046A: loop 0x0467
-0x046D: loop call 0x0471
+0x046D: var al = game_state[6]
+        for (game_state[6] < game_state[0x1F]; game_state[6]++) {
+          call 0x0471
+        }
+        game_state[6] = al
 0x0470: ret
 
 0x0471: word_3AE2 = get_char_data 0x4d

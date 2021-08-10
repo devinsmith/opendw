@@ -32,6 +32,7 @@ static int wait_event(const unsigned char *args);
 static int read_by_mode(const unsigned char *args);
 static int handle_if(const unsigned char *args);
 static int read_byte_array_index(const unsigned char *args);
+static int op_08(const unsigned char *args);
 static int op_0F(const unsigned char *args);
 static int op_11(const unsigned char *args);
 static int op_12(const unsigned char *args);
@@ -39,6 +40,7 @@ static int op_1A(const unsigned char *args);
 static int op_1C(const unsigned char *args);
 static int op_9A(const unsigned char *args);
 static int load_resource(const unsigned char *args);
+static int for_call(const unsigned char *args);
 
 static bool word_mode = false;
 
@@ -57,7 +59,7 @@ op_code op_codes[] = {
   { "word_3AE4 = gamestate[", read_byte_array_index, 1 }, // op_05
   { "set loop =", nullptr, 1 }, // op_06
   { "word_3AE4 = 0", nullptr, 0 }, // op_07
-  { "set_gamestate: idx =", nullptr, 1 }, // op_08
+  { "gamestate[", op_08, 1 }, // op_08
   { "word_3AE2 =", read_by_mode, 0 }, // op_09
   { "word_3AE2 = gamestate[", read_byte_array_index, 1 }, // op_0A
   { "op_0B", nullptr, 1 }, // op_0B
@@ -87,7 +89,7 @@ op_code op_codes[] = {
   { "inc [mem]", nullptr, 1 }, // op_23
   { "inc word_3AE2", nullptr, 0 }, // op_24
   { "inc reg", nullptr, 0 }, // op_25
-  { "op_26", nullptr, 1 }, // op_26
+  { "dec game_state[", read_byte_array_index, 1 }, // op_26
   { "op_27", nullptr, 0 }, // op_27
   { "dec [mem]", nullptr, 0 }, // op_28
   { "op_29", nullptr, 0 }, // op_29
@@ -141,7 +143,7 @@ op_code op_codes[] = {
   { "retf", nullptr, 0 }, // op_59, return far
   { "loop ret", nullptr, 0 }, // op_5A
   { "op_5B", nullptr, 0 }, // op_5B
-  { "loop call", read_word, 0 }, // op_5C
+  { "var al = game_state[6]", for_call, 0 }, // op_5C
   { "word_3AE2 = get_char_data", nullptr, 1 }, // op_5D
   { "set_char_prop", nullptr, 1 }, // op_5E
   { "op_5F", nullptr, 0 }, // op_5F
@@ -151,7 +153,7 @@ op_code op_codes[] = {
   { "op_63", read_word, 0 }, // op_63
   { "op_64", nullptr, 0 }, // op_64
   { "op_65", nullptr, 0 }, // op_65
-  { "op_66", nullptr, 1 }, // op_66
+  { "test game_state[", read_byte_array_index, 1 }, // op_66
   { "op_67", nullptr, 0 }, // op_67
   { "op_68", nullptr, 1 }, // op_68
   { "op_69", nullptr, 1 }, // op_69
@@ -382,6 +384,21 @@ static int read_word(const unsigned char *args)
   return 2;
 }
 
+static int for_call(const unsigned char *args)
+{
+  uint16_t word = *args++;
+  word += *args++ << 8;
+
+  printf("\n        for (game_state[6] < game_state[0x1F]; game_state[6]++) {");
+  printf("\n          call 0x%04X", word);
+  printf("\n        }");
+  printf("\n        game_state[6] = al");
+
+  word_mode = false;
+
+  return 2;
+}
+
 static int wait_event(const unsigned char *args)
 {
   int count = 0;
@@ -446,7 +463,7 @@ static int read_by_mode(const unsigned char *args)
 static int handle_if(const unsigned char *args)
 {
   unsigned char ch = *args++;
-  printf("byte_3AE4 != 0x%02X ", ch);
+  printf("++byte_3AE4 != 0x%02X ", ch);
   uint16_t word = *args++;
   word += *args++ << 8;
 
@@ -460,6 +477,12 @@ static int read_byte_array_index(const unsigned char *args)
   unsigned char ch = *args++;
   printf("0x%02X]", ch);
 
+  return 1;
+}
+
+static int op_08(const unsigned char *args)
+{
+  printf("0x%02x] = word_3AE4", *args++);
   return 1;
 }
 
