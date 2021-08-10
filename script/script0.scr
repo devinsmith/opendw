@@ -345,6 +345,7 @@ Disassembling script0.bin (1148 bytes)
 0x0402: gamestate[0x5a] = 0xFF
 0x0404: gamestate[0x56] = 0xFF
 
+# Allocate new memory and copy data_D760 to it.
 0x0406: .word
 0x0407: word_3AE2 = 0x0700
 0x040A: malloc(word_3AE2)
@@ -357,10 +358,15 @@ Disassembling script0.bin (1148 bytes)
 0x0414: .word
 0x0415: set loop = 0x00
 0x0417: word_3AE2 = 0x0000
-0x041A: memcpy 0x700
+0x041D: memcpy(data_res + word_3AE2, data_D760, 0x700);
+
+# Restore script as data resource
 0x041B: .byte
 0x041C: push_byte(running_script_idx)
 0x041D: data_res = resource_get(pop_byte())
+
+# Zero out all bytes from 0x100 to 0x700, exclude
+# first 255 bytes that we allocated earlier.
 0x041E: set loop = 0xff
 0x0420: word_3AE2 = 0x00
 0x0422: store_data_resource 0x96
@@ -368,6 +374,8 @@ Disassembling script0.bin (1148 bytes)
 0x0427: op_26 0x97
 0x0429: op_66 0x97
 0x042B: jnz 0x0422
+
+
 0x042E: set loop = 0x50
 0x0430: store_data_resource 0x96
 0x0432: if byte_3AE4 != 0x00 jmp 0x0430
@@ -386,6 +394,7 @@ Disassembling script0.bin (1148 bytes)
 0x0447: loop call 0x044f
 0x044A: word_3ADF[0x03cb] = 0xff
 0x044E: ret
+
 0x044F: set loop = 0x0b
 0x0451: word_3AE2 = 0x00
 0x0453: set_gamestate: idx = 0x07
