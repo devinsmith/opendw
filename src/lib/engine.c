@@ -423,7 +423,7 @@ static void op_47();
 static void op_48();
 static void loop(); // 49
 static void op_4A();
-static void op_4B();
+static void op_stc();
 static void op_4C();
 static void op_4D();
 static void op_4F();
@@ -558,14 +558,14 @@ struct op_call_table targets[] = {
   { op_41, "0x407C" },
   { op_42, "0x4085" },
   { NULL, "0x408E" },
-  { op_jnz, "0x4099" },
-  { op_jz, "0x40A3" },
+  { op_jz, "0x4099" },
+  { op_jnz, "0x40A3" },
   { op_js, "0x40AF" },
   { op_47, "0x40B8" },
   { op_48, "0x40ED" },
   { loop, "0x4106" },
   { op_4A, "0x4113" },
-  { op_4B, "0x4122" },
+  { op_stc, "0x4122" },
   { op_4C, "0x412A" },
   { op_4D, "0x4132" },
   { NULL, "0x414B" },
@@ -969,6 +969,7 @@ static void op_0F(void)
   al = *cpu.pc++;
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.bx = cpu.ax;
+
   // load di properly...
   printf("OP_0F: BX: 0x%04X\n", cpu.bx);
   cpu.di = game_state.unknown[cpu.bx];
@@ -1754,7 +1755,7 @@ static void op_42(void)
 // 0x4099
 // op_44
 // Jump on non-zero flag.
-static void op_jnz(void)
+static void op_jz(void)
 {
   if ((word_3AE6 & ZERO_FLAG_MASK) == 0) {
     cpu.pc++;
@@ -1771,7 +1772,7 @@ static void op_jnz(void)
 // 0x40A3
 // op_45
 // Jump on zero flag.
-static void op_jz(void)
+static void op_jnz(void)
 {
   if ((word_3AE6 & ZERO_FLAG_MASK) != 0) {
     cpu.pc++;
@@ -1877,9 +1878,9 @@ static void op_4A(void)
 }
 
 // 0x4122
-static void op_4B(void)
+static void op_stc()
 {
-  word_3AE6 |= 0x0001;
+  word_3AE6 |= CARRY_FLAG_MASK;
 }
 
 // 0x412A
