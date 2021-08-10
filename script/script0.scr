@@ -24,18 +24,23 @@ Disassembling script0.bin (1148 bytes)
           call 0x00F6
         }
         game_state[6] = al
+
+# Don't allow user to create new party members if we already have 7.
 0x00A9: word_3AE4 = gamestate[0x1F]
 0x00AB: cmp word_3AE4, 0x07
 0x00AD: jz 0x00cf
+
 0x00B0: gamestate[0x41] = 0
 0x00B2: var al = game_state[6]
         for (game_state[6] < game_state[0x1F]; game_state[6]++) {
           call 0x00ED
         }
         game_state[6] = al
+
 0x00B5: word_3AE4 = gamestate[0x41]
 0x00B7: cmp word_3AE4, 0x04
 0x00B9: jc 0x00cf
+
 0x00BC: set_msg $("\rCreate character\r")
 0x00CA: word_3AE2 = 0xc3
 0x00CC: jmp 0x00d1
@@ -43,11 +48,13 @@ Disassembling script0.bin (1148 bytes)
 0x00D1: op_14 0x00e3
 0x00D4: set_msg $("\rBegin the game")
 0x00E0: wait_event 0x0000, 'C', 0x020a, 'B', 0x02df, 0x01, 0x04, 0x01, 0xff
+
 0x00ED: word_3AE2 = get_char_data 0x4d
 0x00EF: test word_3AE2
 0x00F0: jnz 0x00f5
-0x00F3: inc [mem] 0x41
+0x00F3: inc game_state[0x41]
 0x00F5: loop ret
+
 0x00F6: word_3AE2 = gamestate[0x06]
 0x00F8: op_30 0x31
 0x00FA: write_number
@@ -56,6 +63,7 @@ Disassembling script0.bin (1148 bytes)
 0x0100: word_3AE2 = 0x8d
 0x0102: write_number
 0x0103: loop ret
+
 0x0104: draw_rectangle 0x04, 0x20, 0x24, 0x98
 0x0109: set_msg $("Do you wish to..\r\rDelete ")
 0x011C: write_character_name
@@ -167,7 +175,7 @@ Disassembling script0.bin (1148 bytes)
 0x02D5: set_char_prop 0x14
 0x02D7: set_char_prop 0x18
 0x02D9: .byte
-0x02DA: inc [mem] 0x1f
+0x02DA: inc game_state[0x1F]
 0x02DC: jmp 0x0093
 
 # We jump here to Begin the game.
@@ -214,8 +222,8 @@ Disassembling script0.bin (1148 bytes)
         word_3AE2 += resource_idx(gamestate[0x98])->bytes[offset + 1] << 8
 0x033C: store_data_resource 0x41
 0x033E: loop 0x033a
-0x0341: inc [mem] 0x42
-0x0343: inc [mem] 0x97
+0x0341: inc game_state[0x42]
+0x0343: inc game_state[0x97]
 0x0345: word_3AE2 = gamestate[0x42]
 0x0347: cmp word_3EA2, 0x0e
 0x0349: jnc 0x033a

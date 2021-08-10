@@ -86,7 +86,7 @@ op_code op_codes[] = {
   { "NOP_XXX", nullptr, 0 }, // op_20
   { "op_21", nullptr, 0 }, // op_21
   { "word_3AE2 = word_3AE4", nullptr, 0 }, // op_22
-  { "inc [mem]", nullptr, 1 }, // op_23
+  { "inc game_state[", read_byte_array_index, 1 }, // op_23
   { "inc word_3AE2", nullptr, 0 }, // op_24
   { "inc reg", nullptr, 0 }, // op_25
   { "dec game_state[", read_byte_array_index, 1 }, // op_26
