@@ -5,7 +5,7 @@ Example of Purgatory:
 
 First 4 bytes of level file:
 
-0x22, 0x22, 0x1c, 0x64
+0x22, 0x22, 0x1c, 0x64, these are loaded into gamestate [0x21 - 0x24]
 
 Next bytes are variable, read until hitting >  0x80:
 
