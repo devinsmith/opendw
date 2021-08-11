@@ -412,13 +412,53 @@ static int wait_event(const unsigned char *args)
   uint8_t ch = *args++;
   count = 2;
 
+  const char *key_desc = nullptr;
+
   while (ch != 0xff) {
     bool printable = isprint(ch & 0x7f);
-    if (!printable && ch != 0x9B) {
+    switch (ch) {
+    case 0:
+      printable = true;
+      key_desc = "Unknown";
+      break;
+    case 1:
+      printable = true;
+      key_desc = "#[1-7]";
+      break;
+    case 0x9B:
+      printable = true;
+      key_desc = "ESC";
+      break;
+    case 0x88:
+      printable = true;
+      key_desc = "LEFT";
+      break;
+    case 0x8A:
+      printable = true;
+      key_desc = "DOWN";
+      break;
+    case 0x8B:
+      printable = true;
+      key_desc = "UP";
+      break;
+    case 0x8D:
+      printable = true;
+      key_desc = "ENTER";
+      break;
+    case 0x95:
+      printable = true;
+      key_desc = "RIGHT";
+      break;
+    default:
+      key_desc = nullptr;
+      break;
+    }
+
+    if (!printable) {
       printf(", 0x%02x", ch);
     } else {
-      if (ch == 0x9B) {
-        printf(", \"ESC\",");
+      if (key_desc != nullptr) {
+        printf(", \"%s\",", key_desc);
       } else {
         printf(", '%c',", ch & 0x7f);
       }

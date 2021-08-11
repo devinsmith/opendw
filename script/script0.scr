@@ -45,7 +45,7 @@ Disassembling script0.bin (1148 bytes)
 0x00CA: word_3AE2 = 0xc3
 0x00CC: jmp 0x00d1
 0x00CF: word_3AE2 = 0x80
-0x00D1: op_14 0x00e3
+0x00D1: word_3ADF[0x00e3] = word_3AE2
 0x00D4: set_msg $("\rBegin the game")
 0x00E0: wait_event 0x0000, 'C', 0x020a, 'B', 0x02df, 0x01, 0x04, 0x01, 0xff
 
@@ -53,7 +53,7 @@ Disassembling script0.bin (1148 bytes)
 0x00EF: test word_3AE2
 0x00F0: jnz 0x00f5
 0x00F3: inc game_state[0x41]
-0x00F5: loop ret
+0x00F5: ret
 
 0x00F6: word_3AE2 = gamestate[0x06]
 0x00F8: op_30 0x31
@@ -62,7 +62,7 @@ Disassembling script0.bin (1148 bytes)
 0x00FF: write_character_name
 0x0100: word_3AE2 = 0x8d
 0x0102: write_number
-0x0103: loop ret
+0x0103: ret
 
 0x0104: draw_rectangle 0x04, 0x20, 0x24, 0x98
 0x0109: set_msg $("Do you wish to..\r\rDelete ")
@@ -90,7 +90,7 @@ Disassembling script0.bin (1148 bytes)
 0x0170: if ++byte_3AE4 != 0x0C jmp 0x0168
 0x0174: dec [mem]
 0x0175: load_char_data 0x00
-0x0177: op_38 0x7f
+0x0177: word_3AE2 &= 0x7f
 0x0179: op_98 0x00
 0x017B: clc
 0x017C: ret
@@ -111,7 +111,7 @@ Disassembling script0.bin (1148 bytes)
 0x01E9: word_3AE4 = gamestate[0x06]
 0x01EB: word_3AE2 = 0x00
 0x01ED: op_13 0x18
-0x01EF: inc reg
+0x01EF: inc byte [word_3AE4]
 0x01F0: check_gamestate 0x1f
 0x01F2: jc 0x0204
 0x01F5: dec [mem]
@@ -121,7 +121,7 @@ Disassembling script0.bin (1148 bytes)
 0x01FB: op_13 0x0a
 0x01FD: peek_and_pop
 0x01FE: op_13 0x0b
-0x0200: inc reg
+0x0200: inc byte [word_3AE4]
 0x0201: jmp 0x01eb
 0x0204: dec game_state[0x1F]
 0x0206: wait_escape
@@ -293,7 +293,7 @@ Disassembling script0.bin (1148 bytes)
 0x0395: word_3AE2 = load_resource(word_3AE2)
 0x0396: gamestate[0x56] = word_3AE2
 0x0398: word_3AE2 = gamestate[0xDF]
-0x039A: op_14 0x03cb
+0x039A: word_3ADF[0x03cb] = word_3AE2
 0x039D: word_3AE2 = 0x10
 0x039F: word_3AE2 = load_resource(word_3AE2)
 0x03A0: gamestate[0x98] = word_3AE2
@@ -302,7 +302,7 @@ Disassembling script0.bin (1148 bytes)
 0x03A5: op_9E
 0x03A6: op_27
 0x03A7: op_21
-0x03A8: op_38 0xff00
+0x03A8: word_3AE2 &= 0xff00
 0x03AB: gamestate[0x54] = word_3AE2
 0x03AD: gamestate[0x96] = word_3AE2
 0x03AF: .byte
@@ -433,13 +433,13 @@ Disassembling script0.bin (1148 bytes)
 0x045B: word_3AE2 = 0x0000
 0x045E: set_char_prop 0x55
 0x0460: set_char_prop 0x57
-0x0462: loop ret # Return back to 447.
+0x0462: ret # Return back to 447.
 
 # Initializes some sort of game state.
 # Clears bits in game_state[0xa3-0xa5]
 0x0463: set loop = 0x09
 0x0465: word_3AE2 = 0x57
-0x0467: op_4F 0x99
+0x0467: clear_bit game_state 0x99
 0x0469: inc word_3AE2
 0x046A: loop 0x0467
 
@@ -457,4 +457,4 @@ Disassembling script0.bin (1148 bytes)
 0x0477: op_30 0x56
 0x0479: op_4E
 0x047A: test word_3AE2
-0x047B: loop ret
+0x047B: ret
