@@ -89,7 +89,7 @@ op_code op_codes[] = {
   { "word_3AE2 = word_3AE4", nullptr, 0 }, // op_22
   { "inc game_state[", read_byte_array_index, 1 }, // op_23
   { "inc word_3AE2", nullptr, 0 }, // op_24
-  { "inc reg", nullptr, 0 }, // op_25
+  { "inc byte [word_3AE4]", nullptr, 0 }, // op_25
   { "dec game_state[", read_byte_array_index, 1 }, // op_26
   { "op_27", nullptr, 0 }, // op_27
   { "dec [mem]", nullptr, 0 }, // op_28

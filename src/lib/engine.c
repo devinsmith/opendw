@@ -396,7 +396,7 @@ static void op_21();
 static void op_22();
 static void op_23();
 static void op_24();
-static void op_25();
+static void inc_byte_word_3AE4();
 static void op_26();
 static void op_27();
 static void op_28();
@@ -527,7 +527,7 @@ struct op_call_table targets[] = {
   { op_22, "0x3DB7" },
   { op_23, "0x3DC0" },
   { op_24, "0x3DD7" },
-  { op_25, "0x3DE5" },
+  { inc_byte_word_3AE4, "0x3DE5" }, // op_25
   { op_26, "0x3DEC" },
   { op_27, "0x3E06" },
   { op_28, "0x3E14" },
@@ -1293,10 +1293,13 @@ static void op_24()
 }
 
 // 0x3DE5
-static void op_25()
+// op_25
+static void inc_byte_word_3AE4()
 {
+  // inc byte ptr [word_3AE4]
   uint8_t byte_3AE4 = (word_3AE4 & 0x00FF);
   byte_3AE4++;
+  // No virtual flags (word_3AE6) are modified for this increment operation.
   word_3AE4 = (word_3AE4 & 0xFF00) | byte_3AE4;
 }
 
