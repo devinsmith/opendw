@@ -36,6 +36,7 @@ static int op_08(const unsigned char *args);
 static int op_0F(const unsigned char *args);
 static int op_11(const unsigned char *args);
 static int op_12(const unsigned char *args);
+static int op_14(const unsigned char *args);
 static int op_1A(const unsigned char *args);
 static int op_1C(const unsigned char *args);
 static int op_9A(const unsigned char *args);
@@ -71,7 +72,7 @@ op_code op_codes[] = {
   { "gamestate[", op_11, 1 }, // op_11
   { "gamestate[", op_12, 1 }, // op_12
   { "op_13", nullptr, 1 }, // op_13
-  { "op_14", read_word, 0 }, // op_14
+  { "word_3ADF[", op_14, 0 }, // op_14
   { "op_15", read_word, 0 }, // op_15
   { "op_16", nullptr, 1 }, // op_16
   { "store_data_resource", nullptr, 1 }, // op_17
@@ -81,7 +82,7 @@ op_code op_codes[] = {
   { "op_1B", nullptr, 0 }, // op_1B
   { "word_3ADF[", op_1C, 0 }, // op_1C
   { "memcpy 0x700", nullptr, 0 }, // op_1D
-  { nullptr, nullptr, 0 },
+  { "op_1E", nullptr, 0 }, // op_1E
   { "op_1F", nullptr, 0 }, // op_1F
   { "NOP_XXX", nullptr, 0 }, // op_20
   { "op_21", nullptr, 0 }, // op_21
@@ -107,7 +108,7 @@ op_code op_codes[] = {
   { "op_35", nullptr, 0 }, // op_35
   { "op_36", nullptr, 0 }, // op_36
   { "op_37", nullptr, 0 }, // op_37
-  { "op_38", read_by_mode, 0 }, // op_38
+  { "word_3AE2 &=", read_by_mode, 0 }, // op_38
   { "op_39", nullptr, 1 },
   { "op_3A", nullptr, 1 }, // op_3A
   { "op_3B", nullptr, 0 }, // op_3B
@@ -141,14 +142,14 @@ op_code op_codes[] = {
   { "op_57_res", nullptr, 3 }, // op_57
   { "load_resource", load_resource, 3 }, // op_58, loads 3 bytes, but 1 is byte, 1 is word.
   { "retf", nullptr, 0 }, // op_59, return far
-  { "loop ret", nullptr, 0 }, // op_5A
+  { "ret", set_byte, 0 }, // op_5A, hack for setting byte mode
   { "op_5B", nullptr, 0 }, // op_5B
   { "var al = game_state[6]", for_call, 0 }, // op_5C
   { "word_3AE2 = get_char_data", nullptr, 1 }, // op_5D
   { "set_char_prop", nullptr, 1 }, // op_5E
   { "op_5F", nullptr, 0 }, // op_5F
   { "op_60", nullptr, 0 }, // op_60
-  { "op_61", nullptr, 1 }, // op_61
+  { "test_player_property", nullptr, 1 }, // op_61
   { "op_62", nullptr, 0 }, // op_62
   { "op_63", read_word, 0 }, // op_63
   { "op_64", nullptr, 0 }, // op_64
@@ -157,7 +158,7 @@ op_code op_codes[] = {
   { "op_67", nullptr, 0 }, // op_67
   { "op_68", nullptr, 1 }, // op_68
   { "op_69", nullptr, 1 }, // op_69
-  { nullptr, nullptr, 0 },
+  { "op_6A", nullptr, 4 }, // op_6A
   { "op_6B", nullptr, 0 }, // op_6B
   { "op_6C", nullptr, 0 }, // op_6C
   { "op_6D", nullptr, 0 }, // op_6D
@@ -497,6 +498,19 @@ static int op_0F(const unsigned char *args)
   printf("        word_3AE2 += resource_idx(gamestate[0x%02X])->bytes[offset + 1] << 8", ch + 2);
 
   return 1;
+}
+
+static int op_14(const unsigned char *args)
+{
+  uint16_t word = *args++;
+  word += *args++ << 8;
+
+  printf("0x%04x] = word_3AE2", word);
+
+  if (word_mode)
+    printf("\n        word_3ADF[0x%04X] = (word_3AE2 & 0xFF00) >> 8", word + 1);
+
+  return 2;
 }
 
 static int op_1A(const unsigned char *args)
