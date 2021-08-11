@@ -279,7 +279,8 @@ unsigned char data_CA4C[4096] = { 0 };
 
 // The function signature for this function pointer is not entirely correct
 // but we'll figure it out as we decode more of DW.
-void (*word_3163)(unsigned char byte);
+// 0x3163
+void (*string_byte_handler_func)(unsigned char byte);
 
 struct len_bytes {
   uint16_t len;
@@ -341,14 +342,14 @@ struct mouse_status mouse;
 
 static void run_script(uint8_t script_index, uint16_t src_offset);
 static void sub_11A0(int set_11C4);
-static void sub_3150(unsigned char byte);
-static void sub_316C();
+static void handle_byte_callback(unsigned char byte);
+static void set_sb_handler_append_string();
 static void append_string(unsigned char byte);
 static void sub_280E();
 static void sub_1BF8(uint8_t color, uint8_t y_adjust);
 static void set_ui_header(unsigned char *base_ptr, uint16_t offset);
 static void sub_2CF5();
-static void sub_3165();
+static void set_sb_handler_ui_draw_chr();
 static void sub_4A79(uint8_t al);
 static void set_sign_flag();
 static void clear_sign_flag();
@@ -2633,14 +2634,14 @@ static void op_77()
 // 0x47EC
 static void set_msg(void)
 {
-  cpu.bx = extract_string(cpu.base_pc, cpu.pc - cpu.base_pc, sub_3150);
+  cpu.bx = extract_string(cpu.base_pc, cpu.pc - cpu.base_pc, handle_byte_callback);
   cpu.pc = cpu.base_pc + cpu.bx;
 }
 
 // 0x4801
 static void op_7A()
 {
-  cpu.bx = extract_string(word_3ADF->bytes, word_3AE2, sub_3150);
+  cpu.bx = extract_string(word_3ADF->bytes, word_3AE2, handle_byte_callback);
   word_3AE2 = cpu.bx;
 }
 
@@ -2665,7 +2666,7 @@ static void write_character_name()
     ah = al;
     cpu.ax = al;
     al = al | 0x80;
-    sub_3150(al);
+    handle_byte_callback(al);
     if ((ah & 0x80) == 0) {
       break;
     }
@@ -2702,7 +2703,7 @@ static void sub_1BE6()
 
   cpu.ax = 0xA0;
   for (int i = 0; i < counter; i++) {
-    sub_3150(0xA0);
+    handle_byte_callback(0xA0);
   }
 }
 
@@ -2785,7 +2786,7 @@ static void sub_1DCA(uint8_t dl)
     // 0x1E10
     if (skip_1E10 == 0) {
       al = dl;
-      sub_3150(al);
+      handle_byte_callback(al);
     }
     // 0x1E15
     counter = counter - 2;
@@ -2852,10 +2853,10 @@ static void op_83(void)
   if (byte_3AE1 != (cpu.ax >> 8)) {
     // high byte of 3AE2;
     al = ((word_3AE2 & 0xFF00) >> 8);
-    sub_3150(al);
+    handle_byte_callback(al);
   }
   al = word_3AE2;
-  sub_3150(al);
+  handle_byte_callback(al);
 }
 
 // 0x4907
@@ -3019,7 +3020,7 @@ static void sub_1A72()
   push_word(cpu.ax);
 
   // 0x1A85
-  sub_3165();
+  set_sb_handler_ui_draw_chr();
   cpu.bx = 6;
   do {
     // 0x1A8B
@@ -3038,7 +3039,7 @@ static void sub_1A72()
   cpu.ax = pop_word();
   draw_point.y = (cpu.ax & 0xFF00) >> 8;
   draw_point.x = (cpu.ax & 0xFF);
-  sub_316C();
+  set_sb_handler_append_string();
 }
 
 // 0x1F10
@@ -3291,7 +3292,7 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
 
     printf("%s: cpu.bx = 0x%04X\n", __func__, cpu.bx);
 
-    cpu.bx = extract_string(escape_string_table, (cpu.bx - 0x2A68), sub_3150);
+    cpu.bx = extract_string(escape_string_table, (cpu.bx - 0x2A68), handle_byte_callback);
     ui_draw_string();
 
     bl = draw_point.y;
@@ -3338,7 +3339,7 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
       if ((word_2AA7 & 0x8000) != 0) {
         if ((word_2AA7 & 0x4000) == 0) {
           if (al == 0xA0) {
-            al = 0x9B;
+            al = 0x9B; // Treat space bar as escape?
           }
         }
       }
@@ -3692,12 +3693,12 @@ static void sub_1E49()
   set_game_state(__func__, 0xC6 + cpu.bx, al);
   sub_1EBE();
   al = 0x8D;
-  sub_3150(al);
+  handle_byte_callback(al);
 }
 
 static void sub_1C70(unsigned char *src_ptr)
 {
-  cpu.bx = extract_string(src_ptr, 0, sub_3150);
+  cpu.bx = extract_string(src_ptr, 0, handle_byte_callback);
   cpu.cf = 0;
 }
 
@@ -4864,29 +4865,29 @@ static void append_string(unsigned char byte)
   ui_set_byte_3236(draw_point.x);
 }
 
-static void sub_3165()
+static void set_sb_handler_ui_draw_chr()
 {
-  word_3163 = ui_draw_chr_piece;
+  string_byte_handler_func = ui_draw_chr_piece;
 }
 
-static void sub_316C()
+static void set_sb_handler_append_string()
 {
-  word_3163 = append_string;
+  string_byte_handler_func = append_string;
 }
 
 // 0x27E3
 static void set_ui_header(unsigned char *base_ptr, uint16_t offset)
 {
   // Indicate that we are interested in setting the header.
-  word_3163 = ui_header_set_byte;
+  string_byte_handler_func = ui_header_set_byte;
   ui_string.len = 0;
   ui_header_reset();
 
-  // Extract string (this will call word_3163, a.k.a. ui_header_set_byte)
-  cpu.bx = extract_string(base_ptr, offset, sub_3150);
+  // Extract string (this will call string_byte_handler_func, a.k.a. ui_header_set_byte)
+  cpu.bx = extract_string(base_ptr, offset, handle_byte_callback);
 
   // Reset function ptr.
-  sub_316C();
+  set_sb_handler_append_string();
 
   // Flush to screen
   sub_280E();
@@ -4901,9 +4902,9 @@ static void sub_280E()
 }
 
 // 0x3150
-static void sub_3150(unsigned char byte)
+static void handle_byte_callback(unsigned char byte)
 {
-  word_3163(byte);
+  string_byte_handler_func(byte);
 }
 
 // 0x482D
@@ -5144,7 +5145,7 @@ void reset_game_state()
   cpu.ax = (ah << 8) | game_state.unknown[6];
   push_word(cpu.ax);
 
-  sub_3165();
+  set_sb_handler_ui_draw_chr();
   int counter = 6;
   while (counter >= 0) {
     al = game_state.unknown[0x18 + counter];
@@ -5169,7 +5170,7 @@ void reset_game_state()
   cpu.ax = pop_word();
   draw_point.y = (cpu.ax & 0xFF00) >> 8;
   draw_point.x = cpu.ax & 0xFF;
-  sub_316C();
+  set_sb_handler_append_string();
 }
 
 static int sub_1C57()
