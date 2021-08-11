@@ -25,33 +25,33 @@
 // 2E26, 3036, 3226, 3426, 3626 (and onwards)
 
 struct skill_info {
-  unsigned char arcane_lore;
-  unsigned char cave_lore;
-  unsigned char forest_lore;
-  unsigned char mountain_lore;
-  unsigned char town_lore;
-  unsigned char bandage;
-  unsigned char climb;
-  unsigned char fistfighting;
-  unsigned char hide;
-  unsigned char lockpick;
-  unsigned char pickpocket;
-  unsigned char swim;
-  unsigned char tracking;
-  unsigned char bureaucracy;
-  unsigned char druid_magic;
-  unsigned char high_magic;
-  unsigned char low_magic;
-  unsigned char merchant;
-  unsigned char sun_magic;
-  unsigned char axe;
-  unsigned char flail;
-  unsigned char mace;
-  unsigned char sword;
-  unsigned char two_handed_sword;
-  unsigned char bow;
-  unsigned char crossbow;
-  unsigned char thrown_weapons;
+  unsigned char arcane_lore; // 0x20
+  unsigned char cave_lore; // 0x21
+  unsigned char forest_lore; // 0x22
+  unsigned char mountain_lore; // 0x23
+  unsigned char town_lore; // 0x24
+  unsigned char bandage; // 0x25
+  unsigned char climb; // 0x26
+  unsigned char fistfighting; // 0x27
+  unsigned char hide; // 0x28
+  unsigned char lockpick; // 0x29
+  unsigned char pickpocket; // 0x2A
+  unsigned char swim; // 0x2B
+  unsigned char tracking; // 0x2C
+  unsigned char bureaucracy; // 0x2D
+  unsigned char druid_magic; // 0x2E
+  unsigned char high_magic; // 0x2F
+  unsigned char low_magic; // 0x30
+  unsigned char merchant; // 0x31
+  unsigned char sun_magic; // 0x32
+  unsigned char axe; // 0x33
+  unsigned char flail; // 0x34
+  unsigned char mace; // 0x35
+  unsigned char sword; // 0x36
+  unsigned char two_handed_sword; // 0x37
+  unsigned char bow; // 0x38
+  unsigned char crossbow; // 0x39
+  unsigned char thrown_weapons; // 0x3A
 };
 
 // Every spell byte below is a bitmask.
@@ -65,7 +65,7 @@ struct spell_info {
   // 0x20 - Charm
   // 0x40 - Disarm
   // 0x80 - Mage Fire
-  unsigned char spell1;
+  unsigned char spell1; // 0x3C
 
   // 0x01 - Vorn's Guard
   // 0x02 - Sala's Swift
@@ -75,7 +75,7 @@ struct spell_info {
   // 0x20 - Big Chill
   // 0x40 - Ice Chill
   // 0x80 - Poog's Vortex
-  unsigned char spell2;
+  unsigned char spell2; // 0x3D
 
   // 0x01 - Water Summon
   // 0x02 - Earth Summon
@@ -85,7 +85,7 @@ struct spell_info {
   // 0x20 - Group Heal
   // 0x40 - Healing
   // 0x80 - Cowardice
-  unsigned char spell3;
+  unsigned char spell3; // 0x3E
 
   // 0x01 - Greater Healing
   // 0x02 - Brambles
@@ -96,7 +96,7 @@ struct spell_info {
   // 0x40 - Death Curse
   // (High magic)
   // 0x80 - Fire Summon
-  unsigned char spell4;
+  unsigned char spell4; // 0x3F
 
   // 0x01 - Exorcism
   // 0x02 - Sunstroke
@@ -107,7 +107,7 @@ struct spell_info {
   // 0x20 - Soften Stone
   // 0x40 - Create Wall
   // 0x80 - Cure All
-  unsigned char spell5;
+  unsigned char spell5; // 0x40
 
   // 0x01 - Exorcism
   // 0x02 - Sunstroke
@@ -117,7 +117,7 @@ struct spell_info {
   // 0x20 - Soften Stone
   // 0x40 - Create Wall
   // 0x80 - Cure All
-  unsigned char spell6;
+  unsigned char spell6; // 0x41
 
   // 0x01 - Mithras' Bless
   // 0x02 - Column of Fire
@@ -127,7 +127,7 @@ struct spell_info {
   // 0x20 - Fire Storm
   // 0x40 - Wrath of Mithras
   // 0x80 - Rage of Mithras
-  unsigned char spell7;
+  unsigned char spell7; // 0x42
 
   // 0x01 - Radiance
   // 0x02 - Guidance
@@ -138,7 +138,7 @@ struct spell_info {
   // 0x20 - Sun Light
   // 0x40 - Armor of Light
   // 0x80 - Light Flash
-  unsigned char spell8;
+  unsigned char spell8; // 0x43
 
   // 0x01 - [Not used]
   // 0x02 - [Not used]
@@ -149,7 +149,7 @@ struct spell_info {
   // 0x20 - Zak's Speed
   // 0x40 - Charger
   // 0x80 - Summon Salamander
-  unsigned char spell9;
+  unsigned char spell9; // 0x44
 };
 
 struct item_info {
@@ -231,22 +231,22 @@ struct player_record {
   unsigned short max_power; // 0x1E-0x1F
 
   // Skills
-  struct skill_info skills;
-  unsigned char advancement_points;
+  struct skill_info skills; // 0x20 -> 0x3A
+  unsigned char advancement_points; // 0x3B
 
-  struct spell_info spells;
+  struct spell_info spells; // 0x3C -> 0x44
 
-  unsigned char unknown[8];
-  unsigned char status; // bitfield (0 = Ok, 1 = dead, 2 = chained, 4 = poisoned)
-  unsigned char unknown_byte; // always 0 ? 0x4D ?
-  unsigned char gender; // 0 = male, 1 = female
-  unsigned short level;
-  unsigned int xp;
-  unsigned int gold;
-  unsigned char armor;
-  unsigned char defense;
-  unsigned char armor_class;
-  unsigned char unknown_byte2;
+  unsigned char unknown[8]; // 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B
+  unsigned char status; // bitfield (0 = Ok, 1 = dead, 2 = chained, 4 = poisoned)   0x4C
+  unsigned char unknown_byte; // always 0 ? 0x4D
+  unsigned char gender; // 0 = male, 1 = female // 0x4E
+  unsigned short level; // 0x4F-0x50
+  unsigned int xp; // 0x51, 0x52, 0x53, 0x54
+  unsigned int gold; // 0x55, 0x56, 0x57, 0x58
+  unsigned char armor; // 0x59
+  unsigned char defense; // 0x5A
+  unsigned char armor_class; // 0x5B
+  unsigned char unknown_byte2; // 0x5C
 
   unsigned char padding[143];
 
@@ -297,6 +297,9 @@ const char *player_property_name(int prop_idx)
     break;
   case 0x0F:
     return "Max Dexterity";
+    break;
+  case 0x4C:
+    return "Status";
     break;
   }
 
