@@ -440,7 +440,7 @@ static void op_5A();
 static void op_5C();
 static void get_character_data();
 static void set_character_data();
-static void op_61();
+static void test_player_property();
 static void op_63();
 static void op_66();
 static void op_69();
@@ -587,7 +587,7 @@ struct op_call_table targets[] = {
   { set_character_data, "0x4322" },
   { NULL, "0x4372" },
   { NULL, "0x438B" },
-  { op_61, "0x43A6" },
+  { test_player_property, "0x43A6" },
   { NULL, "0x43BF" },
   { op_63, "0x43F7" },
   { NULL, "0x446E" },
@@ -2275,7 +2275,7 @@ static void set_flags()
 }
 
 // 0x43A6
-static void op_61()
+static void test_player_property()
 {
   // 4A7D
   sub_4A79(word_3AE2);
@@ -2581,6 +2581,7 @@ static void op_71(void)
   // 0x469D
   // pop si ?
   si = pop_word();
+  cpu.base_pc = base_pc;
   cpu.pc = base_pc + si;
 }
 
