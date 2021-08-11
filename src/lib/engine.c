@@ -349,7 +349,7 @@ static void sub_1BF8(uint8_t color, uint8_t y_adjust);
 static void set_ui_header(unsigned char *base_ptr, uint16_t offset);
 static void sub_2CF5();
 static void sub_3165();
-static void sub_4A7D();
+static void sub_4A79(uint8_t al);
 static void sub_4AC0();
 static void sub_4AC6();
 static void sub_54D8();
@@ -1908,7 +1908,7 @@ static void op_4F()
 {
   uint8_t al;
 
-  sub_4A7D();
+  sub_4A79(word_3AE2);
   al = cpu.ax & 0xFF;
 
   al = ~al;
@@ -2039,7 +2039,7 @@ static void op_57()
   cpu.bx = cpu.bx & 0xFF;
 
   al = 1;
-  struct resource *r = resource_load(al);
+  struct resource *r = resource_load(cpu.bx);
   al = r->index;
   word_3AE8 = al;
   word_3AEA = al;
@@ -2254,26 +2254,6 @@ static void set_character_data(void)
 
 }
 
-// 0x4A7D
-static void sub_4A7D()
-{
-  uint8_t al;
-
-  al = word_3AE2;
-  cpu.ax = al;
-  cpu.di = cpu.ax;
-  cpu.bx = cpu.ax;
-
-  al = *cpu.pc++;
-  cpu.ax = al;
-  cpu.bx = cpu.bx >> 3;
-  cpu.bx += cpu.ax;
-
-  cpu.di &= 7;
-  al = data_4A99[cpu.di]; // levels?
-  cpu.ax = al;
-}
-
 static void sub_40D1()
 {
   uint16_t flags = 0;
@@ -2293,7 +2273,7 @@ static void sub_40D1()
 static void op_61()
 {
   // 4A7D
-  sub_4A7D();
+  sub_4A79(word_3AE2);
   cpu.cx = game_state.unknown[6];
   cpu.di = cpu.cx;
 
@@ -2527,14 +2507,15 @@ static void op_6F(void)
 
 
 // 0x46A1
-static void sub_46A1(void)
+static void sub_46A1(uint8_t start_offset)
 {
   uint8_t al;
-  uint16_t offset = cpu.bx & 0xFF;
+  uint16_t offset = start_offset;
   // 0x46A3
   offset += data_5A04[0];
   offset += data_5A04[1] << 8;
 
+  // Determine script execution src offset
   cpu.bx = data_5521[offset];
   cpu.bx += data_5521[offset + 1] << 8;
   al = game_state.unknown[0x56];
@@ -2577,7 +2558,7 @@ static void op_71(void)
 
         bl = al;
         cpu.bx = (cpu.bx & 0xFF00) | bl;
-        sub_46A1();
+        sub_46A1(bl);
         al = game_state.unknown[2];
         if (al != game_state.unknown[0x57]) {
           return;
@@ -2587,7 +2568,7 @@ static void op_71(void)
     }
     // 0x4698
     cpu.bx = 0;
-    sub_46A1();
+    sub_46A1(0);
   }
   // 0x469D
   // pop si ?
@@ -3816,7 +3797,7 @@ static void read_level_metadata()
   word_5864 = cpu.ax;
 
   cpu.di += 2;
-  al = game_state.unknown[0x22];
+  al = game_state.unknown[0x22]; // number of level scripts?
   cpu.ax = al;
   cpu.ax = cpu.ax << 1;
   cpu.si = cpu.ax;
@@ -3826,7 +3807,7 @@ static void read_level_metadata()
   cpu.ax = al;
 
   // 0x5858
-  // The final bytes loaded here are the offsets of the script.
+  // The final bytes loaded here are the offsets of the scripts.
   do {
     data_5A04[cpu.si] = cpu.di & 0xFF;
     data_5A04[cpu.si + 1] = (cpu.di & 0xFF00) >> 8;
@@ -4676,13 +4657,12 @@ static void op_9A(void)
 }
 
 // 0x4A79
-static void sub_4A79(void)
+// also 0x4A7D (taking 3AE2)
+static void sub_4A79(uint8_t al)
 {
-  uint8_t al = *cpu.pc++;
-
-  // jmp 4A80
-  // 0x4A80
   cpu.ax = al;
+
+  // 0x4A80
   cpu.di = cpu.ax;
   cpu.bx = cpu.ax;
 
@@ -4690,21 +4670,23 @@ static void sub_4A79(void)
   cpu.bx = cpu.bx >> 3;
   cpu.bx += al;
   cpu.di &= 7;
-  al = data_4A99[cpu.di];
+  al = data_4A99[cpu.di]; // bit flags
   cpu.ax = al;
 }
 
 // 0x416B
 static void op_9B(void)
 {
-  sub_4A79();
+  uint8_t al = *cpu.pc++;
+  sub_4A79(al);
   set_game_state(__func__, cpu.bx, game_state.unknown[cpu.bx] | (cpu.ax & 0xFF));
 }
 
 // 0x4181
 static void op_9D(void)
 {
-  sub_4A79();
+  uint8_t al = *cpu.pc++;
+  sub_4A79(al);
 
   // test [bx+3860], al
   cpu.cf = 0;
