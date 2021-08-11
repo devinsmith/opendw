@@ -1,0 +1,28 @@
+Disassembling script22.bin (78 bytes)
+
+# Set gamestate[0x41] to 0xFF, then check each player's status, if
+# at least one character is still alive 0x41 will be cleared.
+0x0000: gamestate[0x41] = 0xFF
+0x0002: var al = game_state[6]
+        for (game_state[6] < game_state[0x1F]; game_state[6]++) {
+          call 0x0044
+        }
+        game_state[6] = al
+0x0005: test game_state[0x41]
+0x0007: jz 0x0043
+
+# All dead
+0x000A: draw_rectangle 0x05, 0x28, 0x23, 0x90
+0x000F: set_msg $("Alas, your brave party has met its match! Your current adventure is over.")
+0x0040: wait_escape
+0x0041: draw_ui_full
+0x0042: op_1E
+0x0043: retf
+
+#####
+# Check a player's status, if he is ok, set gamestate[0x41] to 0.
+0x0044: word_3AE2 = 0x07
+0x0046: test_player_property 0x4c
+0x0048: jnz 0x004d
+0x004B: gamestate[0x41] = 0
+0x004D: ret
