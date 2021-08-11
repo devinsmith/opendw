@@ -350,8 +350,8 @@ static void set_ui_header(unsigned char *base_ptr, uint16_t offset);
 static void sub_2CF5();
 static void sub_3165();
 static void sub_4A79(uint8_t al);
-static void sub_4AC0();
-static void sub_4AC6();
+static void set_sign_flag();
+static void clear_sign_flag();
 static void sub_54D8();
 static void sub_536B();
 
@@ -1818,14 +1818,14 @@ static void op_48()
 {
   uint8_t al;
 
-  sub_4AC6();
+  clear_sign_flag();
   al = *cpu.pc++;
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.bx = cpu.ax;
 
   if (game_state.unknown[cpu.bx] < 0x80) {
     set_game_state(__func__, cpu.bx, game_state.unknown[cpu.bx] | 0x80);
-    sub_4AC0();
+    set_sign_flag();
   }
 }
 
@@ -2254,7 +2254,7 @@ static void set_character_data(void)
 
 }
 
-static void sub_40D1()
+static void set_flags()
 {
   uint16_t flags = 0;
 
@@ -2264,8 +2264,13 @@ static void sub_40D1()
   flags |= cpu.cf << 0;
   cpu.ax = flags;
 
+  // Clear carry flag
   cpu.ax &= 0xFFFE;
+
+  // Clear everything except old carry flag
   word_3AE6 &= 0x0001;
+
+  // Store new flags (with old carry flag value)
   word_3AE6 |= cpu.ax;
 }
 
@@ -2282,13 +2287,15 @@ static void op_61()
   uint8_t val = game_state.unknown[cpu.di + 10];
   unsigned char *player = get_player_data(val >> 1);
 
+  printf("%s: %s 0x%02X\n", __func__, player_property_name(cpu.bx), cpu.bx);
+
   // test [bx+di], al
   uint8_t test_val = player[cpu.bx];
   uint8_t test_result = test_val & (cpu.ax & 0xFF);
   cpu.cf = 0;
   cpu.sf = test_result >= 0x80;
   cpu.zf = test_result == 0;
-  sub_40D1();
+  set_flags();
 }
 
 // 0x43F7
@@ -2409,14 +2416,15 @@ static void op_69(void)
 }
 
 // 0x4AC0
-static void sub_4AC0()
+static void set_sign_flag()
 {
   word_3AE6 |= 0x40;
 }
 
 // 0x4AC6
-static void sub_4AC6()
+static void clear_sign_flag()
 {
+  // Clear bit 7 (sign flag)
   word_3AE6 &= 0xBF;
 }
 
@@ -2426,7 +2434,7 @@ static void op_6A(void)
   int i;
   uint8_t val[4];
 
-  sub_4AC6();
+  clear_sign_flag();
   // 0x4576
   // push si
   //
@@ -2437,7 +2445,7 @@ static void op_6A(void)
       game_state.unknown[1] >= val[1] &&
       val[2] >= game_state.unknown[0] &&
       val[3] >= game_state.unknown[1]) {
-    sub_4AC0();
+    set_sign_flag();
   }
   // 0x459A
 }
@@ -4691,7 +4699,7 @@ static void op_9D(void)
   // test [bx+3860], al
   cpu.cf = 0;
   cpu.zf = (game_state.unknown[cpu.bx] & cpu.ax) == 0 ? 1 : 0;
-  sub_40D1();
+  set_flags();
 }
 
 // Extract string from stream, call func for each character
