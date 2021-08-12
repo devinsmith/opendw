@@ -1361,6 +1361,7 @@ static void op_2A()
 // 0x3E45
 static void op_2B()
 {
+  // shl byte ptr [word_3AE4], 1
   uint8_t byte_3AE4 = (word_3AE4 & 0x00FF);
   byte_3AE4 = byte_3AE4 << 1;
   word_3AE4 = (word_3AE4 & 0xFF00) | byte_3AE4;
@@ -3224,6 +3225,9 @@ static void sub_1F8F()
 
 // 0x28B0
 // The inputs here have to do with the keys we accept.
+// Returns:
+//    AX: key pressed.
+//    BX: offset to jump to.
 static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
 {
   uint8_t al, ah;

@@ -95,7 +95,7 @@ op_code op_codes[] = {
   { "dec [mem]", nullptr, 0 }, // op_28
   { "op_29", nullptr, 0 }, // op_29
   { "op_2A", nullptr, 0 }, // op_2A
-  { "op_2B", nullptr, 0 }, // op_2B
+  { "shl byte [word_3AE4], 1", nullptr, 0 }, // op_2B
   { "op_2C", nullptr, 0 }, // op_2C
   { "op_2D", nullptr, 0 }, // op_2D
   { "op_2E", nullptr, 0 }, // op_2E
@@ -113,7 +113,7 @@ op_code op_codes[] = {
   { "op_3A", nullptr, 1 }, // op_3A
   { "op_3B", nullptr, 0 }, // op_3B
   { "op_3C", nullptr, 0 }, // op_3C
-  { "op_3D", nullptr, 1 }, // op_3D
+  { "cmp word_3AE2, gamestate[", read_byte_array_index, 1 }, // op_3D
   { "cmp word_3EA2,", read_by_mode, 0 }, // op_3E
   { "check_gamestate", nullptr, 1 }, // op_3F
   { "cmp word_3AE4,", nullptr, 1 }, // op_40
