@@ -27,13 +27,14 @@ uint16_t offsets[NUM_OFFSETS];
 unsigned short word_1053 = 0;
 unsigned short word_1055 = 0;
 
-/* 0x17DD */
-void init_offsets()
+// 0x17DD
+void init_offsets(unsigned short dx)
 {
   int i;
   uint16_t val = 0;
 
-  word_1053 = 0x50;
+  // 0x17E5
+  word_1053 = dx;
 
   // 0x17E5
   for (i = 0; i < NUM_OFFSETS; i++) {

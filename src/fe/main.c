@@ -136,7 +136,7 @@ main(int argc, char *argv[])
 
   setup_memory();
 
-  init_offsets();
+  init_offsets(0x50);
   load_chr_table();
 
   byte_4F0F = 0xFF;

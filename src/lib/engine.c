@@ -21,6 +21,7 @@
 
 #include "compress.h"
 #include "engine.h"
+#include "offsets.h"
 #include "player.h"
 #include "resource.h"
 #include "state.h"
@@ -52,6 +53,11 @@ uint16_t word_11C8 = 0;
 uint16_t word_11CA = 0;
 uint16_t word_11CC = 0;
 
+uint8_t byte_1960 = 0;
+uint8_t byte_1961 = 0;
+uint8_t byte_1962 = 0;
+uint16_t word_1964 = 0;
+uint8_t byte_1966 = 0;
 
 uint8_t byte_1CE1 = 0;
 uint8_t byte_1CE2 = 0;
@@ -355,6 +361,7 @@ static void set_sign_flag();
 static void clear_sign_flag();
 static void sub_54D8();
 static void sub_536B();
+static void sub_59A6();
 
 #define NUM_FUNCS 2
 static void sub_50B2();
@@ -447,6 +454,7 @@ static void op_66();
 static void op_69();
 static void op_6A();
 static void op_6C();
+static void op_6D();
 static void op_6F();
 static void op_71();
 static void op_73();
@@ -600,7 +608,7 @@ struct op_call_table targets[] = {
   { op_6A, "0x4573" },
   { NULL, "0x45A1" },
   { op_6C, "0x45A8" },
-  { NULL, "0x45F0" },
+  { op_6D, "0x45F0" },
   { NULL, "0x45FA" },
   { op_6F, "0x4607" },
   { NULL, "0x4632" },
@@ -2495,6 +2503,140 @@ static void op_6C(void)
   }
   // 0x45CC
   // pop si
+}
+
+// 0x194A
+// Returns bx, dx
+static void sub_194A()
+{
+  uint8_t bl, dl;
+
+  bl = 3;
+  bl -= word_1964;
+  bl += byte_1960;
+
+  cpu.bx = (cpu.bx & 0xFF00) | bl;
+
+  dl = byte_1961;
+  dl -= 4;
+  dl += byte_1962;
+
+  cpu.dx = (cpu.dx & 0xFF00) | dl;
+}
+
+static void sub_1A13()
+{
+  struct viewport_data vp;
+  word_104F = cpu.bx;
+  //word_1051 = // dragon.com 0x695C ?
+  cpu.ax = byte_1962;
+
+  cpu.ax = cpu.ax << 1;
+  cpu.ax = cpu.ax << 1;
+  cpu.ax = cpu.ax << 1;
+  cpu.ax = cpu.ax << 1;
+  cpu.ax = cpu.ax << 1;
+
+  vp.xpos = cpu.ax;
+  vp.ypos = 0x18;
+
+  // CF8
+
+  printf("%s: 0x1A13 unimplemented\n", __func__);
+  exit(1);
+}
+
+
+// 0x1861
+static void sub_1861()
+{
+  uint8_t al, bl, dl;
+  sub_194A();
+  al = 0;
+  bl = cpu.bx & 0xFF;
+  dl = cpu.dx & 0xFF;
+  if (bl == game_state.unknown[0]) {
+    if (dl == game_state.unknown[1]) {
+      al = !al;
+    }
+  }
+  // 0x1874
+  byte_1966 = al;
+  sub_54D8();
+
+  // Correct?
+  if ((((word_11C6 & 0xFF00) >> 8) & 0x08) != 0) {
+    printf("%s: 0x1881 unimplemented\n", __func__);
+    exit(1);
+  }
+  // 18E4
+  cpu.bx = 0x695C;
+  sub_1A13();
+  printf("%s: 0x18E7 unimplemented\n", __func__);
+  exit(1);
+
+}
+
+// 0x17F7
+static void sub_17F7()
+{
+  uint8_t al;
+
+  // mov byte [word_1964], 00
+  word_1964 &= 0xFF00;
+  byte_104E = 0;
+
+  // jmp short 1806
+  // 0x1806
+  al = 0;
+  byte_1962 = al;
+  sub_1861();
+
+  printf("%s: 0x180E unimplemented\n", __func__);
+  exit(1);
+}
+
+// 0x1750
+static void sub_1750()
+{
+  uint8_t al;
+  cpu.bx = 0x17D9;
+
+  // Values embedded in COM file at 0x17D9
+  draw_rectangle(1, 0, 39, 192);
+  al = game_state.unknown[0];
+  byte_1960 = al;
+  al = game_state.unknown[1];
+  byte_1961 = al;
+
+  cpu.ax = 0;
+  init_offsets(0x90);
+  sub_59A6();
+  sub_17F7();
+
+  printf("%s: 0x1764 unimplemented\n", __func__);
+  exit(1);
+}
+
+// 0x45F0
+static void op_6D()
+{
+  unsigned char *base_pc = cpu.base_pc;
+
+  // 0x45F0: push si
+  uint16_t si = cpu.pc - cpu.base_pc; // is this correct?
+  push_word(si);
+
+  sub_1750();
+  
+  printf("%s: 0x4560 unimplemented\n", __func__);
+  exit(1);
+
+  // pop si ?
+//  si = pop_word();
+//  cpu.base_pc = base_pc;
+//  cpu.pc = base_pc + si;
+
 }
 
 // 0x4607
