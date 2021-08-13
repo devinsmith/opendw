@@ -335,9 +335,7 @@ static script_file read_file(const char *fname)
   rewind(fp);
 
   script.bytes = new unsigned char[fsize];
-  script.len = (size_t)fsize;
-
-  fread(script.bytes, 1, fsize, fp);
+  script.len = fread(script.bytes, 1, fsize, fp);
 
   return script;
 }
