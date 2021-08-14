@@ -62,10 +62,10 @@ uint8_t byte_1964 = 0;
 uint8_t byte_1966 = 0;
 
 // Viewport offsets
-unsigned short data_1997[] = { 0x0000 };
+unsigned short data_1997[] = { 0x0000, 0x0010, 0x0028, 0x0040, 0x0058, 0x0070, 0x0088, 0x00A0 };
 // Viewport heights
-unsigned short data_19A7[] = { 0x0010 };
-unsigned short data_19B7[] = { 0x0030 };
+unsigned short data_19A7[] = { 0x0010, 0x0028, 0x0040, 0x0058, 0x0070, 0x0088, 0x00A0, 0x00A8 };
+unsigned short data_19B7[] = { 0x0030, 0x0020, 0x0020, 0x0020, 0x0020, 0x0020, 0x0020, 0x0020 };
 
 uint8_t byte_1CE1 = 0;
 uint8_t byte_1CE2 = 0;
@@ -2623,7 +2623,7 @@ static void sub_1967()
   cpu.bx = byte_1964;
   //cpu.bx = cpu.bx << 1;
   // DRS:
-  if (cpu.bx != 0) {
+  if (cpu.bx > 8) {
     printf("%s: %d: Need to extract more from data_1997. We don't know how big it is.\n",
            __func__, cpu.bx);
     exit(1);
