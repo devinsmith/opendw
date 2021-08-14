@@ -36,6 +36,13 @@ struct pic_data {
 
 uint8_t ui_drawn_yet = 0; // 0x268E
 
+// 0x10D2
+static int viewport_initial_offset = 0;
+// 0x10D4
+static int viewport_height = 0x88;
+// 0x10D6
+static int viewport_width = 0x50;
+
 static void draw_indexed_picture9();
 static void sub_1F54(uint8_t al);
 static void sub_27CC();
@@ -87,6 +94,9 @@ static unsigned char *viewport_mem_save; // 0x4F13
 static const int viewport_mem_sz = 10880;
 unsigned short word_4F15; // 0x4F15
 unsigned short word_4F17; // 0x4F17
+
+// 0x695C -> 0x6ADF
+static unsigned char *minimap_viewport;
 
 // Viewport metadata.
 // 0x6748
@@ -406,19 +416,25 @@ static void sub_E6D(const struct viewport_data *d, unsigned char *data)
 // 0x1060
 void draw_viewport()
 {
-  int rows = 0x88;
-  int cols = 0x50;
-  int line_num = 8; // Can be increased on 10D2
+  int ret = sub_2752(0xa);
+  printf("%s: %d", __func__, ret);
 
-  // 2752 (0x0a)
-  //
   sub_1F54(0x0a);
 
-  uint8_t *framebuffer = vga_memory();
+  // 0x1175
+  ui_update_viewport(0);
+}
 
-  // 0x88 x 0x50
-  /* see 0x1060 */
-  const unsigned char *src = viewport_memory;
+// 0x1175
+void ui_update_viewport(size_t vp_offset)
+{
+  int line_num = viewport_initial_offset + 8; // Can be increased on 10D2
+  int rows = viewport_height;
+  int cols = viewport_width;
+  uint8_t *framebuffer = vga_memory();
+  const unsigned char *src = viewport_memory + vp_offset;
+
+  // rows x cols
   for (int y = 0; y < rows; y++) {
     uint16_t fb_off = get_line_offset(line_num) + 0x10;
     for (int x = 0; x < cols; x++) {
@@ -677,6 +693,9 @@ void ui_load()
   viewports[2].data = com_extract(0x67B0, 4 + (4 * 0xD));
   viewports[3].data = com_extract(0x67E8, 4 + (4 * 0xD));
 
+  // Load mini map viewport data
+  minimap_viewport = com_extract(0x695C, 4 + (0x10 * 0x18));
+
   unsigned char *ui_piece_offsets_base = com_extract(0x6AE0, UI_PIECE_COUNT * 2);
   unsigned char *ui_piece_offsets = ui_piece_offsets_base;
   printf("UI Pieces:\n");
@@ -713,6 +732,8 @@ void ui_clean()
   for (size_t ui_idx = 0; ui_idx < UI_PIECE_COUNT; ui_idx++) {
     free(ui_pieces[ui_idx].data);
   }
+
+  free(minimap_viewport);
 
   free(viewport_memory);
 }
@@ -1154,4 +1175,31 @@ void init_viewport_memory()
 {
   viewport_memory = malloc(viewport_mem_sz);
   viewport_mem_save = malloc(viewport_mem_sz);
+}
+
+unsigned char *ui_get_minimap_viewport()
+{
+  return minimap_viewport;
+}
+
+void ui_set_viewport_width(int new_width)
+{
+  viewport_width = new_width;
+}
+
+void ui_set_viewport_height(int new_height)
+{
+  viewport_height = new_height;
+}
+
+void ui_set_viewport_offset(int new_offset)
+{
+  viewport_initial_offset = new_offset;
+}
+
+// 0x184B
+void ui_viewport_reset()
+{
+  // Yes, the offset and size are hardcoded.
+  memmove(viewport_memory, viewport_memory + 0xD80, 0xD80);
 }

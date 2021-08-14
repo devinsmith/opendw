@@ -53,11 +53,19 @@ uint16_t word_11C8 = 0;
 uint16_t word_11CA = 0;
 uint16_t word_11CC = 0;
 
+uint8_t byte_1949 = 0;
+
 uint8_t byte_1960 = 0;
 uint8_t byte_1961 = 0;
 uint8_t byte_1962 = 0;
-uint16_t word_1964 = 0;
+uint8_t byte_1964 = 0;
 uint8_t byte_1966 = 0;
+
+// Viewport offsets
+unsigned short data_1997[] = { 0x0000 };
+// Viewport heights
+unsigned short data_19A7[] = { 0x0010 };
+unsigned short data_19B7[] = { 0x0030 };
 
 uint8_t byte_1CE1 = 0;
 uint8_t byte_1CE2 = 0;
@@ -258,7 +266,6 @@ unsigned char *data_5866; // data
 // Unknown how large this is
 // 0x5897
 unsigned char data_5897[256];
-
 
 // 0x4C31 - 0x4C34
 unsigned char word_4C31[4];
@@ -2512,7 +2519,7 @@ static void sub_194A()
   uint8_t bl, dl;
 
   bl = 3;
-  bl -= word_1964;
+  bl -= byte_1964;
   bl += byte_1960;
 
   cpu.bx = (cpu.bx & 0xFF00) | bl;
@@ -2539,11 +2546,10 @@ static void sub_1A13()
 
   vp.xpos = cpu.ax;
   vp.ypos = 0x18;
+  vp.data = ui_get_minimap_viewport();
 
   // CF8
-
-  printf("%s: 0x1A13 unimplemented\n", __func__);
-  exit(1);
+  sub_CF8(ui_get_minimap_viewport(), &vp);
 }
 
 
@@ -2572,9 +2578,68 @@ static void sub_1861()
   // 18E4
   cpu.bx = 0x695C;
   sub_1A13();
-  printf("%s: 0x18E7 unimplemented\n", __func__);
-  exit(1);
+  al = word_11C6;
+  byte_1949 = al;
 
+  sub_194A();
+  bl = cpu.bx & 0xFF;
+  bl++;
+  cpu.bx = (cpu.bx & 0xFF00) | bl;
+  sub_54D8();
+
+  // test byte [11C7], 08
+  if ((((word_11C6 & 0xFF00) >> 8) & 0x08) != 0) {
+    printf("%s: 0x18FF unimplemented\n", __func__);
+    exit(1);
+  }
+
+  // 191B
+  sub_194A();
+  dl = cpu.dx & 0xFF;
+  dl--;
+  cpu.dx = (cpu.dx & 0xFF00) | dl;
+  sub_54D8();
+
+  // test byte [11C7], 08
+  if ((((word_11C6 & 0xFF00) >> 8) & 0x08) != 0) {
+    printf("%s: 0x192A unimplemented\n", __func__);
+    exit(1);
+  }
+
+  // 193E
+  // test byte [1966], 80
+  if ((byte_1966 & 0x80) == 0) {
+    // 1948
+    return;
+  }
+  // jmp 0x1A10
+  printf("%s: 0x1A10 unimplemented\n", __func__);
+  exit(1);
+}
+
+static void sub_1967()
+{
+  ui_set_viewport_width(0x90);
+  cpu.bx = byte_1964;
+  //cpu.bx = cpu.bx << 1;
+  // DRS:
+  if (cpu.bx != 0) {
+    printf("%s: %d: Need to extract more from data_1997. We don't know how big it is.\n",
+           __func__, cpu.bx);
+    exit(1);
+  }
+
+  cpu.ax = data_1997[cpu.bx];
+  ui_set_viewport_offset(cpu.ax);
+  cpu.ax = data_19A7[cpu.bx];
+  ui_set_viewport_height(cpu.ax);
+  cpu.di = data_19B7[cpu.bx];
+
+  ui_update_viewport(cpu.di);
+
+  ui_set_viewport_offset(0);
+  ui_set_viewport_height(0x88);
+  ui_set_viewport_width(0x50);
 }
 
 // 0x17F7
@@ -2582,18 +2647,55 @@ static void sub_17F7()
 {
   uint8_t al;
 
-  // mov byte [word_1964], 00
-  word_1964 &= 0xFF00;
+  // mov byte [1964], 00
+  byte_1964 = 0;
   byte_104E = 0;
 
   // jmp short 1806
-  // 0x1806
-  al = 0;
-  byte_1962 = al;
-  sub_1861();
 
-  printf("%s: 0x180E unimplemented\n", __func__);
-  exit(1);
+
+  do {
+
+    // 0x1806
+    al = 0;
+    do {
+      byte_1962 = al;
+      sub_1861();
+
+      al = byte_1962;
+      al++;
+    } while (al < 9);
+
+    sub_1967();
+
+    // Check for key in the buffer.
+    // if no key (jmp 1837)
+
+    // 0x1820 (a key)
+    cpu.cx = 4;
+    cpu.di = 0x1843;
+    // test al, al (key press)
+    // je (0x1831)
+    // 0x182A
+    cpu.di = 0x1847;
+    al = al & 0xDF;
+    cpu.ax = (al << 8) | al;
+
+    // 0x1831
+    al = cpu.ax >> 8;
+    // repne scasb
+    // searching es:di for al, di++
+    // je if found ret.
+
+
+
+
+    // 0x1837
+    byte_1964++;
+    al = byte_1964;
+    ui_viewport_reset(); // called 8 times?
+
+  } while (al < 8);
 }
 
 // 0x1750
@@ -2612,9 +2714,17 @@ static void sub_1750()
   cpu.ax = 0;
   init_offsets(0x90);
   sub_59A6();
+  // 0x176A
   sub_17F7();
 
-  printf("%s: 0x1764 unimplemented\n", __func__);
+  // 0x176D
+  cpu.bx = 0x1777;
+  // cpu.cx = cs
+  //sub_28B0();
+
+  // jmp near bx 0x17A7 ??
+
+  printf("%s: 0x176D unimplemented\n", __func__);
   exit(1);
 }
 

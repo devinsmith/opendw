@@ -97,6 +97,14 @@ void viewport_save();
 void sub_4C95(struct resource *r);
 void draw_rectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
 
+unsigned char *ui_get_minimap_viewport();
+
+void ui_viewport_reset();
+void ui_update_viewport(size_t vp_offset);
+void ui_set_viewport_width(int new_width);
+void ui_set_viewport_height(int new_height);
+void ui_set_viewport_offset(int new_offset);
+
 #ifdef __cplusplus
 }
 #endif
