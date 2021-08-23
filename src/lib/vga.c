@@ -19,6 +19,10 @@
 
 #include "vga.h"
 
+#ifndef nitems
+#define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
+#endif /* nitems */
+
 static struct vga_driver *vga = NULL;
 
 #define VGA_WIDTH 320
@@ -26,6 +30,13 @@ static struct vga_driver *vga = NULL;
 
 /* Represents 0xA0000 (0xA000:0000) memory. */
 static uint8_t *framebuffer;
+
+static struct key_buffer {
+  int buffer[32];
+  int head;
+  int tail;
+  int count;
+} vga_keyb;
 
 static int
 display_start(int game_width, int game_height)
@@ -57,6 +68,10 @@ void register_vga_driver(struct vga_driver *driver)
 
 int vga_initialize(int game_width, int game_height)
 {
+  vga_keyb.head = 0;
+  vga_keyb.tail = 0;
+  vga_keyb.count = 0;
+
   if (vga != NULL && vga->initialize != NULL) {
     return vga->initialize(game_width, game_height);
   }
@@ -100,4 +115,37 @@ void vga_end()
   } else {
     display_end();
   }
+}
+
+void vga_poll_events()
+{
+  if (vga != NULL && vga->poll != NULL) {
+    vga->poll();
+  }
+}
+
+void vga_addkey(int key)
+{
+  if (vga_keyb.count == nitems(vga_keyb.buffer)) {
+    return;
+  }
+
+  vga_keyb.buffer[vga_keyb.head] = key;
+  vga_keyb.head = (vga_keyb.head + 1) % nitems(vga_keyb.buffer);
+  vga_keyb.count++;
+}
+
+int vga_getkey2()
+{
+  int key;
+
+  if (vga_keyb.count == 0) {
+    return 0;
+  }
+
+  key = vga_keyb.buffer[vga_keyb.tail];
+  vga_keyb.count--;
+
+  vga_keyb.tail = (vga_keyb.tail + 1) % nitems(vga_keyb.buffer);
+  return key;
 }

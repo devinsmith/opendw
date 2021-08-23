@@ -31,6 +31,7 @@ struct vga_driver {
   void (*waitkey)();
   uint8_t* (*memory)();
   uint16_t (*getkey)();
+  void (*poll)();
 };
 
 struct mouse_status {
@@ -49,6 +50,9 @@ void vga_update();
 uint16_t vga_getkey();
 void vga_waitkey();
 void vga_end();
+void vga_addkey(int key);
+int vga_getkey2();
+void vga_poll_events();
 
 // Intended for use by various vga drivers.
 void video_setup();

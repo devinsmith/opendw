@@ -7,7 +7,7 @@ find_package(Threads REQUIRED)
 
 set(TARGET_NAME opendw_test)
 
-set(SOURCES test_compress.cpp test_opendw.cpp)
+set(SOURCES test_compress.cpp test_opendw.cpp test_vga.cpp)
 
 add_executable(${TARGET_NAME} ${SOURCES})
 target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/lib ${CHECK_INCLUDE_DIRS})

@@ -208,6 +208,11 @@ get_key()
   return 0;
 }
 
+static void poll_events()
+{
+
+}
+
 struct vga_driver sdl_driver = {
   "SDL", // 2.0
   display_start,
@@ -215,7 +220,8 @@ struct vga_driver sdl_driver = {
   display_update,
   waitkey,
   get_fb_mem,
-  get_key
+  get_key,
+  poll_events
 };
 
 void video_setup()

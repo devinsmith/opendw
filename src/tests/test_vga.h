@@ -13,22 +13,13 @@
 // ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-// Tests for opendw
+// Tests for vga
 
-#include <cstdlib>
+#ifndef OD_TEST_VGA_H
+#define OD_TEST_VGA_H
+
 #include <check.h>
 
-#include "test_compress.h"
-#include "test_vga.h"
+Suite* vga_suite();
 
-int main(int argc, char *argv[])
-{
-  Suite *s = compress_suite();
-  SRunner *sr = srunner_create(s);
-  srunner_add_suite(sr, vga_suite());
-
-  srunner_run_all(sr, CK_NORMAL);
-  int number_failed = srunner_ntests_failed(sr);
-  srunner_free(sr);
-  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
-}
+#endif /* OD_TEST_VGA_H */

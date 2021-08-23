@@ -13,22 +13,48 @@
 // ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-// Tests for opendw
+// Tests for vga.c
 
-#include <cstdlib>
-#include <check.h>
-
-#include "test_compress.h"
 #include "test_vga.h"
 
-int main(int argc, char *argv[])
-{
-  Suite *s = compress_suite();
-  SRunner *sr = srunner_create(s);
-  srunner_add_suite(sr, vga_suite());
+#include "vga.h"
 
-  srunner_run_all(sr, CK_NORMAL);
-  int number_failed = srunner_ntests_failed(sr);
-  srunner_free(sr);
-  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+START_TEST(test_vga_keyb)
+{
+  vga_initialize(64, 64);
+
+  for (int i = 0; i < 32; i++) {
+    vga_addkey(i);
+  }
+
+  for (int i = 0; i < 32; i++) {
+    int actual = vga_getkey2();
+    ck_assert_int_eq(actual, i);
+  }
+
+
+  int key = vga_getkey2();
+  ck_assert_int_eq(key, 0);
+
+  for (int i = 0; i < 32; i++) {
+    vga_addkey(i);
+  }
+
+  key = vga_getkey2();
+  ck_assert_int_eq(key, 0);
+
+  vga_end();
 }
+END_TEST
+
+Suite* vga_suite()
+{
+  Suite *s = suite_create("vga");
+
+  TCase *tc_core = tcase_create("core");
+  tcase_add_test(tc_core, test_vga_keyb);
+  suite_add_tcase(s, tc_core);
+
+  return s;
+}
+
