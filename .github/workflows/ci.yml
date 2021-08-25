@@ -65,6 +65,10 @@ jobs:
           mingw-w64-x86_64-cmake
           mingw-w64-x86_64-SDL2
 
+    - name: Put MSYS2_MinGW64 on PATH
+      # there is not yet an environment variable for this path from msys2/setup-msys2
+      run: echo "D:/a/_temp/msys/msys64/mingw64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
 #    - name: Install Prerequisites
 #      run: |
 #        .\.github\get-deps-mingw.ps1
@@ -72,8 +76,8 @@ jobs:
     - name: Configure Build & Test
       shell: bash
       run: |
-        mingw-w64-cmake -E make_directory build/
-        mingw-w64-cmake -S . -B build/ -DENABLE_TOOLS=ON
-        mingw-w64-cmake --build build/ --target INSTALL
-        mingw-w64-ctest -V ./build/
+        cmake -E make_directory build/
+        cmake -S . -B build/ -DENABLE_TOOLS=ON
+        cmake --build build/ --target INSTALL
+        ctest -V ./build/
 
