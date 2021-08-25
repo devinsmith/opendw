@@ -72,8 +72,8 @@ jobs:
     - name: Configure Build & Test
       shell: bash
       run: |
-        cmake -E make_directory build/
-        cmake -S . -B build/ -DENABLE_TOOLS=ON
-        cmake --build build/ --target INSTALL
-        ctest -V ./build/
+        mingw-w64-cmake -E make_directory build/
+        mingw-w64-cmake -S . -B build/ -DENABLE_TOOLS=ON
+        mingw-w64-cmake --build build/ --target INSTALL
+        mingw-w64-ctest -V ./build/
 
