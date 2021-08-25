@@ -10,6 +10,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
 
 # Currently the only supported output is SDL2.
 find_package(SDL2 REQUIRED)
+message (SDL2_FOUND=${SDL2_FOUND})
+message (SDL2_INC=${SDL2_INCLUDE_DIRS})
+message (SDL2_LIBS=${SDL2_LIBRARIES})
 #find_package(X11)
 
 add_subdirectory(src)

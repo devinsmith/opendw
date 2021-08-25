@@ -74,11 +74,20 @@ jobs:
 #      run: |
 #        .\.github\get-deps-mingw.ps1
 
-    - name: Configure Build & Test
+    - name: Create Build Environment
+      run: cmake -E make_directory build/
+
+    - name: Configure CMake
+      shell: bash
+      run: cmake -S . -B build/ -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DENABLE_TOOLS=ON
+
+    - name: Dump CMakeCache
+      shell: bash
+      run: cat build/CMakeCache.txt
+
+    - name: Build & Test
       shell: bash
       run: |
-        cmake -E make_directory build/
-        cmake -S . -B build/ -DENABLE_TOOLS=ON
         cmake --build build/ --config $BUILD_TYPE
         ctest -V ./build/
 
