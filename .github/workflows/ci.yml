@@ -79,6 +79,6 @@ jobs:
       run: |
         cmake -E make_directory build/
         cmake -S . -B build/ -DENABLE_TOOLS=ON
-        cmake --build build/ --target INSTALL
+        cmake --build build/ --config $BUILD_TYPE
         ctest -V ./build/
 
