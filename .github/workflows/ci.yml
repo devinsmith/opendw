@@ -65,9 +65,9 @@ jobs:
           mingw-w64-x86_64-cmake
           mingw-w64-x86_64-SDL2
 
-          #    - name: Install Prerequisites
-          #      run: |
-          #        .\.github\get-deps-mingw.ps1
+#    - name: Install Prerequisites
+#      run: |
+#        .\.github\get-deps-mingw.ps1
 
     - name: Configure Build & Test
       shell: msys2
