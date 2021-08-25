@@ -70,7 +70,7 @@ jobs:
 #        .\.github\get-deps-mingw.ps1
 
     - name: Configure Build & Test
-      shell: msys2
+      shell: bash
       run: |
         cmake -E make_directory build/
         cmake -S . -B build/ -DENABLE_TOOLS=ON
