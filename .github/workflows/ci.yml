@@ -55,16 +55,25 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
+    - uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: >-
+          git
+          base-devel
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-cmake
+          mingw-w64-x86_64-SDL2
 
-    - name: Install Prerequisites
-      run: |
-        .\.github\get-deps-mingw.ps1
+          #    - name: Install Prerequisites
+          #      run: |
+          #        .\.github\get-deps-mingw.ps1
 
     - name: Configure Build & Test
-      shell: bash
+      shell: msys2
       run: |
         cmake -E make_directory build/
-        cmake -S . -B build/ -DENABLE_TOOLS=ON -DCMAKE_C_FLAGS=" /W4"
-        cmake --build build/ --config Debug --target INSTALL
+        cmake -S . -B build/ -DENABLE_TOOLS=ON
+        cmake --build build/ --target INSTALL
         ctest -V ./build/
 
