@@ -81,10 +81,6 @@ jobs:
       shell: bash
       run: cmake -S . -B build/ -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DENABLE_TOOLS=ON
 
-    - name: Dump CMakeCache
-      shell: bash
-      run: cat build/CMakeCache.txt
-
     - name: Build & Test
       shell: bash
       run: |
