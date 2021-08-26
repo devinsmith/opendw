@@ -14,6 +14,7 @@ message (SDL2_FOUND=${SDL2_FOUND})
 message (SDL2_INC_DIRS=${SDL2_INCLUDE_DIRS})
 message (SDL2_INC_DIR=${SDL2_INCLUDE_DIR})
 message (SDL2_LIBS=${SDL2_LIBRARIES})
+message (SDL2_LIB=${SDL2_LIBRARY})
 #find_package(X11)
 
 add_subdirectory(src)
