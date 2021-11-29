@@ -3482,7 +3482,7 @@ static void sub_1F8F()
 // Side effect, advances src_ptr (in/out variable)
 // Returns:
 //    AX: key pressed.
-//    BX: offset to jump to.
+//    BX: offset to jump to, within current script.
 static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
 {
   uint8_t al, ah;
@@ -3609,8 +3609,10 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
       }
     } else {
       // 0x29B1
-      if (sub_2BD9() == 0)
+      if (sub_2BD9() == 0) {
+        // No event occurred, keep looping.
         continue;
+      }
       // 0x29B6
       al = 1;
     }
@@ -3631,6 +3633,7 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
 
     uint8_t dl = byte_2AA6;
     // 0x29DD
+    // Loop through all possible key presses
     while (1) {
       cpu.di += 3;
       al = *(base + cpu.di);
@@ -3644,9 +3647,12 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
       }
 
       // 0x29EF
+      // Numeric key
       if (al == 0x01) {
         bl = dl;
-        bl -= 0xB1;
+        bl -= 0xB1; // '1' + 0x80
+
+        // Did we press a key to corresponds to a member of our party.
         if (bl < game_state.unknown[0x1F]) {
           // 0x29FE
           bh = 0;
@@ -3698,6 +3704,7 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
             sub_2A4C();
             return;
           }
+          // Did user press this key??
           if (al == byte_2AA6) {
             // 0x2A4C
             sub_2A4C();
