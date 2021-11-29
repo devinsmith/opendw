@@ -482,7 +482,7 @@ static void op_84();
 static void op_85();
 static void load_word3AE2_resource();
 static void op_88();
-static void op_89();
+static void wait_event();
 static void op_8A();
 static void op_8B();
 static void prompt_no_yes();
@@ -643,7 +643,7 @@ struct op_call_table targets[] = {
   { load_word3AE2_resource, "0x493E" },
   { NULL, "0x4955" },
   { op_88, "0x496D" },
-  { op_89, "0x4977" },
+  { wait_event, "0x4977" },
   { op_8A, "0x498E" },
   { op_8B, "0x499B" },
   { prompt_no_yes, "0x49A5" },
@@ -3477,9 +3477,12 @@ static void sub_1F8F()
 
 // 0x28B0
 // The inputs here have to do with the keys we accept.
+// Inputs:
+//    BX: offset from source pointer.
+// Side effect, advances src_ptr (in/out variable)
 // Returns:
 //    AX: key pressed.
-//    BX: offset to jump to.
+//    BX: offset to jump to, within current script.
 static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
 {
   uint8_t al, ah;
@@ -3487,6 +3490,8 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
 
   ui_draw_string();
 
+  // It is currently unknown what the first 2 bytes (word)
+  // does in this function.
   cpu.ax = **src_ptr;
   (*src_ptr)++;
   cpu.ax += **src_ptr << 8;
@@ -3496,11 +3501,14 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
 
   // 0x28BA
   word_2AA7 = cpu.ax;
+
+  // cpu.ax &= 20FF
   ah = (cpu.ax & 0xFF00) >> 8;
   ah = ah & 0x20;
   al = cpu.ax & 0xFF;
-
   cpu.ax = (ah << 8) | al;
+
+  printf("%s: 2AA7: 0x%04X AX: 0x%04X\n", __func__, word_2AA7, cpu.ax);
 
   timers.timer5 = ah;
   // extract 0x2AA8
@@ -3601,8 +3609,10 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
       }
     } else {
       // 0x29B1
-      if (sub_2BD9() == 0)
+      if (sub_2BD9() == 0) {
+        // No event occurred, keep looping.
         continue;
+      }
       // 0x29B6
       al = 1;
     }
@@ -3623,6 +3633,7 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
 
     uint8_t dl = byte_2AA6;
     // 0x29DD
+    // Loop through all possible key presses
     while (1) {
       cpu.di += 3;
       al = *(base + cpu.di);
@@ -3636,9 +3647,12 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
       }
 
       // 0x29EF
+      // Numeric key
       if (al == 0x01) {
         bl = dl;
-        bl -= 0xB1;
+        bl -= 0xB1; // '1' + 0x80
+
+        // Did we press a key to corresponds to a member of our party.
         if (bl < game_state.unknown[0x1F]) {
           // 0x29FE
           bh = 0;
@@ -3648,8 +3662,9 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
           bh = game_state.unknown[0xA + si];
           cpu.bx += (bh << 8);
           unsigned char *c960 = get_player_data_base();
+          // Check player's status, see if alive still ?
           cpu.cx = c960[cpu.bx - 0xC960 + 0x4C];
-          cpu.cx = cpu.cx & byte_2AA9;
+          cpu.cx = cpu.cx & byte_2AA9; // Status modifier?
           if (cpu.cx != 0)
             continue;
 
@@ -3689,6 +3704,7 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
             sub_2A4C();
             return;
           }
+          // Did user press this key??
           if (al == byte_2AA6) {
             // 0x2A4C
             sub_2A4C();
@@ -3718,9 +3734,13 @@ static void op_88()
 }
 
 // 0x4977
-static void op_89(void)
+// Waits on an event to occur. This takes an unknown number of parameters
+// until reading a 0xff character.
+static void wait_event(void)
 {
   printf("%s : 0x4977\n", __func__);
+
+  // offset to start at.
   word_3ADB = cpu.pc - running_script->bytes;
   cpu.base_pc = running_script->bytes;
   cpu.bx = word_3ADB;
