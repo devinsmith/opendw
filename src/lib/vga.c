@@ -130,6 +130,8 @@ void vga_addkey(int key)
     return;
   }
 
+  printf("Adding key: 0x%04X\n", key);
+
   vga_keyb.buffer[vga_keyb.head] = key;
   vga_keyb.head = (vga_keyb.head + 1) % nitems(vga_keyb.buffer);
   vga_keyb.count++;

@@ -85,7 +85,7 @@ static const uint16_t shifted_scancodes[] = {
 };
 
 // Some keys are missing for Control-[key]
-static const uint16_t crtl_scancodes[] = {
+static const uint16_t ctrl_scancodes[] = {
   0x0000, 0x0000, 0x0000, 0x0000, 0x1E01, 0x3002, // ....ab
   0x2E03, 0x2004, 0x1205, 0x2106, 0x2207, 0x2308, // cedfgh
   0x1709, 0x240A, 0x250B, 0x260C, 0x320D, 0x310E, // ijklmn
@@ -278,9 +278,44 @@ get_key()
   return 0;
 }
 
-static void poll_events()
+static int handle_key(SDL_Event *e)
 {
+  const SDL_KeyboardEvent *ke = &e->key;
+  const SDL_Keysym *ksym = &ke->keysym;
+  const uint16_t *scancode_table;
 
+  if (ksym->mod & KMOD_SHIFT) {
+    scancode_table = shifted_scancodes;
+  } else if (ksym->mod & KMOD_ALT) {
+    scancode_table = alt_scancodes;
+  } else if (ksym->mod & KMOD_CTRL) {
+    scancode_table = ctrl_scancodes;
+  } else {
+    scancode_table = normal_scancodes;
+  }
+  uint16_t key = scancode_table[ksym->sym];
+  if (key > 0) {
+    vga_addkey(key);
+  }
+  return 1;
+}
+
+static int poll_events()
+{
+  SDL_Event e;
+  int should_exit = 0;
+
+  while (SDL_PollEvent(&e) != 0) {
+    switch (e.type) {
+    case SDL_QUIT:
+      should_exit = 1;
+      break;
+    case SDL_KEYDOWN:
+      handle_key(&e);
+      break;
+    }
+  }
+  return should_exit;
 }
 
 struct vga_driver sdl_driver = {

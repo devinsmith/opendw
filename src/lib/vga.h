@@ -31,7 +31,7 @@ struct vga_driver {
   void (*waitkey)();
   uint8_t* (*memory)();
   uint16_t (*getkey)();
-  void (*poll)();
+  int (*poll)();
 };
 
 struct mouse_status {
