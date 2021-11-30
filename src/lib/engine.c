@@ -86,11 +86,6 @@ unsigned char *data_1E21;
 // 0x1EB9, 2 bytes, since there's a function at 0x1EBB
 unsigned char data_1EB9[] = { 0xC2, 0x00 };
 
-// 0x2C0E
-// Acceptable keys?
-// 0x824, 0x9B (Escape)
-unsigned char data_2C0E[] = { 0x04, 0x82, 0x9B, 0x00, 0x00, 0xFF };
-
 uint8_t byte_1F07 = 0;
 uint8_t byte_1F08 = 0;
 
@@ -150,9 +145,6 @@ unsigned char data_4A99[] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 
 // 0x49AB (compressed Yes/No bytes)
 unsigned char data_49AB[] = { 0xFE, 0x6, 0x97, 0x7F, 0x2B, 0xC0 };
-
-// 0x49CA (keys: 0xCE = 'N', 0xD9 = 'Y', unknown about other bytes)
-unsigned char data_49CA[] = { 0x00, 0x00, 0xCE, 0x00, 0x00, 0xD9, 0x00, 0x00, 0xFF };
 
 unsigned char byte_4F0F;
 unsigned char byte_4F10 = 0;
@@ -481,7 +473,7 @@ static void op_83();
 static void op_84();
 static void op_85();
 static void load_word3AE2_resource();
-static void op_88();
+static void op_wait_escape();
 static void wait_event();
 static void op_8A();
 static void op_8B();
@@ -642,7 +634,7 @@ struct op_call_table targets[] = {
   { op_85, "0x4920" },
   { load_word3AE2_resource, "0x493E" },
   { NULL, "0x4955" },
-  { op_88, "0x496D" },
+  { op_wait_escape, "0x496D" },
   { wait_event, "0x4977" },
   { op_8A, "0x498E" },
   { op_8B, "0x499B" },
@@ -3490,6 +3482,7 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
 
   ui_draw_string();
 
+  // Read flags (word)
   // It is currently unknown what the first 2 bytes (word)
   // does in this function.
   cpu.ax = **src_ptr;
@@ -3572,7 +3565,8 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
   sub_4B60();
   sub_1A72();
   printf("%s: word_2AA7: 0x%04X\n", __func__, word_2AA7);
-  // 0x294B
+
+  // 0x294B:
   while (1) {
     if ((word_2AA7 & 0x0080) == 0) {
       sub_1F10();
@@ -3720,6 +3714,11 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
 // Takes a pointer?
 static void sub_2C00()
 {
+  // 0x2C0E
+  // Acceptable keys:
+  // Flags: 0x824, only 1 acceptable key: 0x9B (Escape)
+  unsigned char data_2C0E[] = { 0x04, 0x82, 0x9B, 0x00, 0x00, 0xFF };
+
   cpu.bx = 0x2C0E; // function pointer.
   unsigned char *ptr = data_2C0E;
   sub_28B0(&ptr, data_2C0E);
@@ -3727,8 +3726,8 @@ static void sub_2C00()
 }
 
 // 0x496D
-// Delete (?)
-static void op_88()
+// Waits for an escape key before advancing.
+static void op_wait_escape()
 {
   sub_2C00();
 }
@@ -4699,6 +4698,9 @@ static void op_8B()
 // 0x49A5
 static void prompt_no_yes()
 {
+  // 0x49CA (keys: 0xCE = 'N', 0xD9 = 'Y', unknown about other bytes)
+  unsigned char data_49CA[] = { 0x00, 0x00, 0xCE, 0x00, 0x00, 0xD9, 0x00, 0x00, 0xFF };
+
   sub_1C70(data_49AB);
   cpu.bx = 0x49CA;
   unsigned char *ptr = data_49CA;
@@ -4707,10 +4709,11 @@ static void prompt_no_yes()
 
   draw_pattern(&draw_rect);
 
-  if (key == 0xD9) {
+  if (key == 0xD9) { // 'Y'
     cpu.cf = 1;
     cpu.zf = 1;
   } else {
+    // 'N'
     cpu.zf = 0;
     if ((key & 0xFF) > 0xD9) {
       cpu.cf = 0;
