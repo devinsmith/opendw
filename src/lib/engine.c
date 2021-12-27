@@ -3428,7 +3428,7 @@ static void sub_2ADC()
   if ((word_2AA7 & 0x1) != 0) {
     return;
   }
-  memset(&data_2AAA, 0, sizeof(data_2AAA));
+  zero_out_2AAA();
 }
 
 // 0x2A4C
@@ -3917,7 +3917,7 @@ static void sub_1E49()
   // 0x1E54
   while (1) {
     cpu.bx = 0x1EB9; // function pointer.
-    unsigned char *ptr = data_1EB9 + 0;
+    unsigned char *ptr = data_1EB9;
     sub_28B0(&ptr, data_1EB9);
 
     // Checking for keys.
