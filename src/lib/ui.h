@@ -105,6 +105,8 @@ void ui_set_viewport_width(int new_width);
 void ui_set_viewport_height(int new_height);
 void ui_set_viewport_offset(int new_offset);
 
+void zero_out_2AAA();
+
 #ifdef __cplusplus
 }
 #endif

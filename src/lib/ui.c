@@ -539,7 +539,7 @@ static void draw_character(int x, int y, const unsigned char *chdata)
 }
 
 // 0x2AE3
-static void zero_out_2AAA()
+void zero_out_2AAA()
 {
   // only clears out 25 bytes in dragon.com
   // size of data_2AAA may be inaccurate.
