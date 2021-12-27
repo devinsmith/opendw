@@ -3432,25 +3432,29 @@ static void sub_2ADC()
 }
 
 // 0x2A4C
+// Inputs byte_2AA6 ?
 static void sub_2A4C()
 {
   uint8_t al;
 
   cpu.di++;
-  printf("%s DI: 0x%04X\n", __func__, cpu.di);
+  printf("%s: 2AA6-2AA7 (0x%02X/0x%04X) DI 0x%04X\n", __func__,
+    byte_2AA6, word_2AA7, cpu.di);
 
+  // Actual jump address
   cpu.bx = *(cpu.base_pc + cpu.di);
   cpu.bx += *(cpu.base_pc + cpu.di + 1) << 8;
 
-  printf("%s: BX - 0x%04X\n", __func__, cpu.bx);
+  printf("%s: JUMP (BX) - 0x%04X\n", __func__, cpu.bx);
   printf("%s: AX - 0x%04X\n", __func__, cpu.ax);
+
   sub_2ADC();
   al = cpu.ax & 0xFF;
   if (al == 1) {
     al = byte_2AA6;
     printf("%s: AL - 0x%02X\n", __func__, al);
 
-    al -= 0xB1;
+    al -= 0xB1; // '1' & 0x80
     game_state.unknown[0x6] = al;
   }
   al = byte_2AA6;
@@ -3659,8 +3663,10 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
           // Check player's status, see if alive still ?
           cpu.cx = c960[cpu.bx - 0xC960 + 0x4C];
           cpu.cx = cpu.cx & byte_2AA9; // Status modifier?
-          if (cpu.cx != 0)
+          if (cpu.cx != 0) {
+            // Player is not alive.
             continue;
+          }
 
           sub_2A4C();
           return;

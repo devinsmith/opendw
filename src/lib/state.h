@@ -26,6 +26,7 @@ extern "C" {
 
 // We should break this apart.
 struct game_state {
+  // 0x06 - Currently selected player.
   // 0x1F - Number of characters in the party.
   // 0xC6 - 0x?? - New character name.
   unsigned char unknown[256];
