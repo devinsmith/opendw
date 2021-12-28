@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.7.2)
 project(opendw)
 
-message (CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH})
-
 set(PACKAGE opendw)
 set(VERSION 0.02)
 
