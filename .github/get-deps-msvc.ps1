@@ -11,8 +11,10 @@ $sdlUrl = "https://www.libsdl.org/release/$sdlArchive"
 curl.exe -sSLfO $sdlUrl
 if ($LASTEXITCODE) { "Download failed" | Write-Host: exit 1 }
 
+$env:GITHUB_PATH
+
 $target = Join-Path $pwd.Drive.Root "deps/SDL"
 mkdir $target
 
-Expand-Archive $sdlArchive -DestinationPath $target
+Expand-Archive -Path $sdlArchive -DestinationPath $target -PassThru
 
