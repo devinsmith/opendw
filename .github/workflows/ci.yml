@@ -96,13 +96,15 @@ jobs:
       run: |
         .\.github\get-deps-msvc.ps1
 
-    - name: Put DEPS directory on PATH
-      run: echo "D:/deps" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+#    - name: Put DEPS directory on PATH
+#      run: echo "D:/deps" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: Create Build Environment
       run: cmake -E make_directory build/
 
     - name: Configure CMake
+      env:
+        CMAKE_PREFIX_PATH: D:\deps
       run: cmake -S . -B build/ -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
     - name: Build & Test
