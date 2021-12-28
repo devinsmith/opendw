@@ -22,5 +22,3 @@ Expand-Archive -Path $sdlArchive -DestinationPath $target
 $extractTarget = Join-Path $target "SDL2-$sdlVersion"
 $newTarget = Join-Path $target "sdl2"
 Move-Item -Path $extractTarget -Destination $newTarget
-
-$env:GITHUB_PATH += ";$newTarget"
