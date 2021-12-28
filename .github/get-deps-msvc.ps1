@@ -13,8 +13,7 @@ if ($LASTEXITCODE) { "Download failed" | Write-Host: exit 1 }
 
 $env:GITHUB_PATH
 
-#$target = Join-Path $pwd.Drive.Root "deps/SDL"
-$target = $env:GITHUB_PATH + "/deps"
+$target = Join-Path $pwd.Drive.Root "deps"
 mkdir $target
 
 Expand-Archive -Path $sdlArchive -DestinationPath $target -PassThru
@@ -23,3 +22,5 @@ Expand-Archive -Path $sdlArchive -DestinationPath $target -PassThru
 $extractTarget = Join-Path $target "SDL2-" $sdlVersion
 $newTarget = Join-Path $target "sdl2"
 Move-Item -Path $extractTarget -Destination $newTarget -PassThru
+
+$env:GITHUB_PATH += $newTarget
