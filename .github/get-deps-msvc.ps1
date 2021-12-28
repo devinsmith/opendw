@@ -19,7 +19,7 @@ mkdir $target
 Expand-Archive -Path $sdlArchive -DestinationPath $target -PassThru
 
 # Remove version string from path to help CMake
-$extractTarget = Join-Path $target "SDL2-" $sdlVersion
+$extractTarget = Join-Path $target "SDL2-$sdlVersion"
 $newTarget = Join-Path $target "sdl2"
 Move-Item -Path $extractTarget -Destination $newTarget -PassThru
 
