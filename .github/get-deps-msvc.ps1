@@ -16,11 +16,11 @@ $env:GITHUB_PATH
 $target = Join-Path $pwd.Drive.Root "deps"
 mkdir $target
 
-Expand-Archive -Path $sdlArchive -DestinationPath $target -PassThru
+Expand-Archive -Path $sdlArchive -DestinationPath $target
 
 # Remove version string from path to help CMake
 $extractTarget = Join-Path $target "SDL2-$sdlVersion"
 $newTarget = Join-Path $target "sdl2"
-Move-Item -Path $extractTarget -Destination $newTarget -PassThru
+Move-Item -Path $extractTarget -Destination $newTarget
 
-$env:GITHUB_PATH += $newTarget
+$env:GITHUB_PATH += ";$newTarget"
