@@ -12,6 +12,7 @@ curl.exe -sSLfO $sdlUrl
 if ($LASTEXITCODE) { "Download failed" | Write-Host: exit 1 }
 
 $env:GITHUB_PATH
+Get-Location
 
 $target = Join-Path $pwd.Drive.Root "deps"
 mkdir $target
