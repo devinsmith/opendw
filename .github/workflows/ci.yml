@@ -103,9 +103,9 @@ jobs:
       run: cmake -E make_directory build/
 
     - name: Configure CMake
-      run: cmake -S . -B build/ -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+      run: cmake -S . -B build/ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build & Test
       run: |
-        cmake --build build/ -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        cmake --build build/ --config ${{env.BUILD_TYPE}}
         ctest -V ./build/
