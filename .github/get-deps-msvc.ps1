@@ -14,7 +14,7 @@ if ($LASTEXITCODE) { "Download failed" | Write-Host: exit 1 }
 $env:GITHUB_PATH
 
 #$target = Join-Path $pwd.Drive.Root "deps/SDL"
-$target = Join-Path $env:GITHUB_PATH "deps"
+$target = $env:GITHUB_PATH + "/deps"
 mkdir $target
 
 Expand-Archive -Path $sdlArchive -DestinationPath $target -PassThru
