@@ -219,7 +219,7 @@ uint8_t bit_extract(struct bit_extractor *be, int n)
     be->num_bits--;
 
     // rcl al, 1
-    int carry = 0;
+    uint8_t carry = 0;
     if (tmp > be->bit_buffer) {
       carry = 1;
     }
