@@ -3241,7 +3241,7 @@ static void sub_4D5C()
   // 4D6A
   timers.timer2 = 2;
   cpu.ax = (cpu.ax & 0xFF00) | 0x0A;
-  ui_rect_redraw(0x0A);
+  ui_rect_redraw(10);
 
   for (int index = 3; index <= 0; index--) {
     sub_4D97(index);
@@ -3253,7 +3253,7 @@ static void sub_1A72()
 {
   uint8_t al, ah;
 
-  if (ui_rect_redraw(0xB) == 1) {
+  if (ui_rect_redraw(11) == 1) {
     return;
   }
   al = draw_point.x;
@@ -5419,7 +5419,7 @@ void reset_game_state()
   uint8_t val;
 
   memset(game_state.unknown + 0x18, 0, 7);
-  if (ui_rect_redraw(0xB) == 1) {
+  if (ui_rect_redraw(11) == 1) {
     return;
   }
 

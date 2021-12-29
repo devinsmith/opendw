@@ -59,15 +59,30 @@ static struct ui_rect data_268F;
 // 0x2697
 struct ui_rect draw_rect;
 
+struct rect_dimension {
+  uint8_t w;
+  uint8_t h;
+  uint8_t x;
+  uint8_t y;
+};
+
 // 0x2794-0x27CB
-static unsigned char data_2794[56] = {
-  0x00, 0xB8, 0x28, 0xC0, 0x00, 0x98, 0x01, 0xB8, // 0x2794-0x279B
-  0x27, 0x98, 0x28, 0xB8, 0x00, 0x90, 0x28, 0x98, // 0x279C-0x27A3
-  0x27, 0x00, 0x28, 0x90, 0x1B, 0x00, 0x27, 0x20, // 0x27A4-0x27AB
-  0x00, 0x00, 0x02, 0x90, 0x02, 0x00, 0x04, 0x08, // 0x27AC-0x27B3
-  0x14, 0x00, 0x16, 0x08, 0x16, 0x00, 0x1B, 0x90, // 0x27B4-0x27BB
-  0x02, 0x08, 0x16, 0x90, 0x1B, 0x08, 0x27, 0x78, // 0x27BC-0x27C3
-  0x04, 0x00, 0x14, 0x08, 0x01, 0x98, 0x27, 0xB8  // 0x27C4-0x27CB
+// Defines dimensions (w, h, x, y) of rectangles.
+static struct rect_dimension rect_dimensions[] = {
+  {  0, 184, 40, 192 }, // 0x2794-0x2797
+  {  0, 152,  1, 184 }, // 0x2798-0x279B
+  { 39, 152, 40, 184 }, // 0x279C-0x279F
+  {  0, 144, 40, 152 }, // 0x27A0-0x27A3
+  { 39,   0, 40, 144 }, // 0x27A4-0x27A7
+  { 27,   0, 39,  32 }, // 0x27A8-0x27AB
+  {  0,   0,  2, 144 }, // 0x27AC-0x27AF
+  {  2,   0,  4,   8 }, // 0x27B0-0x27B3
+  { 20,   0, 22,   8 }, // 0x27B4-0x27B7
+  { 22,   0, 27, 144 }, // 0x27B8-0x27BB
+  {  2,   8, 22, 144 }, // 0x27BC-0x27BF
+  { 27,   8, 39, 120 }, // 0x27C0-0x27C3
+  {  4,   0, 20,   8 }, // 0x27C4-0x27C7
+  {  1, 152, 39, 184 }  // 0x27C8-0x27CB
 };
 
 // 0x3797
@@ -416,7 +431,7 @@ static void sub_E6D(const struct viewport_data *d, unsigned char *data)
 // 0x1060
 void draw_viewport()
 {
-  int ret = ui_rect_redraw(0xa);
+  int ret = ui_rect_redraw(10);
   printf("%s: %d", __func__, ret);
 
   sub_1F54(0x0a);
@@ -874,33 +889,22 @@ int ui_rect_redraw(uint8_t input)
 // Checks boundaries of rectangle?
 int ui_adjust_rect(uint8_t input)
 {
-  uint16_t ax, si;
-  uint8_t al;
-
-  ax = input;
-  ax = ax << 2;
-  si = ax;
-
   ui_rect_expand();
 
   // 0x2764
-  al = data_2794[si];
-  if (al > draw_rect.w) {
+  if (draw_rect.w < rect_dimensions[input].w) {
     ui_rect_shrink();
     return 0;
   }
-  al = data_2794[si + 1];
-  if (al > draw_rect.h) {
+  if (draw_rect.h < rect_dimensions[input].h) {
     ui_rect_shrink();
     return 0;
   }
-  al = data_2794[si + 2];
-  if (al < draw_rect.x) {
+  if (draw_rect.x > rect_dimensions[input].x) {
     ui_rect_shrink();
     return 0;
   }
-  al = data_2794[si + 3];
-  if (al < draw_rect.y) {
+  if (draw_rect.y > rect_dimensions[input].y) {
     ui_rect_shrink();
     return 0;
   }
