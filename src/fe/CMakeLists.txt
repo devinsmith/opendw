@@ -18,11 +18,10 @@ add_executable(ndragon main.c vga_null.c)
 target_include_directories(ndragon PRIVATE ${CMAKE_SOURCE_DIR}/src/lib)
 target_link_libraries(ndragon PRIVATE dragon)
 
-
-#if(MSVC)
-#  target_compile_options(${TARGET_NAME} PRIVATE /W4 /WX)
-#else()
-#target_compile_options(${TARGET_NAME} PRIVATE -Wall -Werror)
-#target_compile_options(${TARGET_NAME} PRIVATE -Wall)
-#endif()
-
+if(MSVC)
+    target_compile_options(${TARGET_NAME} PRIVATE /W4 /WX)
+else()
+    # Not yet with -Werror
+    #target_compile_options(${TARGET_NAME} PRIVATE -Wall -Werror)
+    target_compile_options(${TARGET_NAME} PRIVATE -Wall)
+endif()

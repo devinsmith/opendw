@@ -10,9 +10,10 @@ set(SOURCES
 add_library(${TARGET_NAME} STATIC ${SOURCES})
 target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/lib)
 
-#if(MSVC)
-#  target_compile_options(${TARGET_NAME} PRIVATE /W4 /WX)
-#else()
-#  target_compile_options(${TARGET_NAME} PRIVATE -Wall -Werror)
-target_compile_options(${TARGET_NAME} PRIVATE -Wall)
-#endif()
+if(MSVC)
+  target_compile_options(${TARGET_NAME} PRIVATE /W4 /WX)
+else()
+  # Not yet with -Werror
+  #target_compile_options(${TARGET_NAME} PRIVATE -Wall -Werror)
+  target_compile_options(${TARGET_NAME} PRIVATE -Wall)
+endif()
