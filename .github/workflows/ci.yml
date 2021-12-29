@@ -56,7 +56,7 @@ jobs:
       - name: Create Build Environment
         # Some projects don't allow in-source building, so create a
         # separate build directory
-        run: cmake -E make_directory ${{github.workspace}}/build
+        run: cmake -E make_directory build/
 
       - name: Configure CMake
         # Use a bash shell so we can use the same syntax for environment
@@ -68,7 +68,7 @@ jobs:
         # available with CMake 3.13 and higher.
         # The CMake binaries on the Github Actions machines are
         # (as of this writing) 3.12
-        run: cmake $GITHUB_WORKSPACE \
+        run: cmake -S . -B build/ \
               -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
               -G "${{ matrix.config.generators }}" \
               -DENABLE_TOOLS=ON
@@ -76,7 +76,7 @@ jobs:
       - name: Build
         working-directory: ${{github.workspace}}/build
         shell: bash
-        run: cmake --build . --config $BUILD_TYPE
+        run: cmake --build build/ --config ${{ matrix.config.build_type }}
 
       - name: Test
         working-directory: ${{github.workspace}}/build
