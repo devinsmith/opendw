@@ -416,7 +416,7 @@ static void sub_E6D(const struct viewport_data *d, unsigned char *data)
 // 0x1060
 void draw_viewport()
 {
-  int ret = sub_2752(0xa);
+  int ret = ui_rect_redraw(0xa);
   printf("%s: %d", __func__, ret);
 
   sub_1F54(0x0a);
@@ -862,7 +862,7 @@ void ui_rect_shrink()
 
 // Uses carry flag as a boolean
 // 0x2752
-int sub_2752(uint8_t input)
+int ui_rect_redraw(uint8_t input)
 {
   if (ui_drawn_yet == 0)
     return 0;
