@@ -28,7 +28,7 @@ jobs:
             build_type: "Release",
             cc: "gcc",
             cxx: "g++",
-            generators: "Ninja"
+            generators: "Unix Makefiles"
           }
 
     steps:
@@ -43,7 +43,6 @@ jobs:
         if: startsWith(matrix.config.os, 'windows')
         run: |
           .\.github\get-deps-msvc.ps1
-          ninja --version
           cmake --version
 
       - name: Install dependencies on Ubuntu
@@ -51,7 +50,6 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y libsdl2-dev
-          ninja --version
           cmake --version
           gcc --version
 
