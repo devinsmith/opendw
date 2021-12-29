@@ -19,7 +19,9 @@ target_include_directories(ndragon PRIVATE ${CMAKE_SOURCE_DIR}/src/lib)
 target_link_libraries(ndragon PRIVATE dragon)
 
 if(MSVC)
-    target_compile_options(${TARGET_NAME} PRIVATE /W4 /WX)
+    # Not yet with /WX
+    #target_compile_options(${TARGET_NAME} PRIVATE /W4 /WX)
+    target_compile_options(${TARGET_NAME} PRIVATE /W4)
 else()
     # Not yet with -Werror
     #target_compile_options(${TARGET_NAME} PRIVATE -Wall -Werror)

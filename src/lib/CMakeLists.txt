@@ -11,7 +11,9 @@ add_library(${TARGET_NAME} STATIC ${SOURCES})
 target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/lib)
 
 if(MSVC)
-  target_compile_options(${TARGET_NAME} PRIVATE /W4 /WX)
+  # Not yet with /WX
+  #target_compile_options(${TARGET_NAME} PRIVATE /W4 /WX)
+  target_compile_options(${TARGET_NAME} PRIVATE /W4)
 else()
   # Not yet with -Werror
   #target_compile_options(${TARGET_NAME} PRIVATE -Wall -Werror)

@@ -205,7 +205,7 @@ void decompress_data1(struct buf_rdr *input, struct buf_wri *output, int size)
 // 0x1D8C (num_bits passed in BL)
 uint8_t bit_extract(struct bit_extractor *be, int n)
 {
-  int al = 0;
+  uint8_t al = 0;
 
   for (int i = 0; i < n; i++) {
     if (be->num_bits == 0) {
