@@ -23,7 +23,10 @@ add_executable(strextract ${STREXT_SOURCES})
 target_include_directories(strextract PRIVATE ${CMAKE_SOURCE_DIR}/src/lib)
 target_link_libraries(strextract PUBLIC dragon)
 
-add_executable(kbhit kbhit.cpp)
+# Rather useless tool
+#add_executable(kbhit kbhit.cpp)
+
+install(TARGETS disasm DESTINATION bin)
 #if(MSVC)
 #  target_compile_options(resextract PRIVATE /W4 /WX)
 #else()
