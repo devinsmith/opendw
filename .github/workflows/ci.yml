@@ -30,7 +30,7 @@ jobs:
             build_type: "Release",
             cc: "gcc",
             cxx: "g++",
-            generators: "Unix Makefiles"
+            generators: "Unix Makefiles",
             archiver: "7z a",
             artifact: "ubuntu_gcc.7z"
           }
@@ -40,7 +40,7 @@ jobs:
             build_type: "Release",
             cc: "clang",
             cxx: "clang++",
-            generators: "Unix Makefiles"
+            generators: "Unix Makefiles",
             archiver: "7za a",
             artifact: "macos_clang.7z"
           }
