@@ -20,7 +20,9 @@ jobs:
             build_type: "Release",
             cc: "cl",
             cxx: "cl",
-            generators: "Visual Studio 16 2019"
+            generators: "Visual Studio 16 2019",
+            archiver: "7z a",
+            artifact: "windows_msvc.7z"
           }
         - {
             name: "Ubuntu Latest GCC",
@@ -29,6 +31,8 @@ jobs:
             cc: "gcc",
             cxx: "g++",
             generators: "Unix Makefiles"
+            archiver: "7z a",
+            artifact: "ubuntu_gcc.7z"
           }
         - {
             name: "MacOS Latest Clang",
@@ -37,6 +41,8 @@ jobs:
             cc: "clang",
             cxx: "clang++",
             generators: "Unix Makefiles"
+            archiver: "7za a",
+            artifact: "macos_clang.7z"
           }
 
     steps:
@@ -64,7 +70,7 @@ jobs:
       - name: Install dependencies on MacOS
         if: startsWith(matrix.config.os, 'macos')
         run: |
-          brew install sdl2 cmake
+          brew install sdl2 p7zip
           cmake --version
           clang --version
 
@@ -76,7 +82,8 @@ jobs:
           cmake -S . -B . \
             -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
             -G "${{ matrix.config.generators }}" \
-            -DENABLE_TOOLS=ON
+            -DENABLE_TOOLS=ON \
+            -DCMAKE_INSTALL_PREFIX:PATH=instdir
 
       - name: Build
         shell: bash
@@ -88,3 +95,20 @@ jobs:
         # See https://cmake.org/cmake/help/latest/manual/ctest.1.html
         # for more detail
         run: ctest -C $BUILD_TYPE
+
+      - name: Install & Strip
+        shell: bash
+        run: cmake --install . --strip
+
+      - name: Pack
+        shell: bash
+        working-directory: instdir
+        run: |
+          ls -laR
+          ${{ matrix.config.archiver }} ../${{ matrix.config.artifact }} .
+
+      - name: Upload
+        uses: actions/upload-artifact@v1
+        with:
+          path: ./${{ matrix.config.artifact }}
+          name: ${{ matrix.config.artifact }}
