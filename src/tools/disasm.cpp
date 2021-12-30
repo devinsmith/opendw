@@ -475,12 +475,16 @@ static int wait_event(const unsigned char *args)
 
 static int set_word(const unsigned char *args)
 {
+  (void)args; // unused
+
   word_mode = true;
   return 0;
 }
 
 static int set_byte(const unsigned char *args)
 {
+  (void)args; // unused
+
   word_mode = false;
   return 0;
 }
