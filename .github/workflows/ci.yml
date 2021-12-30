@@ -30,6 +30,14 @@ jobs:
             cxx: "g++",
             generators: "Unix Makefiles"
           }
+        - {
+            name: "MacOS Latest Clang",
+            os: "macos-latest",
+            build_type: "Release",
+            cc: "clang",
+            cxx: "clang++",
+            generators: "Unix Makefiles"
+          }
 
     steps:
       - uses: actions/checkout@v2
@@ -52,6 +60,13 @@ jobs:
           sudo apt install -y libsdl2-dev
           cmake --version
           gcc --version
+
+      - name: Install dependencies on MacOS
+        if: startsWith(matrix.config.os, 'macos')
+        run: |
+          brew install sdl2 cmake
+          cmake --version
+          clang --version
 
       - name: Configure CMake
         shell: bash
