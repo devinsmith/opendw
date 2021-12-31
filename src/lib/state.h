@@ -28,6 +28,8 @@ extern "C" {
 struct game_state {
   // 0x06 - Currently selected player.
   // 0x1F - Number of characters in the party.
+  // 0x6A - 0x6D (Gold)
+  // 0x6E - 0x71 (Experience)
   // 0xC6 - 0x?? - New character name.
   unsigned char unknown[256];
 };
