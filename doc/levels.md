@@ -1,7 +1,9 @@
 Levels are a variable number of bytes.
 
+Examples:
 
-Example of Purgatory:
+Purgatory (0x71)
+================
 
 First 4 bytes of level file:
 
