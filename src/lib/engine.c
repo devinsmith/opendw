@@ -468,7 +468,7 @@ static void op_7A();
 static void read_header_bytes(void); // 7B
 static void op_7C();
 static void op_7D();
-static void op_80();
+static void advance_cursor(); // op_80
 static void op_81();
 static void op_82();
 static void op_83();
@@ -628,7 +628,7 @@ struct op_call_table targets[] = {
   { op_7D, "0x483B" },
   { NULL, "0x4845" },
   { NULL, "0x486D" },
-  { op_80, "0x487F" },
+  { advance_cursor, "0x487F" },
   { op_81, "0x48C5" },
   { op_82, "0x48D2" },
   { op_83, "0x48EE" },
@@ -2516,13 +2516,17 @@ static void sub_194A()
   bl -= byte_1964;
   bl += byte_1960;
 
+  // row?
   cpu.bx = (cpu.bx & 0xFF00) | bl;
 
   dl = byte_1961;
   dl -= 4;
   dl += byte_1962;
 
+  // column?
   cpu.dx = (cpu.dx & 0xFF00) | dl;
+
+  printf("%s: 0x%02X:0x%02X\n", __func__, bl, dl);
 }
 
 static void sub_1A13()
@@ -2548,9 +2552,10 @@ static void sub_1A13()
 
 
 // 0x1861
-static void sub_1861()
+static void sub_1861(uint8_t input)
 {
   uint8_t al, bl, dl;
+
   sub_194A();
   al = 0;
   bl = cpu.bx & 0xFF;
@@ -2566,7 +2571,7 @@ static void sub_1861()
 
   // Correct?
   if ((((word_11C6 & 0xFF00) >> 8) & 0x08) != 0) {
-    printf("%s: 0x1881 unimplemented\n", __func__);
+    printf("%s: 0x1881 unimplemented (%d)\n", __func__, input);
     exit(1);
   }
   // 18E4
@@ -2654,7 +2659,7 @@ static void sub_17F7()
     al = 0;
     do {
       byte_1962 = al;
-      sub_1861();
+      sub_1861(al);
 
       al = byte_1962;
       al++;
@@ -2705,6 +2710,7 @@ static void sub_1750()
   al = game_state.unknown[1];
   byte_1961 = al;
 
+  // 1764
   cpu.ax = 0;
   init_offsets(0x90);
   sub_59A6();
@@ -2723,6 +2729,7 @@ static void sub_1750()
 }
 
 // 0x45F0
+// mini map
 static void op_6D()
 {
   unsigned char *base_pc = cpu.base_pc;
@@ -2948,6 +2955,7 @@ static void sub_1BE6()
   if (counter <= 0)
     return;
 
+  // Append spaces
   cpu.ax = 0xA0;
   for (int i = 0; i < counter; i++) {
     handle_byte_callback(0xA0);
@@ -2955,7 +2963,8 @@ static void sub_1BE6()
 }
 
 // 0x487F
-static void op_80(void)
+// OP 80 (takes 1 argument)
+static void advance_cursor(void)
 {
   uint8_t al;
 
@@ -3340,8 +3349,7 @@ static void sub_1ABD(uint8_t val)
   al = game_state.unknown[6];
   if (al >= game_state.unknown[31]) {
     // 1AF6
-    al = byte_1BE5;
-    fill_color = al; // color ?
+    fill_color = byte_1BE5; // color ?
     al = draw_point.y;
     cpu.ax = al;
     g_linenum = cpu.ax; // line number
@@ -3359,6 +3367,7 @@ static void sub_1ABD(uint8_t val)
     reset_ui_background();
     return;
   }
+
   // 1B22
   al = 0xC;
   cpu.ax = (cpu.ax & 0xFF00) | al;
@@ -3398,6 +3407,7 @@ static void sub_1ABD(uint8_t val)
     }
     si--;
   }
+
   if (found == 0) {
     // 1B53 (not found)
     uint8_t dl = 2; // health
@@ -3861,6 +3871,154 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
   }
 }
 
+#if 0
+static int sub_294B()
+{
+  uint8_t al;
+  uint8_t bl, bh;
+
+  if ((word_2AA7 & 0x0080) == 0) {
+    sub_1F10();
+  }
+  sub_2CF5(); // timer
+  sub_3824(); // mouse ?
+  sub_2AEE(); // Mouse in bounds?
+  uint8_t clicked = sub_3840();
+  if (clicked == 0x80) {
+    printf("%s: 0x2965 unimplemented\n", __func__);
+    exit(1);
+  }
+
+  // 0x2985
+  al = sub_2D0B(); // key pressed?
+  if (al != 0) {
+    // A-Z letters.
+    if (al >= 0xE1 && al <= 0xFA) {
+      // 0x2992
+      if ((word_2AA7 & 0x2) == 0) {
+        al = al & 0xDF;
+      }
+    }
+
+    // 0x299B
+    // All other keys
+    printf("%s: word_2AA7: 0x%04X\n", __func__, word_2AA7);
+    if ((word_2AA7 & 0x8000) != 0) {
+      if ((word_2AA7 & 0x4000) == 0) {
+        if (al == 0xA0) {
+          al = 0x9B; // Treat space bar as escape?
+        }
+      }
+    }
+  } else {
+    // 0x29B1
+    if (sub_2BD9() == 0) {
+      // No event occurred, keep looping.
+      return 1;
+    }
+    // 0x29B6
+    al = 1;
+  }
+
+  // 29B8
+  byte_2AA6 = al;
+  if ((word_2AA7 & 0x40) != 0) {
+    sub_2ADC();
+    cpu.bx = word_2AA2;
+    return 0;
+  }
+
+  // 0x29CC
+  // ax = word_2AA4
+  cpu.di = word_2AA2;
+  cpu.di -= 3;
+  *src_ptr -= 3;
+
+  uint8_t dl = byte_2AA6;
+  // 0x29DD
+  // Loop through all possible key presses
+  while (1) {
+    cpu.di += 3;
+    al = *(base + cpu.di);
+    cpu.ax = (cpu.ax & 0xFF00) | al;
+    if (al == 0) {
+      sub_2A4C();
+      return 0;
+    }
+    if (al == 0xFF) {
+      break;
+    }
+
+    // 0x29EF
+    // Numeric key
+    if (al == 0x01) {
+      bl = dl;
+      bl -= 0xB1; // '1' + 0x80
+
+      // Did we press a key to corresponds to a member of our party.
+      if (bl < game_state.unknown[0x1F]) {
+        // 0x29FE
+        bh = 0;
+        cpu.bx = bl;
+        uint16_t si = cpu.bx;
+        cpu.bx = 0xC960;
+        bh = game_state.unknown[0xA + si];
+        cpu.bx += (bh << 8);
+        unsigned char *c960 = get_player_data_base();
+        // Check player's status, see if alive still ?
+        cpu.cx = c960[cpu.bx - 0xC960 + 0x4C];
+        cpu.cx = cpu.cx & byte_2AA9; // Status modifier?
+        if (cpu.cx != 0)
+          continue;
+
+        sub_2A4C();
+        return 0;
+      }
+    }
+    // 0x2A15
+    else if (al == 0x02) {
+      printf("%s: 0x2A19 unimplemented\n", __func__);
+      exit(1);
+    }
+    // 0x2A20
+    else if (al != 0x80) {
+
+      // 0x2A24
+      if (al == 0x81) {
+        cpu.di++;
+      } else {
+        // 0x2A2B
+        if ((al & 0x80) == 0) {
+          // 0x2A2F
+          cpu.di++;
+          al = al | 0x80;
+          cpu.ax = (cpu.ax & 0xFF00) | al;
+          if (al > byte_2AA6)
+          {
+            continue;
+          }
+          // 0x2A38
+          bl = *(base + cpu.di);
+          bl |= 0x80;
+          if (bl < byte_2AA6) {
+            // 0x29DD
+            continue;
+          }
+          sub_2A4C();
+          return 0;
+        }
+        // Did user press this key??
+        if (al == byte_2AA6) {
+          // 0x2A4C
+          sub_2A4C();
+          return 0;
+        }
+      }
+    }
+  }
+}
+#endif
+
 // 0x2C00
 // Takes a pointer?
 static void sub_2C00()
@@ -4175,6 +4333,7 @@ static void read_level_metadata()
 {
   uint8_t al;
 
+  // resource index.
   al = game_state.unknown[0x56];
   // test al, al
   if (al >= 0x80)
