@@ -18,6 +18,8 @@ add_executable(ndragon main.c vga_null.c)
 target_include_directories(ndragon PRIVATE ${CMAKE_SOURCE_DIR}/src/lib)
 target_link_libraries(ndragon PRIVATE dragon)
 
+install(TARGETS sdldragon DESTINATION bin)
+
 if(MSVC)
     # Not yet with /WX
     #target_compile_options(${TARGET_NAME} PRIVATE /W4 /WX)
