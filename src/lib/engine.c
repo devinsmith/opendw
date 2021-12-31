@@ -367,10 +367,13 @@ static void sub_59A6();
 #define NUM_FUNCS 2
 static void sub_50B2();
 static void sub_5088();
+static void sub_5080();
 
+// 0x5060
 void (*func_5060[NUM_FUNCS])() = {
   sub_50B2,
-  sub_5088
+  sub_5088,
+  sub_5080
 };
 
 // Decoded opcode calls, forward definition.
@@ -5069,6 +5072,14 @@ static void sub_50B2()
 {
   printf("%s: unimplemented\n", __func__);
   exit(1);
+}
+
+// Sound for opening a door?
+static void sub_5080()
+{
+  cpu.dx = 0x28;
+  cpu.bx = 0x400;
+  sub_5096();
 }
 
 static void sub_5088()
