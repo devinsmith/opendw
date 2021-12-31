@@ -27,7 +27,8 @@ uint16_t offsets[NUM_OFFSETS];
 unsigned short word_1053 = 0;
 unsigned short word_1055 = 0;
 
-// 0x17DD
+// 0x17DD / 0x17E2
+// called with values of 0x50 or 0x80
 void init_offsets(unsigned short dx)
 {
   int i;
@@ -39,7 +40,7 @@ void init_offsets(unsigned short dx)
   // 0x17E5
   for (i = 0; i < NUM_OFFSETS; i++) {
     offsets[i] = val;
-    val += 0x50;
+    val += dx;
   }
 }
 
