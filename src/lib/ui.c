@@ -933,6 +933,7 @@ void sub_CF8(unsigned char *data, struct viewport_data *vp)
   if (vp->runlength >= 0x80 && byte_104E >= 0x80) {
     vp->xpos--;
   }
+  // 0xD2A
   vp->runlength &= 0x7F;
   al = *ds++;
   ax = (int8_t)al;
