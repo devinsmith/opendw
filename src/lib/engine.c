@@ -113,7 +113,7 @@ uint16_t word_36C0;
 uint16_t word_36C2;
 uint16_t g_linenum; // 36C4
 
-uint8_t byte_3855 = 0;
+uint8_t byte_3855 = 0; // mouse enabled?
 uint16_t word_3856 = 0;
 uint8_t byte_3867 = 0;
 uint8_t byte_387F = 0;
@@ -3450,6 +3450,7 @@ static void sub_1ABD(uint8_t val)
 // 0x1F10
 static void sub_1F10()
 {
+  // Checks if mouse is enabled?
   if (byte_3855 == 0) {
     return;
   }
@@ -3527,6 +3528,7 @@ static uint8_t sub_3840()
 }
 
 // 0x2D0B
+// returns keycode in AL, also sets sign flag?
 static uint16_t sub_2D0B()
 {
   cpu.bx = word_2DD9;
