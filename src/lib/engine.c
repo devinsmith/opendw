@@ -1938,6 +1938,7 @@ static void op_4F()
 // 0x418B
 static void op_51()
 {
+  // offset of random encounter data...
   cpu.ax = *cpu.pc++;
   cpu.ax += *cpu.pc++ << 8;
 
@@ -1951,20 +1952,21 @@ static void op_51()
   word_3AE2 = (word_3AE2 & 0xFF); // XXX ? Correct.
   cpu.bx = word_3AE4;
   bl = cpu.bx & 0xFF;
+
+  unsigned char *es = word_3ADF->bytes;
+
   // 419E
   word_3AE2 = cpu.ax & 0xFF;
   word_3AE4 = (word_3AE4 & 0xFF00) | bl;
+  while (bl != 0xFF) {
+    bl--;
 
-  bl--;
-  if (bl == 0xFF)
-    return;
-
-  uint8_t al = cpu.base_pc[cpu.di + bl];
-
-  printf("DI: 0x%04X\n", cpu.di);
-  printf("AL: 0x%02X\n", al);
-  printf("%s: 0x418D unimplemented\n", __func__);
-  exit(1);
+    uint8_t al = es[cpu.di + bl];
+    if (al >= word_3AE2) {
+      word_3AE2 = al;
+      word_3AE4 = (word_3AE4 & 0xFF00) | bl;
+    }
+  }
 }
 
 // 0x41B9
