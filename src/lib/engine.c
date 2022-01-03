@@ -364,7 +364,7 @@ static void sub_54D8();
 static void sub_536B();
 static void sub_59A6();
 
-#define NUM_FUNCS 2
+#define NUM_FUNCS 3
 static void sub_50B2();
 static void sub_5088();
 static void sub_5080();
