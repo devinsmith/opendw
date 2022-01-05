@@ -35,7 +35,16 @@ struct vga_driver {
 };
 
 struct mouse_status {
+  // clicked contains the last 2 left mouse clicks
+  // (in order to track double clicks)
+  // as the most significant bytes
+  //
+  // The value of clicked could then be:
+  //  0 -> 00000000b (no button clicked)
+  // 80 -> 10000000b (single click)
+  // C0 -> 11000000b (double click)
   uint8_t clicked; // 0x3854
+
   uint8_t enabled; // 0x3855 (might be enabled or num of buttons)
 
   uint16_t x; // 0x3556

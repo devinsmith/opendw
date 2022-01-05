@@ -113,9 +113,6 @@ uint16_t word_36C0;
 uint16_t word_36C2;
 uint16_t g_linenum; // 36C4
 
-uint8_t g_mouse_configured = 0; // 0x3855
-uint16_t g_mouse_last_xpos = 0; // 0x3856
-
 uint8_t byte_3867 = 0;
 uint8_t byte_387F = 0;
 
@@ -344,6 +341,8 @@ struct virtual_cpu {
 #define SIGN_FLAG_MASK 0x80
 
 struct virtual_cpu cpu;
+
+// 0x3854 - 0x3859
 struct mouse_status mouse;
 
 static void run_script(uint8_t script_index, uint16_t src_offset);
@@ -3449,7 +3448,7 @@ static void sub_1ABD(uint8_t val)
 // 0x1F10
 static void sub_1F10()
 {
-  if (g_mouse_configured == 0) {
+  if (mouse.enabled == 0) {
     return;
   }
 
@@ -3467,7 +3466,7 @@ static void sub_2CF5()
 }
 
 // 0x3824
-static void sub_3824()
+static void poll_mouse()
 {
   // No support for reading mouse position at this point.
   // This is determined by 0x3855.
@@ -3499,7 +3498,7 @@ static int sub_2AEE()
     return 1;
   }
   if ((word_2AA7 & 0x10) != 0) {
-    cpu.ax = g_mouse_last_xpos;
+    cpu.ax = mouse.x;
     if (cpu.ax >= 0xD8) {
       // 0x2B4B
       printf("%s: 0x2B4B unimplemented\n", __func__);
@@ -3508,7 +3507,7 @@ static int sub_2AEE()
   }
   // 0x2B81
   if ((word_2AA7 & 0x20) != 0) {
-    cpu.ax = g_mouse_last_xpos;
+    cpu.ax = mouse.x;
     if (cpu.ax >= 0x10) {
       printf("%s: 0x2B8E unimplemented\n", __func__);
       exit(1);
@@ -3520,8 +3519,10 @@ static int sub_2AEE()
 }
 
 // 0x3840
-static uint8_t sub_3840()
+static uint8_t mouse_get_clicked()
 {
+  // Mouse clicked will store the last 2 clicks in the high bits
+  // of mouse.clicked.
   return mouse.clicked & 0xC0;
 }
 
@@ -3610,6 +3611,7 @@ static void sub_2A4C()
   sub_2ADC();
   al = cpu.ax & 0xFF;
   if (al == 1) {
+    // Set selected player
     al = byte_2AA6;
     printf("%s: AL - 0x%02X\n", __func__, al);
 
@@ -3735,9 +3737,9 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
       sub_1F10();
     }
     sub_2CF5(); // timer
-    sub_3824(); // mouse ?
+    poll_mouse(); // mouse ?
     sub_2AEE(); // Mouse in bounds?
-    uint8_t clicked = sub_3840();
+    uint8_t clicked = mouse_get_clicked();
     if (clicked == 0x80) {
       printf("%s: 0x2965 unimplemented\n", __func__);
       exit(1);
@@ -3885,9 +3887,9 @@ static int sub_294B()
     sub_1F10();
   }
   sub_2CF5(); // timer
-  sub_3824(); // mouse ?
+  poll_mouse(); // mouse ?
   sub_2AEE(); // Mouse in bounds?
-  uint8_t clicked = sub_3840();
+  uint8_t clicked = mouse_get_clicked();
   if (clicked == 0x80) {
     printf("%s: 0x2965 unimplemented\n", __func__);
     exit(1);
