@@ -113,8 +113,9 @@ uint16_t word_36C0;
 uint16_t word_36C2;
 uint16_t g_linenum; // 36C4
 
-uint8_t byte_3855 = 0;
-uint16_t word_3856 = 0;
+uint8_t g_mouse_configured = 0; // 0x3855
+uint16_t g_mouse_last_xpos = 0; // 0x3856
+
 uint8_t byte_3867 = 0;
 uint8_t byte_387F = 0;
 
@@ -3448,7 +3449,7 @@ static void sub_1ABD(uint8_t val)
 // 0x1F10
 static void sub_1F10()
 {
-  if (byte_3855 == 0) {
+  if (g_mouse_configured == 0) {
     return;
   }
 
@@ -3498,7 +3499,7 @@ static int sub_2AEE()
     return 1;
   }
   if ((word_2AA7 & 0x10) != 0) {
-    cpu.ax = word_3856;
+    cpu.ax = g_mouse_last_xpos;
     if (cpu.ax >= 0xD8) {
       // 0x2B4B
       printf("%s: 0x2B4B unimplemented\n", __func__);
@@ -3507,7 +3508,7 @@ static int sub_2AEE()
   }
   // 0x2B81
   if ((word_2AA7 & 0x20) != 0) {
-    cpu.ax = word_3856;
+    cpu.ax = g_mouse_last_xpos;
     if (cpu.ax >= 0x10) {
       printf("%s: 0x2B8E unimplemented\n", __func__);
       exit(1);
