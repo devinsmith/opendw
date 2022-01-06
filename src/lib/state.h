@@ -26,6 +26,7 @@ extern "C" {
 
 // We should break this apart.
 struct game_state {
+  // 0x02 - Current world number? (e.g. Purgatory?)
   // 0x06 - Currently selected player.
   // 0x1F - Number of characters in the party.
   // 0x6A - 0x6D (Gold)
