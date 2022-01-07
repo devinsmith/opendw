@@ -46,9 +46,19 @@ Disassembling script1.bin (208 bytes)
 0x004B: jnz 0x004f
 0x004E: word_3AE4 = 0
 0x004F: gamestate[0xbe] = word_3AE4
-0x0051: wait_event 0x4038, 'J', 0x0079, "LEFT", 0x0079, 'L', 0x007d, "RIGHT", 0x007d, 'K', 0x00b0, "ENTER", 0x00b0, "UP", 0x00b0, "DOWN", 0x007b, 'I', 0x0088, "#[1-7]", 0x00c2, '?', 0x002e, "Unknown", 0x00c9, 0xff
+0x0051: wait_event 0x4038, 'J', 0x0079, "LEFT", 0x0079, 'L', 0x007d, "RIGHT", 0x007d, 'K', 0x00b0, "ENTER",
+  0x00b0, "UP", 0x00b0, "DOWN", 0x007b, 'I', 0x0088, "#[1-7]", 0x00c2, '?', 0x002e, "Unknown", 0x00c9, 0xff
+
+# TURNING
+# -----------------------------------------------
+# game_state[0x03] will hold direction
+#
+
+# Turn left (we turn right 3 times)
 0x0079: inc game_state[0x03]
+# Turn down (we turn right 2 times)
 0x007B: inc game_state[0x03]
+# Turn right (once)
 0x007D: inc game_state[0x03]
 0x007F: word_3AE2 = gamestate[0x03]
 0x0081: word_3AE2 &= 0x03
@@ -56,7 +66,7 @@ Disassembling script1.bin (208 bytes)
 0x0085: jmp 0x002f
 
 
-# Inventory
+# Move forward
 0x0088: word_3AE2 = gamestate[0x26]
 0x008A: word_3AE2 &= 0xc0
 0x008C: test word_3AE2
