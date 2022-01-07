@@ -47,7 +47,7 @@ Disassembling script0.bin (1148 bytes)
 0x00CF: word_3AE2 = 0x80       # 0x00 | 0x80 (don't allow character creation)
 0x00D1: word_3ADF[0x00e3] = word_3AE2
 0x00D4: set_msg $("\rBegin the game")
-0x00E0: wait_event 0x0000, 'C', 0x020a, 'B', 0x02df, 0x01, 0x0104, 0xff
+0x00E0: wait_event 0x0000, 'C', 0x020a, 'B', 0x02df, "#[1-7]", 0x0104, 0xff
 
 0x00ED: word_3AE2 = get_char_data 0x4d
 0x00EF: test word_3AE2
@@ -110,7 +110,7 @@ Disassembling script0.bin (1148 bytes)
 0x01E8: write_number
 0x01E9: word_3AE4 = gamestate[0x06]
 0x01EB: word_3AE2 = 0x00
-0x01ED: op_13 0x18
+0x01ED: gamestate[word_3AE4 + 0x18] = word_3AE2
 0x01EF: inc byte [word_3AE4]
 0x01F0: check_gamestate 0x1f
 0x01F2: jc 0x0204
@@ -118,9 +118,9 @@ Disassembling script0.bin (1148 bytes)
 0x01F6: op_0B 0x0a
 0x01F8: push (word|byte)
 0x01F9: op_0B 0x0b
-0x01FB: op_13 0x0a
+0x01FB: gamestate[word_3AE4 + 0x0A] = word_3AE2
 0x01FD: peek_and_pop
-0x01FE: op_13 0x0b
+0x01FE: gamestate[word_3AE4 + 0x0B] = word_3AE2
 0x0200: inc byte [word_3AE4]
 0x0201: jmp 0x01eb
 0x0204: dec game_state[0x1F]
@@ -254,7 +254,7 @@ Disassembling script0.bin (1148 bytes)
         offset += word_3AE4
         word_3AE2 = resource_idx(gamestate[0x98])->bytes[offset]
         word_3AE2 += resource_idx(gamestate[0x98])->bytes[offset + 1] << 8
-0x0366: op_13 0x00
+0x0366: gamestate[word_3AE4 + 0x00] = word_3AE2
 0x0368: loop 0x035a
 
 0x036B: gamestate[0x5b] = 0xFF
@@ -348,7 +348,7 @@ Disassembling script0.bin (1148 bytes)
 0x03E5: jnc 0x03ed
 0x03E8: cmp word_3AE4, 0x11
 0x03EA: jnc 0x03ef
-0x03ED: op_13 0x00
+0x03ED: gamestate[word_3AE4 + 0x00] = word_3AE2
 0x03EF: loop 0x03de
 
 

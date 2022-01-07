@@ -36,6 +36,7 @@ static int op_08(const unsigned char *args);
 static int op_0F(const unsigned char *args);
 static int op_11(const unsigned char *args);
 static int op_12(const unsigned char *args);
+static int op_13(const unsigned char *args);
 static int op_14(const unsigned char *args);
 static int op_1A(const unsigned char *args);
 static int op_1C(const unsigned char *args);
@@ -71,7 +72,7 @@ op_code op_codes[] = {
   { "op_10", nullptr, 2 }, // op_10
   { "gamestate[", op_11, 1 }, // op_11
   { "gamestate[", op_12, 1 }, // op_12
-  { "op_13", nullptr, 1 }, // op_13
+  { "gamestate[word_3AE4 + ", op_13, 1 }, // op_13
   { "word_3ADF[", op_14, 0 }, // op_14
   { "op_15", read_word, 0 }, // op_15
   { "op_16", nullptr, 1 }, // op_16
@@ -606,6 +607,12 @@ static int op_9A(const unsigned char *args)
 static int op_12(const unsigned char *args)
 {
   printf("0x%02x] = word_3AE2", *args++);
+  return 1;
+}
+
+static int op_13(const unsigned char *args)
+{
+  printf("0x%02X] = word_3AE2", *args++);
   return 1;
 }
 
