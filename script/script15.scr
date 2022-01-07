@@ -30,7 +30,7 @@ Disassembling script15.bin (944 bytes)
 # Q - Quit jump point
 0x0024: jmp 0x0036
 
-# S - ?
+# S - Save game
 0x0026: jmp 0x0059
 
 # C - ?
@@ -61,6 +61,8 @@ Disassembling script15.bin (944 bytes)
 0x0054: jnz 0x00ff
 0x0057: draw_ui_full
 0x0058: ret
+
+# Save game
 0x0059: draw_rectangle 0x0c, 0x40, 0x1d, 0x78
 0x005E: set_msg $("Do you wish to save your game?\r\r")
 0x0075: prompt 'Y', 'N'

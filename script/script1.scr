@@ -25,6 +25,7 @@ Disassembling script1.bin (208 bytes)
 0x002D: ret
 0x002E: op_6D
 
+# Main game loop spans 0x2F - 0x85
 # Starting a new game?
 0x002F: start_game
 0x0030: load_world
@@ -53,6 +54,9 @@ Disassembling script1.bin (208 bytes)
 0x0081: word_3AE2 &= 0x03
 0x0083: gamestate[0x03] = word_3AE2
 0x0085: jmp 0x002f
+
+
+# Inventory
 0x0088: word_3AE2 = gamestate[0x26]
 0x008A: word_3AE2 &= 0xc0
 0x008C: test word_3AE2
@@ -72,6 +76,8 @@ Disassembling script1.bin (208 bytes)
 0x00A8: op_90 0x03
 0x00AA: op_9B 0x01, 0x40
 0x00AD: jmp 0x0030
+
+# Enter/UP
 0x00B0: word_3AE2 = gamestate[0x26]
 0x00B2: word_3AE2 &= 0xc0
 0x00B4: test word_3AE2
@@ -81,7 +87,11 @@ Disassembling script1.bin (208 bytes)
 0x00BA: js 0x00a8
 0x00BD: op_90 0x02
 0x00BF: jmp 0x0092
+
+# Mini map
 0x00C2: load_resource res: 0x0d, offset: 0x0000
 0x00C6: jmp 0x0031
+
+# Other keys?
 0x00C9: load_resource res: 0x0f, offset: 0x0000
 0x00CD: jmp 0x0031
