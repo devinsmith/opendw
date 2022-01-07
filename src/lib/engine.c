@@ -154,8 +154,12 @@ uint8_t byte_4F2B = 0;
 // Another function pointer.
 void (*word_5038)(unsigned char *dest, unsigned int offset);
 
+unsigned short data_5303[] = {
+  0x0016, 0x002E, 0x0046, 0x005E
+};
+
 // Length unknown, purpose unknown, from COM file.
-unsigned char *data_5303;
+unsigned char *data_530B;
 
 unsigned char *data_5521;
 uint8_t byte_551E;
@@ -394,7 +398,7 @@ static void op_0F();
 static void op_10();
 static void op_11();
 static void op_12();
-static void op_13();
+static void set_gamestate_offset();
 static void op_14();
 static void op_15();
 static void op_16();
@@ -522,7 +526,7 @@ struct op_call_table targets[] = {
   { op_10, "0x3C10" },
   { op_11, "0x3C2D" },
   { op_12, "0x3C59" },
-  { op_13, "0x3C72" },
+  { set_gamestate_offset, "0x3C72" },
   { op_14, "0x3C8F" },
   { op_15, "0x3CAB" },
   { op_16, "0x3CCB" },
@@ -1055,15 +1059,16 @@ static void op_12(void)
   }
 }
 
-// 0x3C72
-static void op_13(void)
+// 0x3C72 (op_13)
+// sets game state (arg + word_3AE4) with word_3AE2
+// variant of op_12
+static void set_gamestate_offset(void)
 {
   uint8_t al = *cpu.pc++;
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.bx = cpu.ax;
   cpu.cx = word_3AE2;
   cpu.bx += word_3AE4;
-  printf("op_13: 0x%04X\n", cpu.bx);
   set_game_state(__func__, cpu.bx, (cpu.cx & 0x00FF));
   if (byte_3AE1 != ((cpu.ax & 0xFF00) >> 8)) {
     set_game_state(__func__, cpu.bx + 1, (cpu.cx & 0xFF00) >> 8);
@@ -4857,10 +4862,8 @@ static void start_the_game()
   sub_5764();
   set_ui_header(data_5866, word_5864);
   cpu.bx = game_state.unknown[3];
-  cpu.bx = cpu.bx << 1;
 
   cpu.si = data_5303[cpu.bx];
-  cpu.si += (data_5303[cpu.bx + 1]) << 8;
   cpu.di = 0xB;
   do {
     // 0x51D0
@@ -4868,10 +4871,10 @@ static void start_the_game()
     push_word(cpu.si);
 
     dl = game_state.unknown[1];
-    dl += data_5303[cpu.si + 0x8];
+    dl += data_530B[cpu.si];
     cpu.dx = (cpu.dx & 0xFF00) | dl;
     bl = game_state.unknown[0];
-    bl += data_5303[cpu.si + 0x9];
+    bl += data_530B[cpu.si + 1];
     cpu.bx = bl;
 
     // 0x51E2
@@ -5586,7 +5589,7 @@ void run_engine()
   escape_string_table = com_extract(0x2A68, 0x39);
 
   // load unknown data from COM file.
-  data_5303 = com_extract(0x5303, 512); // XXX: Validate that this is 512 bytes
+  data_530B = com_extract(0x530B, 512); // XXX: Validate that this is 512 bytes
   data_D760 = com_extract(0xD760, 0x700);
   data_1E21 = com_extract(0x1E21, 0xEF);
 
