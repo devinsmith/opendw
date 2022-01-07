@@ -14,11 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-
 #include "log.h"
 #include "state.h"
-#include "ui.h"
 
 // The game state is a 256 byte "scratch/work" area for the game engine
 // to manage and keep track of various aspects of the game.
