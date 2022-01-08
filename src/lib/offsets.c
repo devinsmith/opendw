@@ -25,7 +25,6 @@ uint16_t offsets[NUM_OFFSETS];
 
 // 0x1053 (always gets set to 0x50 ?)
 unsigned short word_1053 = 0;
-unsigned short word_1055 = 0;
 
 // 0x17DD / 0x17E2
 // called with values of 0x50 or 0x80

@@ -43,6 +43,8 @@ static int viewport_height = 0x88;
 // 0x10D6
 static int viewport_width = 0x50;
 
+static unsigned short word_1055 = 0;
+
 static void draw_indexed_picture9();
 static void sub_1F54(uint8_t al);
 static void sub_27CC();
