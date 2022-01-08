@@ -1186,6 +1186,12 @@ void init_viewport_memory()
   viewport_mem_save = malloc(viewport_mem_sz);
 }
 
+// For tools and testing
+unsigned char *ui_get_viewport_mem()
+{
+  return viewport_memory;
+}
+
 unsigned char *ui_get_minimap_viewport()
 {
   return minimap_viewport;
