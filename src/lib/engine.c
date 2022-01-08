@@ -2835,6 +2835,7 @@ static void op_71(void)
         bl = al;
         cpu.bx = (cpu.bx & 0xFF00) | bl;
         sub_46A1(bl);
+
         al = game_state.unknown[2];
         if (al != game_state.unknown[0x57]) {
           return;
@@ -4325,6 +4326,7 @@ static void sub_5868(struct resource *res)
 {
   uint8_t al;
 
+  // Load road components?
   do {
     al = res->bytes[cpu.bx + cpu.di];
     cpu.ax = (cpu.ax & 0xFF00) | al;
@@ -4395,6 +4397,7 @@ static void read_level_metadata()
   } while ((cpu.ax & 0xFF) < 0x80);
 
   // 0x582B
+  // 3 possible viewports? per level?
   cpu.si = 0;
   sub_5868(r);
   cpu.si = 4;
@@ -4607,6 +4610,7 @@ static void sub_536B()
     sub_54D8();
     cpu.bx = pop_word();
     cpu.dx = pop_word();
+
     al = word_11C6;
     al = al & 0xF;
     cpu.ax = (cpu.ax & 0xFF00) | al;
@@ -4805,8 +4809,10 @@ static void sub_56FC()
   al = data_5897[cpu.bx];
   al &= 0x7F;
   cpu.ax = (cpu.ax & 0xFF00) | al;
+
   if (al == 1) {
     // 0x5718
+    // Draw sky tile?
     r = data_59E4[cpu.bx];
     word_1051 = r;
     cpu.ax = 0;
@@ -4924,6 +4930,7 @@ static void start_the_game()
   sub_59A6();
   sub_56FC();
 
+  // Components of the road.
   counter = 8;
   do {
     // 0x5247
