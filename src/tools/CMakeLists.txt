@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(DISASM_SOURCES disasm.cpp)
 set(RESEXT_SOURCES resextract.cpp)
 set(STREXT_SOURCES strextract.cpp)
+set(PPMWRITE_SOURCES ppm.cpp)
 
 add_executable(disasm ${DISASM_SOURCES})
 target_include_directories(disasm PRIVATE ${CMAKE_SOURCE_DIR}/src/lib)
@@ -28,6 +29,17 @@ target_link_libraries(strextract PUBLIC dragon)
 
 # Rather useless tool
 #add_executable(kbhit kbhit.cpp)
+
+add_executable(ppmwrite ${PPMWRITE_SOURCES})
+target_include_directories(ppmwrite PRIVATE ${CMAKE_SOURCE_DIR}/src/lib)
+target_link_libraries(ppmwrite PUBLIC dragon)
+if(MSVC)
+  target_compile_options(ppmwrite PRIVATE /W4 /WX)
+else()
+  target_compile_options(ppmwrite PRIVATE -Wall -Werror)
+endif()
+
+
 
 install(TARGETS disasm DESTINATION bin)
 #if(MSVC)
