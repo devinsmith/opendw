@@ -8,6 +8,9 @@ Resource data in data1. It is unknown how data2 is used at this point.
 |    7 | 5632 | N          | Character data.                     |
 |   29 |      | Y          | Title screen (320x200)              |
 |   71 | 5846 | Y          | Purgatory level                     |
+|  111 | 7050 | Y          | Sky portion (viewport)              |
+|  112 | 5054 | Y          | Red clay road portion (viewport)    |
+|  116 |  936 | Y          | Water puddle (viewport)             |
 
 # Resource 7 (Character data)
 
