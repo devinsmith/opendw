@@ -16,10 +16,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <cstdint>
 
 #include <offsets.h>
-#include <tables.h>
 #include <ui.h>
 
 static const size_t fb_width = 320;
