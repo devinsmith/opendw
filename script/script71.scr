@@ -160,7 +160,7 @@ Disassembling script71.bin (5846 bytes)
 0x113D: ret
 0x113E: word_3AE2 = 0x02
 0x1140: load_resource res: 0x03, offset: 0x0000
-0x1144: start_game
+0x1144: refresh_viewport
 0x1145: draw_rectangle 0x0a, 0x18, 0x1e, 0xa8
 0x114A: jc 0x11fc
 0x114D: set_msg $("You stand above the dead remains of your opponents basking in glory as the crowd chants your names.")

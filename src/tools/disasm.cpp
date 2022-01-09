@@ -190,7 +190,7 @@ op_code op_codes[] = {
   { "wait_escape", nullptr, 0 }, // op_88
   { "wait_event", wait_event, 0 }, // op_89
   { "random_encounter?", nullptr, 0 }, // op_8A
-  { "start_game", nullptr, 0 }, // op_8B
+  { "refresh_viewport", nullptr, 0 }, // op_8B
   { "prompt 'Y', 'N'", nullptr, 0 }, // op_8C
   { "op_8D", nullptr, 0 }, // op_8D: Read string??
   { nullptr, nullptr, 0 },

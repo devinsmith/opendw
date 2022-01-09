@@ -2474,6 +2474,8 @@ static void op_6A(void)
   // 0x459A
 }
 
+// Register new position on map (defined in game state 0, 1)
+// Input here is the direction.
 static void sub_45D0(uint8_t al)
 {
   if (al == 0) {
@@ -4855,7 +4857,7 @@ static void sub_587E()
 }
 
 // 0x51B0
-static void start_the_game()
+static void refresh_viewport()
 {
   uint8_t al, bl, dl;
   struct resource *r;
@@ -5017,7 +5019,7 @@ static void op_8B()
 {
   // push si
   // 499B
-  start_the_game();
+  refresh_viewport();
 }
 
 // Prompt (N)o or (Y)es
