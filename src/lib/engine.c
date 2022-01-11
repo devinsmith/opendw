@@ -4434,6 +4434,7 @@ static void read_level_metadata()
 }
 
 // 0x5523
+// Check boundaries
 static void sub_5523()
 {
   uint8_t bl;
@@ -4448,6 +4449,7 @@ static void sub_5523()
 }
 
 // 0x5559
+// Check boundaries
 static void sub_5559()
 {
   uint8_t dl;
@@ -4644,7 +4646,7 @@ static void sub_536B()
       dl = dl | bl;
       cpu.bx = (cpu.bx & 0xFF00) | bl;
       cpu.dx = (cpu.dx & 0xFF00) | dl;
-      word_11CA = (word_11CA & 0xFF00) | bl;
+      word_11CA = (word_11CA & 0xFF00) | dl;
     } else if (al == 2) {
       // 53E3
       word_11CA = (word_11CA & 0xFF00) | bl;
