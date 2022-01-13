@@ -262,7 +262,8 @@ unsigned char data_56B5[] = {
 // But also referenced as: 56E5 (not sure if this is correct at this point)
 unsigned char data_56C7[128];
 unsigned char data_56E5[128];
-unsigned char data_5A04[128];
+
+unsigned char data_5A04[128]; // offsets, and probably should be unsigned shorts
 
 static struct resource *data_59E4[128];
 
@@ -2591,7 +2592,7 @@ static void sub_1861(uint8_t input)
   }
   // 0x1874
   byte_1966 = al;
-  sub_54D8();
+  sub_54D8(dl, bl);
 
   // Correct?
   if ((((word_11C6 & 0xFF00) >> 8) & 0x08) != 0) {
@@ -2608,7 +2609,7 @@ static void sub_1861(uint8_t input)
   bl = cpu.bx & 0xFF;
   bl++;
   cpu.bx = (cpu.bx & 0xFF00) | bl;
-  sub_54D8();
+  sub_54D8(dl, bl);
 
   // test byte [11C7], 08
   if ((((word_11C6 & 0xFF00) >> 8) & 0x08) != 0) {
@@ -2621,7 +2622,7 @@ static void sub_1861(uint8_t input)
   dl = cpu.dx & 0xFF;
   dl--;
   cpu.dx = (cpu.dx & 0xFF00) | dl;
-  sub_54D8();
+  sub_54D8(dl, bl);
 
   // test byte [11C7], 08
   if ((((word_11C6 & 0xFF00) >> 8) & 0x08) != 0) {
@@ -2832,7 +2833,7 @@ static void op_71(void)
 
     cpu.dx = (cpu.dx & 0xFF00) | dl;
     cpu.bx = (cpu.bx & 0xFF00) | bl;
-    sub_54D8();
+    sub_54D8(cpu.dx, cpu.bx);
 
     al = word_11C8;
     if (al != game_state.unknown[0x3E]) {
@@ -4436,7 +4437,7 @@ static void read_level_metadata()
   cpu.ax = al;
 
   // 0x5858
-  // The final bytes loaded here are the offsets of the scripts.
+  // The final bytes loaded here are the offsets of the scripts?
   do {
     data_5A04[cpu.si] = cpu.di & 0xFF;
     data_5A04[cpu.si + 1] = (cpu.di & 0xFF00) >> 8;
@@ -4479,7 +4480,7 @@ static void sub_5559()
 // 0x54D8
 // Take input parameters DX and BX ?
 // not matching dragon.com
-static void sub_54D8()
+static void sub_54D8(int x, int y)
 {
   uint8_t al;
 
@@ -4505,6 +4506,7 @@ static void sub_54D8()
   cpu.ax = data_5521[cpu.di];
   cpu.ax += data_5521[cpu.di + 1] << 8;
   printf("%s - DI: 0x%04X AX: 0x%04X\n", __func__, cpu.di, cpu.ax);
+
   word_11C6 = cpu.ax;
   al = data_5521[cpu.di + 2];
   word_11C8 = al;
@@ -4558,6 +4560,7 @@ static void sub_4FD9()
     cpu.si = pop_word();
     cpu.si = cpu.si >> 3;
     cpu.si += 0xD7B0;
+
     cpu.bx = 0;
     cpu.dx = 0;
 
@@ -4571,7 +4574,7 @@ static void sub_4FD9()
         push_word(cpu.si);
 
         // 0x500E
-        sub_54D8();
+        sub_54D8(cpu.dx, cpu.bx);
         cpu.si = pop_word();
         cpu.cx = pop_word();
 
@@ -4611,7 +4614,7 @@ static void sub_536B(int x, int y)
 
   push_word(cpu.dx);
   push_word(cpu.bx);
-  sub_54D8();
+  sub_54D8(x, y);
   cpu.bx = pop_word();
   cpu.dx = pop_word();
 
@@ -4619,12 +4622,13 @@ static void sub_536B(int x, int y)
   cpu.ax = word_11C6;
   word_11CA = cpu.ax;
   // 0x537E
+
   if (game_state.unknown[3] != 0) {
     // 0x5385
     push_word(cpu.dx);
     push_word(cpu.bx);
     cpu.dx++;
-    sub_54D8();
+    sub_54D8(cpu.dx, cpu.bx);
     cpu.bx = pop_word();
     cpu.dx = pop_word();
 
@@ -4637,7 +4641,7 @@ static void sub_536B(int x, int y)
     push_word(cpu.dx);
     push_word(cpu.bx);
     cpu.bx--;
-    sub_54D8();
+    sub_54D8(cpu.dx, cpu.bx);
     cpu.bx = pop_word();
     cpu.dx = pop_word();
 
@@ -4939,7 +4943,7 @@ static void refresh_viewport()
   cpu.dx = (cpu.dx & 0xFF00) | dl;
   bl = game_state.unknown[0];
   cpu.bx = (cpu.bx & 0xFF00) | bl;
-  sub_54D8();
+  sub_54D8(cpu.dx, cpu.bx);
   if (cpu.cf == 0) {
     // 0x5234
     data_5521[word_551F + 1] |= 0x8;
