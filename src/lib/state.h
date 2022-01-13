@@ -29,7 +29,7 @@ struct game_state {
   // 0x00 - X position of player
   // 0x01 - Y position of player
   // 0x02 - Current world number? (e.g. Purgatory?)
-  // 0x03 - Current direction (3 = Left)
+  // 0x03 - Current direction (0 = North, 1 = East, 2 = South, 3 = West)
   // 0x06 - Currently selected player.
   // 0x1F - Number of characters in the party.
   // 0x6A - 0x6D (Gold)

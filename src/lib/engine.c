@@ -154,12 +154,24 @@ uint8_t byte_4F2B = 0;
 // Another function pointer.
 void (*word_5038)(unsigned char *dest, unsigned int offset);
 
+// 0x5303
+// Field of vision offsets?
 unsigned short data_5303[] = {
   0x0016, 0x002E, 0x0046, 0x005E
 };
 
-// Length unknown, purpose unknown, from COM file.
-unsigned char *data_530B;
+// 0x530B - 0x536A
+// Field of vision offsets?
+static unsigned char data_530B[] = {
+  0xff, 0x03, 0x00, 0x03, 0x01, 0x03, 0xff, 0x02, 0x00, 0x02, 0x01, 0x02,
+  0xff, 0x01, 0x00, 0x01, 0x01, 0x01, 0xff, 0x00, 0x00, 0x00, 0x01, 0x00,
+  0x03, 0x01, 0x03, 0x00, 0x03, 0xff, 0x02, 0x01, 0x02, 0x00, 0x02, 0xff,
+  0x01, 0x01, 0x01, 0x00, 0x01, 0xff, 0x00, 0x01, 0x00, 0x00, 0x00, 0xff,
+  0x01, 0xfd, 0x00, 0xfd, 0xff, 0xfd, 0x01, 0xfe, 0x00, 0xfe, 0xff, 0xfe,
+  0x01, 0xff, 0x00, 0xff, 0xff, 0xff, 0x01, 0x00, 0x00, 0x00, 0xff, 0x00,
+  0xfd, 0xff, 0xfd, 0x00, 0xfd, 0x01, 0xfe, 0xff, 0xfe, 0x00, 0xfe, 0x01,
+  0xff, 0xff, 0xff, 0x00, 0xff, 0x01, 0x00, 0xff, 0x00, 0x00, 0x00, 0x01
+};
 
 unsigned char *data_5521;
 uint8_t byte_551E;
@@ -2769,7 +2781,7 @@ static void op_6F(void)
 
   cpu.dx = (cpu.dx & 0xFF00) | game_state.unknown[1];
   cpu.bx = (cpu.bx & 0xFF00) | game_state.unknown[0];
-  sub_536B();
+  sub_536B(cpu.dx, cpu.bx);
 
   al = *cpu.pc++;
   cpu.ax = al;
@@ -4414,7 +4426,7 @@ static void read_level_metadata()
   word_5864 = cpu.ax;
 
   cpu.di += 2;
-  al = game_state.unknown[0x22]; // number of level scripts?
+  al = game_state.unknown[0x22]; // Level boundaries?
   cpu.ax = al;
   cpu.ax = cpu.ax << 1;
   cpu.si = cpu.ax;
@@ -4466,6 +4478,7 @@ static void sub_5559()
 
 // 0x54D8
 // Take input parameters DX and BX ?
+// not matching dragon.com
 static void sub_54D8()
 {
   uint8_t al;
@@ -4592,7 +4605,7 @@ static void sub_4FD9()
 
 // 0x536B
 // Controls movement?
-static void sub_536B()
+static void sub_536B(int x, int y)
 {
   uint8_t al, bl, dl;
 
@@ -4873,6 +4886,7 @@ static void refresh_viewport()
   set_ui_header(data_5866, word_5864);
   cpu.bx = game_state.unknown[3];
 
+  // Setup field of vision?
   cpu.si = data_5303[cpu.bx];
   cpu.di = 0xB;
   do {
@@ -4888,7 +4902,7 @@ static void refresh_viewport()
     cpu.bx = bl;
 
     // 0x51E2
-    sub_536B();
+    sub_536B(dl, bl);
     cpu.si = pop_word();
     cpu.di = pop_word();
     printf("%s 0x%04X 11CA: 0x%04X\n", __func__, cpu.di, word_11CA);
@@ -5600,7 +5614,6 @@ void run_engine()
   escape_string_table = com_extract(0x2A68, 0x39);
 
   // load unknown data from COM file.
-  data_530B = com_extract(0x530B, 512); // XXX: Validate that this is 512 bytes
   data_D760 = com_extract(0xD760, 0x700);
   data_1E21 = com_extract(0x1E21, 0xEF);
 
