@@ -263,7 +263,9 @@ unsigned char data_56B5[] = {
 unsigned char data_56C7[128];
 unsigned char data_56E5[128];
 
-unsigned char data_5A04[128]; // offsets, and probably should be unsigned shorts
+unsigned short data_5A04[128]; // offsets
+unsigned char data_5A56[128];
+unsigned char data_5A62[128];
 
 static struct resource *data_59E4[128];
 
@@ -377,8 +379,8 @@ static void set_sb_handler_ui_draw_chr();
 static void sub_4A79(uint8_t al);
 static void set_sign_flag();
 static void clear_sign_flag();
-static void sub_54D8();
-static void sub_536B();
+static void sub_54D8(int x, int y);
+static void sub_536B(int x, int y);
 static void sub_59A6();
 
 #define NUM_FUNCS 3
@@ -2804,7 +2806,6 @@ static void sub_46A1(uint8_t start_offset)
   uint16_t offset = start_offset;
   // 0x46A3
   offset += data_5A04[0];
-  offset += data_5A04[1] << 8;
 
   // Determine script execution src offset
   cpu.bx = data_5521[offset];
@@ -4429,7 +4430,6 @@ static void read_level_metadata()
   cpu.di += 2;
   al = game_state.unknown[0x22]; // Level boundaries?
   cpu.ax = al;
-  cpu.ax = cpu.ax << 1;
   cpu.si = cpu.ax;
   al = game_state.unknown[0x21];
   al = al << 1;
@@ -4437,12 +4437,11 @@ static void read_level_metadata()
   cpu.ax = al;
 
   // 0x5858
-  // The final bytes loaded here are the offsets of the scripts?
+  // The final bytes loaded here are the offsets of the script?
   do {
-    data_5A04[cpu.si] = cpu.di & 0xFF;
-    data_5A04[cpu.si + 1] = (cpu.di & 0xFF00) >> 8;
+    data_5A04[cpu.si] = cpu.di;
     cpu.di += cpu.ax;
-    cpu.si -= 2;
+    cpu.si--;
   } while (cpu.si < 0x8000); // jump not signed.
 }
 
@@ -4493,9 +4492,7 @@ static void sub_54D8(int x, int y)
   cpu.ax = cpu.ax << 1;
   cpu.ax += cpu.dx;
   cpu.bx = cpu.bx & 0xFF;
-  cpu.bx = cpu.bx << 1;
-  cpu.ax += data_5A04[cpu.bx + 2];
-  cpu.ax += data_5A04[cpu.bx + 3] << 8;
+  cpu.ax += data_5A04[cpu.bx + 1]; // 0x5A06
   word_551F = cpu.ax;
 
 
@@ -4812,7 +4809,7 @@ static void sub_56FC()
   struct resource *r;
   struct viewport_data vp;
 
-  bl = data_5A04[0x68];
+  bl = data_5A62[10];
 
   // rcl 4 times
   cpu.cf = 0; // XXX, maybe not correct.
@@ -4911,17 +4908,17 @@ static void refresh_viewport()
     cpu.di = pop_word();
     printf("%s 0x%04X 11CA: 0x%04X\n", __func__, cpu.di, word_11CA);
     al = word_11CA;
-    data_5A04[0x52 + cpu.di] = al;
+    data_5A56[cpu.di] = al;
     al = (word_11CA & 0xFF00) >> 8;
     al &= 0xF7;
     cpu.ax = (cpu.ax & 0xFF00) | al;
-    data_5A04[0x5E + cpu.di] = al;
+    data_5A62[cpu.di] = al;
     cpu.si--;
     cpu.si--;
     cpu.di--;
   } while (cpu.di != 0xFFFF);
 
-  bl = data_5A04[0x5C];
+  bl = data_5A56[10];
   printf("%s 0x51FC BL - 0x%02X\n", __func__, bl);
   bl = bl >> 4;
 
@@ -4953,11 +4950,12 @@ static void refresh_viewport()
   sub_56FC();
 
   // Components of the road.
+  // 0x5244
   counter = 8;
   do {
     // 0x5247
     cpu.bx = data_56A3[counter];
-    bl = data_5A04[94 + cpu.bx];
+    bl = data_5A62[cpu.bx];
     bl = bl >> 4;
     cpu.bx = (cpu.bx & 0xFF00) | bl;
     cpu.bx &= 3;
@@ -4988,7 +4986,7 @@ static void refresh_viewport()
     cpu.ax = data_55EF[counter];
     cpu.di = cpu.ax;
     cpu.di &= 0x007F;
-    bl = data_5A04[0x52 + cpu.di];
+    bl = data_5A56[cpu.di];
     if ((cpu.ax & 0xFF) > 0x80) {
       bl = bl >> 4;
     }
