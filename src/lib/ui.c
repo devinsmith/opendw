@@ -230,7 +230,7 @@ static void sub_DEB(const struct viewport_data *d, unsigned char *data)
   uint16_t newy, dx;
   uint8_t al, dl;
   int sign;
-  uint16_t word_104A;
+  int word_104A;
   uint8_t byte_104C;
   uint16_t offset;
 
@@ -249,8 +249,12 @@ static void sub_DEB(const struct viewport_data *d, unsigned char *data)
   if (ax <= old_ax) {
     // 0x0E06
     word_104A -= ax;
-    printf("%s 0xE06 unhandled\n", __func__);
-    exit(1);
+    if (word_104A >= 0) {
+      dl--;
+    } else {
+      // 0xE6C
+      return;
+    }
   }
   // 0xE0F
   byte_104C = dl;
@@ -297,7 +301,6 @@ static void sub_DEB(const struct viewport_data *d, unsigned char *data)
     // offset += 1055
     offset += word_1055;
     p = data + offset;
-    printf("\n");
   }
 }
 
