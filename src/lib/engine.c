@@ -260,7 +260,7 @@ unsigned char data_56B5[] = {
 
 // Unknown how large this is.
 // But also referenced as: 56E5 (not sure if this is correct at this point)
-unsigned char data_56C7[128];
+unsigned char data_56C6[128];
 unsigned char data_56E5[128];
 
 unsigned short data_5A04[128]; // offsets
@@ -4403,10 +4403,10 @@ static void read_level_metadata()
     push_word(cpu.ax);
     al &= 0x7F;
     cpu.ax = (cpu.ax & 0xFF00) | al;
-    data_56C7[cpu.si] = al;
+    data_56C6[cpu.si + 1] = al; // 56C7
     cpu.bx++;
     al = r->bytes[cpu.bx + cpu.di];
-    data_56C7[cpu.si + 0xf] = al;
+    data_56C6[cpu.si + 0xf + 1] = al; // 0x56D6
     cpu.bx++;
     cpu.si++;
     cpu.ax = pop_word();
@@ -4925,7 +4925,7 @@ static void refresh_viewport()
   if (bl != 0) {
     // 0x520C
     cpu.bx = bl;
-    bl = data_56C7[cpu.bx + 0xE];
+    bl = data_56C6[cpu.bx + 0xF]; // 0x56D5
     cpu.bx = bl;
   }
   set_game_state(__func__, 0x26, bl);
@@ -4996,7 +4996,7 @@ static void refresh_viewport()
       // 0x52B2
       cpu.cx = data_564F[counter];
       byte_104E = cpu.cx & 0xFF;
-      al = data_56C7[cpu.bx];
+      al = data_56C6[cpu.bx];
       // if cpu.cx is odd.
       if (((cpu.cx & 0xFF) & 1) == 1) {
         // 0x52C3 (odd)
