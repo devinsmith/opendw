@@ -260,12 +260,9 @@ unsigned char data_56B5[] = {
 
 // Unknown how large this is.
 // But also referenced as: 56E5 (not sure if this is correct at this point)
-unsigned char data_56C6[128];
+unsigned char data_56C6[128]; // should be 16 (not 128)
 unsigned char data_56E5[128];
 
-unsigned short data_5A04[128]; // offsets
-unsigned char data_5A56[128];
-unsigned char data_5A62[128];
 
 static struct resource *data_59E4[128];
 
@@ -291,6 +288,9 @@ struct timer_ctx {
 
 struct timer_ctx timers;
 
+unsigned short data_5A04[128]; // offsets
+unsigned char data_5A56[128]; // 0x5A56-0x5AD5 (? pre-loaded)
+
 // 0x2A68
 unsigned char *escape_string_table = NULL;
 unsigned char *data_D760 = NULL;
@@ -303,11 +303,6 @@ unsigned char data_CA4C[4096] = { 0 };
 // but we'll figure it out as we decode more of DW.
 // 0x3163
 void (*string_byte_handler_func)(unsigned char byte);
-
-struct len_bytes {
-  uint16_t len;
-  uint8_t bytes[40];
-};
 
 // Small stack, hopefully we don't use much of it.
 #define STACK_SIZE 32
@@ -4809,7 +4804,7 @@ static void sub_56FC()
   struct resource *r;
   struct viewport_data vp;
 
-  bl = data_5A62[10];
+  bl = data_5A56[0x1C]; // 0x5A72 ?
 
   // rcl 4 times
   cpu.cf = 0; // XXX, maybe not correct.
@@ -4912,7 +4907,7 @@ static void refresh_viewport()
     al = (word_11CA & 0xFF00) >> 8;
     al &= 0xF7;
     cpu.ax = (cpu.ax & 0xFF00) | al;
-    data_5A62[cpu.di] = al;
+    data_5A56[cpu.di + 0xC] = al;
     cpu.si--;
     cpu.si--;
     cpu.di--;
@@ -4955,7 +4950,7 @@ static void refresh_viewport()
   do {
     // 0x5247
     cpu.bx = data_56A3[counter];
-    bl = data_5A62[cpu.bx];
+    bl = data_5A56[cpu.bx + 0xC]; // base 0x5A62
     bl = bl >> 4;
     cpu.bx = (cpu.bx & 0xFF00) | bl;
     cpu.bx &= 3;
