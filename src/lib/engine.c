@@ -2486,38 +2486,35 @@ static void op_6A(void)
 
 // Register new position on map (defined in game state 0, 1)
 // Input here is the direction.
-static void sub_45D0(uint8_t al)
+// 0x45D0
+static void adjust_position(uint8_t direction)
 {
-  if (al == 0) {
+  switch (direction) {
+  case DIRECTION_NORTH:
     set_game_state(__func__, 0, game_state.unknown[0] + 1);
-    return;
-  }
-
-  al--;
-  if (al == 0) {
+    break;
+  case DIRECTION_EAST:
     // 0x45E6
     set_game_state(__func__, 1, game_state.unknown[1] + 1);
-    return;
-  }
-
-  al--;
-  if (al == 0) {
+    break;
+  case DIRECTION_SOUTH:
     // 0x45EB
     set_game_state(__func__, 0, game_state.unknown[0] - 1);
-    return;
+    break;
+  case DIRECTION_WEST:
+    set_game_state(__func__, 1, game_state.unknown[1] - 1);
+    break;
+  default:
+    break;
   }
-
-  set_game_state(__func__, 1, game_state.unknown[1] - 1);
 }
 
 // 0x45A8
 static void op_6C(void)
 {
-  uint8_t al = game_state.unknown[3];
-
   // push si
   // 45AC
-  sub_45D0(al);
+  adjust_position(game_state.unknown[3]);
   // 45AF
   if ((game_state.unknown[0x23] & 0x2) != 0) {
     // 0x45B6

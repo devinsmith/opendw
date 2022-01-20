@@ -21,8 +21,17 @@
 extern "C" {
 #endif
 
+// Directions
+enum {
+  DIRECTION_NORTH = 0,
+  DIRECTION_EAST = 1,
+  DIRECTION_SOUTH = 2,
+  DIRECTION_WEST = 3
+};
+
 // Managing game state.
 //
+
 
 // We should break this apart.
 struct game_state {
