@@ -140,17 +140,51 @@ static void process_input(unsigned char *src, int offset)
   sub_CF8(vp.data, &vp);
 }
 
+static void usage(int err)
+{
+  if (err)
+    fprintf(stderr, "Invalid argument\n");
+
+  fprintf(stderr, "usage ppmwrite (-i image)\n");
+  fprintf(stderr, "\t-o offset - offset of image\n");
+
+  exit(err);
+}
+
+static void args_required(char *arg, const char *argname)
+{
+  fprintf(stderr, "option '%s' expects a parameter (%s)\n", arg, argname);
+  exit(1);
+}
+
 int main(int argc, char *argv[])
 {
-  if (argc < 2) {
-    fprintf(stderr, "Invalid argument, needs raw data file.\n");
-    fprintf(stderr, "Example: ./ppmwrite res.bin\n");
-    exit(1);
+  const char *img_file = nullptr;
+  int offset = 4;
+
+  while (--argc) {
+    char *p = *++argv;
+
+    if (!strcmp(p, "-i")) {
+      if (!argv[1]) {
+        args_required(p, "image");
+      }
+      img_file = *++argv, --argc;
+    } else if (!strcmp(p, "-o")) {
+      if (!argv[1]) {
+        args_required(p, "offset");
+      }
+      offset = atoi(*++argv), --argc;
+    }
   }
 
-  auto *src_bytes = read_file(argv[1]);
+  if (img_file == nullptr) {
+    usage(0);
+  }
+
+  auto *src_bytes = read_file(img_file);
   if (src_bytes == nullptr) {
-    fprintf(stderr, "Failed to load: %s\n", argv[1]);
+    fprintf(stderr, "Failed to load: %s\n", img_file);
     exit(1);
   }
 
@@ -158,7 +192,7 @@ int main(int argc, char *argv[])
   init_offsets(0x50);
   init_viewport_memory();
 
-  process_input(src_bytes, 4);
+  process_input(src_bytes, offset);
 
   delete[] src_bytes;
 
