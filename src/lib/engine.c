@@ -252,11 +252,9 @@ unsigned short data_56A3[] = {
 };
 
 // 0x56B5 - 0x56C6
-// offsets within image data.
-unsigned char data_56B5[] = {
-  0x0012, 0x0010, 0x0014,
-  0x000C, 0x000A, 0x000E,
-  0x0006, 0x0004, 0x0008
+// sprite image offsets within image data.
+unsigned short sprite_indices[] = {
+  18, 16, 20, 12, 10, 14, 6, 4, 8
 };
 
 // Unknown how large this is.
@@ -4407,12 +4405,12 @@ static void read_level_metadata()
   } while ((cpu.ax & 0xFF) < 0x80);
 
   // 0x582B
-  // 3 possible viewports? per level?
+  // cache resources. Types
   cpu.si = 0;
   sub_5868(r);
-  cpu.si = 4;
+  cpu.si = 4; // ground components
   sub_5868(r);
-  cpu.si = 8;
+  cpu.si = 8; // other ?
   sub_5868(r);
 
   // 0x583C
@@ -4777,14 +4775,14 @@ static void sub_59A6()
   } while (cpu.bx != 0xFFFF);
 }
 
-static void sub_CE7(struct viewport_data *vp, uint16_t bx)
+static void sub_CE7(struct viewport_data *vp, uint16_t sprite_offset)
 {
-  unsigned char *ds = word_1051->bytes + word_104F + bx;
+  unsigned char *ds = word_1051->bytes + word_104F + sprite_offset;
 
   cpu.ax = *ds;
   ds++;
   cpu.ax += (*ds) << 8;
-  printf("%s: BX: 0x%04X AX: 0x%04X\n", __func__, bx, cpu.ax);
+  printf("%s: BX: 0x%04X AX: 0x%04X\n", __func__, sprite_offset, cpu.ax);
 
   if (cpu.ax == 0)
     return;
@@ -4834,7 +4832,7 @@ static void sub_56FC()
     g_linenum = cpu.ax;
     vp.ypos = cpu.ax;
     byte_104E = cpu.ax & 0xFF;
-    cpu.bx = 4;
+    cpu.bx = 4; // sprite offset
 
     // 5732
     sub_CE7(&vp, cpu.bx);
@@ -4943,7 +4941,7 @@ static void refresh_viewport()
   sub_59A6();
   sub_56FC();
 
-  // Components of the road.
+  // Components of the ground.
   // 0x5244
   counter = 8;
   do {
@@ -4952,13 +4950,14 @@ static void refresh_viewport()
     bl = data_5A56[cpu.bx + 0xC]; // base 0x5A62
     bl = bl >> 4;
     cpu.bx = (cpu.bx & 0xFF00) | bl;
-    cpu.bx &= 3;
+    cpu.bx &= 3; // 3 types of ground?
+
     // [bx+56E9]
-    bl = data_56E5[cpu.bx + 4];
+    bl = data_56E5[cpu.bx + 4]; // resource index by type (ground components)
     cpu.bx = (cpu.bx & 0xFF00) | bl;
 
     // mov ax, [bx + 0x59E4]
-    r = data_59E4[cpu.bx];
+    r = data_59E4[cpu.bx]; // resources used in level
     word_1051 = r;
     word_104F = 0;
 
@@ -4966,8 +4965,8 @@ static void refresh_viewport()
     vp.ypos = data_5691[counter];
     byte_104E = 0;
 
-    // offset
-    cpu.bx = data_56B5[counter];
+    // sprite index
+    cpu.bx = sprite_indices[counter];
 
     sub_CE7(&vp, cpu.bx);
     counter--;
