@@ -252,6 +252,7 @@ unsigned short data_56A3[] = {
 };
 
 // 0x56B5 - 0x56C6
+// offsets within image data.
 unsigned char data_56B5[] = {
   0x0012, 0x0010, 0x0014,
   0x000C, 0x000A, 0x000E,
@@ -4334,7 +4335,8 @@ static void sub_5868(struct resource *res)
 {
   uint8_t al;
 
-  // Load road components?
+  // Load components of the viewport, store resource indices
+  // into data_56E5.
   do {
     al = res->bytes[cpu.bx + cpu.di];
     cpu.ax = (cpu.ax & 0xFF00) | al;
@@ -4787,7 +4789,7 @@ static void sub_CE7(struct viewport_data *vp, uint16_t bx)
   if (cpu.ax == 0)
     return;
 
-  word_104F += cpu.ax;
+  word_104F += cpu.ax; // offset of viewport data.
   // 0xCF8
   ds = word_1051->bytes + word_104F;
   vp->data = ds;
@@ -5009,6 +5011,7 @@ static void refresh_viewport()
         cpu.ax = data_558F[counter];
         vp.xpos = cpu.ax;
         vp.ypos = data_55BF[counter];
+
         cpu.bx = data_561F[counter];
         sub_CE7(&vp, cpu.bx);
       }

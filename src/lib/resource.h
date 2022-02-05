@@ -42,7 +42,8 @@ struct resource {
   // Seems to be one of these values:
   // 0x00 - Not used, free spot.
   // 0x01 - dynamically allocated, must be free'd
-  // ...  - ??? (not sure if values other than 0, 1, and 0xFF are used)
+  // 0x02 - ???
+  // ...  - ??? (not sure if values other than 0, 1, 2, and 0xFF are used)
   // 0xFF - Statically allocated
   int usage_type;
   int tag;

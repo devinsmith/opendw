@@ -1102,7 +1102,7 @@ void sub_37C8()
   sub_4D82();
 
   memset(viewport_memory, 0, viewport_mem_sz);
-  byte_4F0F= 0xFF;
+  byte_4F0F = 0xFF;
 
   update_viewport();
 }
