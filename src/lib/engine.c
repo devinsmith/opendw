@@ -4329,7 +4329,7 @@ static void advance_data_ptr()
 }
 
 // 0x5868
-static void sub_5868(struct resource *res)
+static void sub_5868(struct resource *res, int starting_index)
 {
   uint8_t al;
 
@@ -4341,9 +4341,9 @@ static void sub_5868(struct resource *res)
     push_word(cpu.ax);
     al &= 0x7F;
 
-    data_56E5[cpu.si] = al;
+    data_56E5[starting_index] = al;
     cpu.bx++;
-    cpu.si++;
+    starting_index++;
     cpu.ax = pop_word();
   } while ((cpu.ax & 0xFF) < 0x80);
 
@@ -4407,11 +4407,11 @@ static void read_level_metadata()
   // 0x582B
   // cache resources. Types
   cpu.si = 0;
-  sub_5868(r);
+  sub_5868(r, 0);
   cpu.si = 4; // ground components
-  sub_5868(r);
+  sub_5868(r, 4);
   cpu.si = 8; // other ?
-  sub_5868(r);
+  sub_5868(r, 8);
 
   // 0x583C
   // Index of compressed level string (e.g. "Purgatory")
