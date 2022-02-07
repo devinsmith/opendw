@@ -117,7 +117,7 @@ static unsigned char* read_file(const char *fname)
 }
 
 
-static void process_input(unsigned char *src, int offset)
+static void process_input(unsigned char *src, int offset, int xpos, int ypos)
 {
   unsigned char *ds = src + offset;
 
@@ -135,9 +135,22 @@ static void process_input(unsigned char *src, int offset)
   ds = src + word_104F;
   viewport_data vp{};
   vp.data = ds;
-  vp.xpos = 0;
-  vp.ypos = 0;
+  vp.xpos = xpos;
+  vp.ypos = ypos;
   sub_CF8(vp.data, &vp);
+}
+
+static void process_ground(unsigned char *src)
+{
+  process_input(src, 8, 96, 88); // Top right
+  process_input(src, 4, 0, 88); // Top left
+  process_input(src, 6, 48, 88); // Top middle
+  process_input(src, 14, 112, 104); // Middle right
+  process_input(src, 10, 0, 104); // Middle left
+  process_input(src, 12, 32, 104); // Middle middle
+  process_input(src, 20, 128, 120); // Bottom right
+  process_input(src, 16, 0, 120); // Bottom left
+  process_input(src, 18, 16, 120); // Bottom middle
 }
 
 static void usage(int err)
@@ -147,6 +160,7 @@ static void usage(int err)
 
   fprintf(stderr, "usage ppmwrite (-i image)\n");
   fprintf(stderr, "\t-o offset - offset of image\n");
+  fprintf(stderr, "\t-g        - plot ground\n");
 
   exit(err);
 }
@@ -161,6 +175,7 @@ int main(int argc, char *argv[])
 {
   const char *img_file = nullptr;
   int offset = 4;
+  bool ground = false;
 
   while (--argc) {
     char *p = *++argv;
@@ -175,6 +190,8 @@ int main(int argc, char *argv[])
         args_required(p, "offset");
       }
       offset = atoi(*++argv), --argc;
+    } else if (!strcmp(p, "-g")) {
+      ground = true;
     }
   }
 
@@ -192,7 +209,11 @@ int main(int argc, char *argv[])
   init_offsets(0x50);
   init_viewport_memory();
 
-  process_input(src_bytes, offset);
+  if (ground) {
+    process_ground(src_bytes);
+  } else {
+    process_input(src_bytes, offset, 0, 0);
+  }
 
   delete[] src_bytes;
 

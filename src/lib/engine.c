@@ -4900,11 +4900,11 @@ static void refresh_viewport()
     cpu.di = pop_word();
     printf("%s 0x%04X 11CA: 0x%04X\n", __func__, cpu.di, word_11CA);
     al = word_11CA;
-    data_5A56[cpu.di] = al;
+    data_5A56[cpu.di] = al; // other components?
     al = (word_11CA & 0xFF00) >> 8;
     al &= 0xF7;
     cpu.ax = (cpu.ax & 0xFF00) | al;
-    data_5A56[cpu.di + 0xC] = al;
+    data_5A56[cpu.di + 0xC] = al; // ground
     cpu.si--;
     cpu.si--;
     cpu.di--;
@@ -4941,7 +4941,12 @@ static void refresh_viewport()
   sub_59A6();
   sub_56FC();
 
-  // Components of the ground.
+  // Components of the ground (9 sprites).
+  // These are drawn in the following order:
+  // 8: Top right, 7: Top left, 6: Top middle
+  // 5: Middle right, 4. Middle left, 3. Middle middle
+  // 2. Bottom right. 1. Bottom left, 0. Bottom middle
+  // (Changing this order probably requires a change to data_56A3.
   // 0x5244
   counter = 8;
   do {
@@ -4972,6 +4977,7 @@ static void refresh_viewport()
     counter--;
   } while (counter >= 0);
 
+  // Other components.
   // 0x528E
   counter = 23;
   do {

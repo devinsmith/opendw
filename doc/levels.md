@@ -24,11 +24,15 @@ Next bytes are set in pairs:
 0x00, 0xe1
 0x80, 0x91
 
+# Cached resources
+
 Next bytes are loaded individually but are a maximum of 4 byte chunks
 
-0x01, 0x82
-0x06, 0x82
-0x04, 0x03, 0x87
+| Resources  | Resource Size    |
+|------------|------------------|
+|    0 - 3   | 0x1, 0x82        |
+|    4 - 7   | 0x06, 0x82       |
+|    8 - 11  | 0x04, 0x03, 0x87 |
 
 Now offset to the title of the level:
 
