@@ -369,16 +369,18 @@ static void sub_54D8(int x, int y);
 static void sub_536B(int x, int y);
 static void sub_59A6();
 
-#define NUM_FUNCS 3
+#define NUM_FUNCS 4
 static void sub_50B2();
 static void sub_5088();
 static void sub_5080();
+static void sub_5090();
 
 // 0x5060
 void (*func_5060[NUM_FUNCS])() = {
   sub_50B2,
   sub_5088,
-  sub_5080
+  sub_5080,
+  sub_5090
 };
 
 // Decoded opcode calls, forward definition.
@@ -5109,10 +5111,19 @@ static void sub_5080()
   sub_5096();
 }
 
+// Sound for ?
 static void sub_5088()
 {
   cpu.dx = 0xF0;
   cpu.bx = 0x200;
+  sub_5096();
+}
+
+// Sound for bumping into a wall?
+static void sub_5090()
+{
+  cpu.dx = 0xC8;
+  cpu.bx = 0x800;
   sub_5096();
 }
 
