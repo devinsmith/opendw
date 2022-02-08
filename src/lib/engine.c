@@ -227,20 +227,12 @@ unsigned short data_564F[] = {
   0x0001, 0x0000, 0x0000, 0x0000
 };
 
-// Used as viewport offsets;
-// 0x567F - 0x5690
-unsigned short data_567F[] = {
-  0x0010, 0x0000, 0x0080,
-  0x0020, 0x0000, 0x0070,
-  0x0030, 0x0000, 0x0060
-};
-
-// Used as viewport offsets:
-// 0x5691 - 0x56A2
-unsigned short data_5691[] = {
-  0x0078, 0x0078, 0x0078,
-  0x0068, 0x0068, 0x0068,
-  0x0058, 0x0058, 0x0058
+// 0x567F - 0x5690 (x) and
+// 0x5691 - 0x56A2 (y)
+struct ui_point ground_points[] = {
+  { 16, 120 }, { 0, 120 }, { 128, 120 }, // Bottom
+  { 32, 104 }, { 0, 104 }, { 112, 104}, // Middle
+  { 48, 88 }, { 0, 88 }, { 96, 88 } // Top
 };
 
 // Used as viewport data.
@@ -4946,7 +4938,7 @@ static void refresh_viewport()
   // 8: Top right, 7: Top left, 6: Top middle
   // 5: Middle right, 4. Middle left, 3. Middle middle
   // 2. Bottom right. 1. Bottom left, 0. Bottom middle
-  // (Changing this order probably requires a change to data_56A3.
+  // (Changing this order probably requires a change to data_56A3).
   // 0x5244
   counter = 8;
   do {
@@ -4966,8 +4958,8 @@ static void refresh_viewport()
     word_1051 = r;
     word_104F = 0;
 
-    vp.xpos = data_567F[counter];
-    vp.ypos = data_5691[counter];
+    vp.xpos = ground_points[counter].x;
+    vp.ypos = ground_points[counter].y;
     byte_104E = 0;
 
     // sprite index
@@ -5013,8 +5005,7 @@ static void refresh_viewport()
         r = data_59E4[cpu.di >> 1];
         word_1051 = r;
         word_104F = 0;
-        cpu.ax = data_558F[counter];
-        vp.xpos = cpu.ax;
+        vp.xpos = data_558F[counter];
         vp.ypos = data_55BF[counter];
 
         cpu.bx = data_561F[counter];
