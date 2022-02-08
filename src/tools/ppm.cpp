@@ -135,8 +135,8 @@ static void process_input(unsigned char *src, int offset, int xpos, int ypos)
   ds = src + word_104F;
   viewport_data vp{};
   vp.data = ds;
-  vp.xpos = xpos;
-  vp.ypos = ypos;
+  vp.xpos = (uint16_t)xpos;
+  vp.ypos = (uint16_t)ypos;
   sub_CF8(vp.data, &vp);
 }
 
