@@ -34,7 +34,7 @@ struct viewport_data {
   uint16_t xpos; // Sometimes set as 36C0
   int ypos; // Sometimes set as 36C4
   int runlength; // Sometimes set as 1048
-  int numruns;
+  int numruns; // sometimes set as 104D
   int unknown1;
   int unknown2;
   unsigned char *data;
