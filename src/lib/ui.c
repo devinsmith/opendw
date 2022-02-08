@@ -188,25 +188,24 @@ static void process_quadrant(const struct viewport_data *d, unsigned char *data)
 
   ax = d->runlength;
   word_104A = ax;
-  ax += d->xpos;
+  ax += newx;
   ax -= word_1053;
   if (ax > 0) {
-#if 0
     word_104A -= ax;
     if (word_104A <= 0)
       return;
-#endif
   }
 
+  // DA8
   printf("0x%02X 0x%02X, 0x%02X\n", d->xpos, d->ypos, newx);
   offset = get_offset(d->ypos);
   offset += newx;
   printf("Offset: %04x (%d bytes)\n", offset, d->numruns * d->runlength);
   unsigned char *p = data + offset;
-  unsigned char *q = d->data + 4;
+  unsigned char *si = d->data + 4;
   for (int i = 0; i < d->numruns; i++) {
-    for (int j = 0; j < d->runlength; j++) {
-      unsigned char val = *q;
+    for (int j = 0; j < word_104A; j++) {
+      unsigned char val = *si;
       unsigned char dval = *p;
 
       dval = dval & get_and_table(val);
@@ -215,10 +214,11 @@ static void process_quadrant(const struct viewport_data *d, unsigned char *data)
       //printf("(%02x %02x) ", dval, val);
       *p = dval;
       p++;
-      q++;
+      si++;
     }
     offset += word_1055;
     p = data + offset;
+    si += (d->runlength - word_104A);
     //printf("\n");
   }
 }
