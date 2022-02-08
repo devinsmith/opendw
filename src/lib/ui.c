@@ -197,10 +197,8 @@ static void process_quadrant(const struct viewport_data *d, unsigned char *data)
   }
 
   // DA8
-  printf("0x%02X 0x%02X, 0x%02X\n", d->xpos, d->ypos, newx);
   offset = get_offset(d->ypos);
   offset += newx;
-  printf("Offset: %04x (%d bytes)\n", offset, d->numruns * d->runlength);
   unsigned char *p = data + offset;
   unsigned char *si = d->data + 4;
   for (int i = 0; i < d->numruns; i++) {
