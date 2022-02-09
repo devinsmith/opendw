@@ -427,7 +427,7 @@ static void sub_E6D(const struct viewport_data *d, unsigned char *data)
       p++;
     }
     si += d->runlength;
-    offset += word_1055;
+    dx += word_1055;
   }
 }
 
