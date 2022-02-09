@@ -175,6 +175,8 @@ int main(int argc, char *argv[])
 {
   const char *img_file = nullptr;
   int offset = 4;
+  int x = 0;
+  int y = 0;
   bool ground = false;
 
   while (--argc) {
@@ -192,6 +194,16 @@ int main(int argc, char *argv[])
       offset = atoi(*++argv), --argc;
     } else if (!strcmp(p, "-g")) {
       ground = true;
+    } else if (!strcmp(p, "-x")) {
+      if (!argv[1]) {
+        args_required(p, "x");
+      }
+      x = atoi(*++argv), --argc;
+    } else if (!strcmp(p, "-y")) {
+      if (!argv[1]) {
+        args_required(p, "y");
+      }
+      y = atoi(*++argv), --argc;
     }
   }
 
@@ -212,7 +224,7 @@ int main(int argc, char *argv[])
   if (ground) {
     process_ground(src_bytes);
   } else {
-    process_input(src_bytes, offset, 0, 0);
+    process_input(src_bytes, offset, x, y);
   }
 
   delete[] src_bytes;
