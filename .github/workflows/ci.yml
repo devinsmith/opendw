@@ -31,7 +31,7 @@ jobs:
             cc: "gcc",
             cxx: "g++",
             generators: "Unix Makefiles",
-            archiver: "7z a",
+            archiver: "tar czf",
             artifact: "ubuntu_gcc.7z"
           }
         - {
