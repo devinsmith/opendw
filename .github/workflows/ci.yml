@@ -21,8 +21,8 @@ jobs:
             cc: "cl",
             cxx: "cl",
             generators: "Visual Studio 17 2022",
-            archiver: "7z a",
-            artifact: "windows_msvc.7z"
+            archiver: "7z -tzip a",
+            artifact: "windows_msvc.zip"
           }
         - {
             name: "Ubuntu Latest GCC",
@@ -32,7 +32,7 @@ jobs:
             cxx: "g++",
             generators: "Unix Makefiles",
             archiver: "tar czf",
-            artifact: "ubuntu_gcc.7z"
+            artifact: "ubuntu_gcc.tar.gz"
           }
         - {
             name: "MacOS Latest Clang",
@@ -41,8 +41,8 @@ jobs:
             cc: "clang",
             cxx: "clang++",
             generators: "Unix Makefiles",
-            archiver: "7za a",
-            artifact: "macos_clang.7z"
+            archiver: "tar czf",
+            artifact: "macos_clang.tar.gz"
           }
 
     steps:
@@ -70,7 +70,7 @@ jobs:
       - name: Install dependencies on MacOS
         if: startsWith(matrix.config.os, 'macos')
         run: |
-          brew install sdl2 p7zip
+          brew install sdl2
           cmake --version
           clang --version
 
