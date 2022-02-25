@@ -20,7 +20,7 @@ jobs:
             build_type: "Release",
             cc: "cl",
             cxx: "cl",
-            generators: "Visual Studio 16 2019",
+            generators: "Visual Studio 17 2022",
             archiver: "7z a",
             artifact: "windows_msvc.7z"
           }
