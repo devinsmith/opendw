@@ -99,6 +99,7 @@ void draw_rectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
 
 unsigned char *ui_get_minimap_viewport();
 unsigned char *ui_get_viewport_mem();
+unsigned char *ui_get_data_6820();
 
 void ui_viewport_reset();
 void ui_update_viewport(size_t vp_offset);

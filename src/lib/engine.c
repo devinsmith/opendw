@@ -67,6 +67,12 @@ unsigned short data_1997[] = { 0x0000, 0x0010, 0x0028, 0x0040, 0x0058, 0x0070, 0
 unsigned short data_19A7[] = { 0x0010, 0x0028, 0x0040, 0x0058, 0x0070, 0x0088, 0x00A0, 0x00A8 };
 unsigned short data_19B7[] = { 0x0030, 0x0020, 0x0020, 0x0020, 0x0020, 0x0020, 0x0020, 0x0020 };
 
+// Unknown size 0x19FE
+unsigned short data_19FE[] = { 0x0000 };
+
+// Unknown size 0x1A00
+unsigned short data_1A00[] = { 0x0018, 0x0000 };
+
 uint8_t byte_1CE1 = 0;
 uint8_t byte_1CE2 = 0;
 
@@ -351,14 +357,18 @@ struct virtual_cpu cpu;
 struct mouse_status mouse;
 
 static void run_script(uint8_t script_index, uint16_t src_offset);
+static void sub_CE7(struct viewport_data *vp, uint16_t sprite_offset);
 static void sub_11A0(int set_11C4);
 static void handle_byte_callback(unsigned char byte);
 static void set_sb_handler_append_string();
 static void append_string(unsigned char byte);
+static void sub_19C7(uint8_t val);
+static void sub_1A10();
 static void sub_1A72();
 static void sub_1ABD(uint8_t val);
 static void sub_280E();
 static void sub_1BF8(uint8_t color, uint8_t y_adjust);
+static void sub_28B0(unsigned char **src_ptr, unsigned char *base);
 static void set_ui_header(unsigned char *base_ptr, uint16_t offset);
 static void sub_2CF5();
 static void set_sb_handler_ui_draw_chr();
@@ -2562,7 +2572,6 @@ static void sub_1A13()
   sub_CF8(ui_get_minimap_viewport(), &vp);
 }
 
-
 // 0x1861
 static void sub_1861(uint8_t input)
 {
@@ -2581,10 +2590,51 @@ static void sub_1861(uint8_t input)
   byte_1966 = al;
   sub_54D8(dl, bl);
 
-  // Correct?
+  // 0x187A: Correct?
   if ((((word_11C6 & 0xFF00) >> 8) & 0x08) != 0) {
-    printf("%s: 0x1881 unimplemented (%d)\n", __func__, input);
-    exit(1);
+    // 0x1881
+    bl = (word_11C6 & 0xFF00) >> 8;
+    bl = bl >> 4;
+    bl = bl & 0x3;
+    al = data_56E5[bl + 4];
+    cpu.di = 0;
+    sub_19C7(al);
+    bl = word_11C6;
+    bl = bl >> 4;
+    bl = bl & 0xF;
+
+    // 0x18AA
+    if (bl != 0) {
+      // 0x18AC
+      al = data_56C6[bl];
+      cpu.di = 6;
+      sub_19C7(al);
+    }
+    // 0x18B6
+    bl = word_11C6;
+    bl = bl & 0xF;
+    if (bl != 0) {
+      // 0x18C0
+      al = data_56C6[bl];
+      cpu.di = 0xC;
+      sub_19C7(al);
+    }
+    if ((byte_1966 & 0x80) != 0) {
+      // 0x1945
+      sub_1A10();
+      return;
+    }
+
+    bl = (word_11C6 & 0xFF00) >> 8;
+    bl &= 0x7;
+    if (bl == 0) {
+      // 0x1948
+      return;
+    }
+    al = data_56E5[bl + 7];
+    cpu.di = 0;
+    sub_19C7(al);
+    return;
   }
   // 18E4
   cpu.bx = 0x695C;
@@ -2600,8 +2650,15 @@ static void sub_1861(uint8_t input)
 
   // test byte [11C7], 08
   if ((((word_11C6 & 0xFF00) >> 8) & 0x08) != 0) {
-    printf("%s: 0x18FF unimplemented\n", __func__);
-    exit(1);
+    bl = byte_1949;
+    bl = bl >> 4;
+    bl &= 0xF;
+    if (bl != 0) {
+      // 0x1911
+      al = data_56C6[bl];
+      cpu.di = 0x6;
+      sub_19C7(al);
+    }
   }
 
   // 191B
@@ -2613,8 +2670,19 @@ static void sub_1861(uint8_t input)
 
   // test byte [11C7], 08
   if ((((word_11C6 & 0xFF00) >> 8) & 0x08) != 0) {
-    printf("%s: 0x192A unimplemented\n", __func__);
-    exit(1);
+    bl = byte_1949;
+    bl &= 0xF;
+    if (bl == 0) {
+      // 0x1934
+      al = data_56C6[bl];
+      cpu.di = 0x0C;
+      sub_19C7(al);
+    }
+    if ((byte_1966 & 0x80) == 0) {
+      return;
+    }
+    sub_1A10();
+    return;
   }
 
   // 193E
@@ -2623,9 +2691,9 @@ static void sub_1861(uint8_t input)
     // 1948
     return;
   }
+  // 0x1945
   // jmp 0x1A10
-  printf("%s: 0x1A10 unimplemented\n", __func__);
-  exit(1);
+  sub_1A10();
 }
 
 static void sub_1967()
@@ -2651,6 +2719,51 @@ static void sub_1967()
   ui_set_viewport_offset(0);
   ui_set_viewport_height(0x88);
   ui_set_viewport_width(0x50);
+}
+
+// 0x19C7
+static void sub_19C7(uint8_t val)
+{
+  struct resource *r;
+  struct viewport_data vp;
+
+  if (val > 0x7F) {
+    return;
+  }
+  cpu.bx = 0;
+  word_104F = cpu.bx;
+
+  r = data_59E4[val];
+  word_1051 = r;
+  cpu.ax = byte_1962;
+  cpu.ax = cpu.ax << 5;
+
+  cpu.ax += data_19FE[cpu.di];
+  vp.xpos = cpu.ax;
+  cpu.ax = data_1A00[cpu.di];
+  vp.ypos = cpu.ax;
+
+  cpu.bx = data_1A00[cpu.di + 2];
+
+  sub_CE7(&vp, cpu.bx);
+}
+
+// 0x1A10
+static void sub_1A10()
+{
+  struct viewport_data vp;
+
+  cpu.bx = 0x6820;
+  word_104F = cpu.bx;
+  // word_1051 = cs
+  cpu.ax = byte_1962;
+  cpu.ax = cpu.ax << 5;
+
+  vp.xpos = cpu.ax;
+  vp.ypos = 0x18;
+  vp.data = ui_get_data_6820();
+
+  sub_CF8(ui_get_data_6820(), &vp);
 }
 
 // 0x17F7
@@ -2714,6 +2827,11 @@ static void sub_1750()
 {
   uint8_t al;
   cpu.bx = 0x17D9;
+  // XXX: How big is data_1777?
+  unsigned char data_1777[] = { 0x80, 0x80, 0x9B, 0x9B, 0x17, 0x88, 0xA7, 0x17,
+                                0xCA, 0xA7, 0x17, 0x95, 0xB3, 0x17, 0xCC, 0xB3,
+                                0x17, 0x8A };
+  unsigned char *ptr = data_1777;
 
   // Values embedded in COM file at 0x17D9
   draw_rectangle(1, 0, 39, 192);
@@ -2732,11 +2850,11 @@ static void sub_1750()
   // 0x176D
   cpu.bx = 0x1777;
   // cpu.cx = cs
-  //sub_28B0();
+  sub_28B0(&ptr, data_1777);
 
   // jmp near bx 0x17A7 ??
 
-  printf("%s: 0x176D unimplemented\n", __func__);
+  printf("%s: 0x1775 unimplemented 0x%04X\n", __func__, cpu.bx);
   exit(1);
 }
 
@@ -4769,6 +4887,7 @@ static void sub_59A6()
   } while (cpu.bx != 0xFFFF);
 }
 
+// 0xCE7
 static void sub_CE7(struct viewport_data *vp, uint16_t sprite_offset)
 {
   unsigned char *ds = word_1051->bytes + word_104F + sprite_offset;

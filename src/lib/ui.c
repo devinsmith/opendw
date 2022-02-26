@@ -112,6 +112,8 @@ static const int viewport_mem_sz = 10880;
 unsigned short word_4F15; // 0x4F15
 unsigned short word_4F17; // 0x4F17
 
+// 0x6820 -> ?
+static unsigned char *data_6820;
 // 0x695C -> 0x6ADF
 static unsigned char *minimap_viewport;
 
@@ -713,6 +715,8 @@ void ui_load()
   viewports[2].data = com_extract(0x67B0, 4 + (4 * 0xD));
   viewports[3].data = com_extract(0x67E8, 4 + (4 * 0xD));
 
+  data_6820 = com_extract(0x6820, 4 + (0xD * 0x18));
+
   // Load mini map viewport data
   minimap_viewport = com_extract(0x695C, 4 + (0x10 * 0x18));
 
@@ -848,7 +852,7 @@ uint8_t ui_get_byte_3236()
 // 0x3177
 void ui_draw_string(void)
 {
-  uint16_t i;
+  int i;
   for (i = 0; i < ui_string.len; i++) {
     uint8_t al = ui_string.bytes[i];
     ui_draw_chr_piece(al);
@@ -1218,4 +1222,9 @@ void ui_viewport_reset()
 {
   // Yes, the offset and size are hardcoded.
   memmove(viewport_memory, viewport_memory + 0xD80, 0xD80);
+}
+
+unsigned char *ui_get_data_6820()
+{
+  return data_6820;
 }
