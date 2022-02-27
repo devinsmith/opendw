@@ -67,11 +67,10 @@ unsigned short data_1997[] = { 0x0000, 0x0010, 0x0028, 0x0040, 0x0058, 0x0070, 0
 unsigned short data_19A7[] = { 0x0010, 0x0028, 0x0040, 0x0058, 0x0070, 0x0088, 0x00A0, 0x00A8 };
 unsigned short data_19B7[] = { 0x0030, 0x0020, 0x0020, 0x0020, 0x0020, 0x0020, 0x0020, 0x0020 };
 
-// Unknown size 0x19FE
-unsigned short data_19FE[] = { 0x0000 };
-
-// Unknown size 0x1A00
-unsigned short data_1A00[] = { 0x0018, 0x0000 };
+// 0x19FE - 0x1A0F (each triplet means something)
+unsigned short data_19FE[] = { 0x0000, 0x0018, 0x0000,
+  0xFFF8, 0x0010, 0x0000,
+  0xFFF8, 0x0010, 0x0002};
 
 uint8_t byte_1CE1 = 0;
 uint8_t byte_1CE2 = 0;
@@ -2695,6 +2694,8 @@ static void sub_1861(uint8_t input)
 
 static void sub_1967()
 {
+  uint16_t new_offset;
+
   ui_set_viewport_width(0x90);
   cpu.bx = byte_1964;
   //cpu.bx = cpu.bx << 1;
@@ -2705,13 +2706,16 @@ static void sub_1967()
     exit(1);
   }
 
-  cpu.ax = data_1997[cpu.bx];
-  ui_set_viewport_offset(cpu.ax);
+  new_offset = data_1997[cpu.bx];
+  ui_set_viewport_offset(new_offset);
   cpu.ax = data_19A7[cpu.bx];
+  cpu.ax -= new_offset;
   ui_set_viewport_height(cpu.ax);
   cpu.di = data_19B7[cpu.bx];
 
-  ui_update_viewport(cpu.di);
+  // Technically in 106F
+  size_t vp_offset = get_offset(cpu.di / 2);
+  ui_update_viewport(vp_offset);
 
   ui_set_viewport_offset(0);
   ui_set_viewport_height(0x88);
@@ -2736,12 +2740,17 @@ static void sub_19C7(uint8_t val)
   cpu.ax = byte_1962;
   cpu.ax = cpu.ax << 5;
 
+  if (cpu.di != 0) {
+    printf("%s: Dump more data_19FE, cpu.di: 0x%04X\n", __func__, cpu.di);
+    exit(1);
+  }
+
   cpu.ax += data_19FE[cpu.di];
   vp.xpos = cpu.ax;
-  cpu.ax = data_1A00[cpu.di];
+  cpu.ax = data_19FE[cpu.di + 1]; // 1A00
   vp.ypos = cpu.ax;
 
-  cpu.bx = data_1A00[cpu.di + 1];
+  cpu.bx = data_19FE[cpu.di + 2]; // 1A02
 
   sub_CE7(&vp, cpu.bx);
 }
@@ -2765,6 +2774,7 @@ static void sub_1A10()
 }
 
 // 0x17F7
+// Draw the minimap
 static void sub_17F7()
 {
   uint8_t al;
