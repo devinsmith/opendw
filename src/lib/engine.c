@@ -377,7 +377,7 @@ static void set_sign_flag();
 static void clear_sign_flag();
 static void sub_54D8(int x, int y);
 static void sub_536B(int x, int y);
-static void sub_59A6();
+static void cache_resources();
 
 #define NUM_FUNCS 4
 static void sub_50B2();
@@ -2551,20 +2551,16 @@ static void sub_194A()
   printf("%s: 0x%02X:0x%02X\n", __func__, bl, dl);
 }
 
-static void sub_1A13()
+// 1A13
+// Plots map segment?
+// The only real input here is byte_1962
+static void sub_1A13(int input)
 {
   struct viewport_data vp;
   word_104F = cpu.bx;
   //word_1051 = // dragon.com 0x695C ?
-  cpu.ax = byte_1962;
 
-  cpu.ax = cpu.ax << 1;
-  cpu.ax = cpu.ax << 1;
-  cpu.ax = cpu.ax << 1;
-  cpu.ax = cpu.ax << 1;
-  cpu.ax = cpu.ax << 1;
-
-  vp.xpos = cpu.ax;
+  vp.xpos = input << 5;
   vp.ypos = 0x18;
   vp.data = ui_get_minimap_viewport();
 
@@ -2581,11 +2577,10 @@ static void sub_1861(uint8_t input)
   al = 0;
   bl = cpu.bx & 0xFF;
   dl = cpu.dx & 0xFF;
-  if (bl == game_state.unknown[0]) {
-    if (dl == game_state.unknown[1]) {
-      al = !al;
-    }
+  if (bl == game_state.unknown[0] && dl == game_state.unknown[1]) {
+    al = !al;
   }
+
   // 0x1874
   byte_1966 = al;
   sub_54D8(dl, bl);
@@ -2638,7 +2633,9 @@ static void sub_1861(uint8_t input)
   }
   // 18E4
   cpu.bx = 0x695C;
-  sub_1A13();
+  sub_1A13(input);
+
+  // 18EA
   al = word_11C6;
   byte_1949 = al;
 
@@ -2722,6 +2719,7 @@ static void sub_1967()
 }
 
 // 0x19C7
+// Plot resource onto minimap
 static void sub_19C7(uint8_t val)
 {
   struct resource *r;
@@ -2743,7 +2741,7 @@ static void sub_19C7(uint8_t val)
   cpu.ax = data_1A00[cpu.di];
   vp.ypos = cpu.ax;
 
-  cpu.bx = data_1A00[cpu.di + 2];
+  cpu.bx = data_1A00[cpu.di + 1];
 
   sub_CE7(&vp, cpu.bx);
 }
@@ -2775,8 +2773,8 @@ static void sub_17F7()
   byte_1964 = 0;
   byte_104E = 0;
 
-  // jmp short 1806
-
+  // 1801: jmp short 1806
+  // 1803: call 184B
 
   do {
 
@@ -2843,7 +2841,7 @@ static void sub_1750()
   // 1764
   cpu.ax = 0;
   init_offsets(0x90);
-  sub_59A6();
+  cache_resources();
   // 0x176A
   sub_17F7();
 
@@ -4843,7 +4841,9 @@ static void sub_5764()
 }
 
 // 0x59A6
-static void sub_59A6()
+// Caches resource indexes in data_5897
+// Caches resource data in data_59E4
+static void cache_resources()
 {
   uint8_t al, bl;
   struct resource *r;
@@ -4866,20 +4866,19 @@ static void sub_59A6()
     data_5897[cpu.bx + 0xf] = r->index;
     al = data_5897[cpu.bx];
   } while (al < 0x80);
+
+  // Cache resources
   // 0x59C8
   //
   cpu.bx = 0xE;
-
   // 0x59CB
   do {
     //            [bx + 0x58A6]
     al = data_5897[cpu.bx + 0xf];
     if (al < 0x80) {
       // 0x59D3
-      push_word(cpu.bx);
       // 12A8
       r = resource_get_by_index(al);
-      cpu.bx = pop_word();
       data_59E4[cpu.bx] = r;
     }
     // 0x59E0
@@ -5051,7 +5050,7 @@ static void refresh_viewport()
     data_5521[word_551F + 1] |= 0x8;
   }
   // 0x523E
-  sub_59A6();
+  cache_resources();
   sub_56FC();
 
   // Components of the ground (9 sprites).
