@@ -2577,7 +2577,7 @@ static void sub_1861(uint8_t input)
   bl = cpu.bx & 0xFF;
   dl = cpu.dx & 0xFF;
   if (bl == game_state.unknown[0] && dl == game_state.unknown[1]) {
-    al = !al;
+    al = 0xFF;
   }
 
   // 0x1874
@@ -2668,7 +2668,7 @@ static void sub_1861(uint8_t input)
   if ((((word_11C6 & 0xFF00) >> 8) & 0x08) != 0) {
     bl = byte_1949;
     bl &= 0xF;
-    if (bl == 0) {
+    if (bl != 0) {
       // 0x1934
       al = data_56C6[bl];
       cpu.di = 0x0C;
@@ -2692,12 +2692,12 @@ static void sub_1861(uint8_t input)
   sub_1A10();
 }
 
-static void sub_1967()
+static void sub_1967(uint8_t input)
 {
   uint16_t new_offset;
 
   ui_set_viewport_width(0x90);
-  cpu.bx = byte_1964;
+  cpu.bx = input;
   //cpu.bx = cpu.bx << 1;
   // DRS:
   if (cpu.bx > 8) {
@@ -2758,6 +2758,7 @@ static void sub_19C7(uint8_t val)
 // 0x1A10
 static void sub_1A10()
 {
+  printf("%s\n", __func__);
   struct viewport_data vp;
 
   cpu.bx = 0x6820;
@@ -2798,7 +2799,7 @@ static void sub_17F7()
       al++;
     } while (al < 9);
 
-    sub_1967();
+    sub_1967(byte_1964);
 
     // Check for key in the buffer.
     // if no key (jmp 1837)

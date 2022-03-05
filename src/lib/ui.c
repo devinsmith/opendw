@@ -923,8 +923,9 @@ int ui_adjust_rect(uint8_t input)
 // extract and process viewport data.
 void sub_CF8(unsigned char *data, struct viewport_data *vp)
 {
+  int ax;
   uint8_t al;
-  uint16_t ax, bx;
+  uint16_t bx;
   unsigned char *ds = data;
 
   vp->runlength = *ds++;
