@@ -3730,7 +3730,7 @@ static void sub_2ADC()
 
 // 0x2A4C
 // Inputs byte_2AA6 ?
-static void sub_2A4C()
+static void sub_2A4C(const unsigned char *base)
 {
   uint8_t al;
 
@@ -3777,6 +3777,9 @@ static void sub_1F8F()
 // Returns:
 //    AX: key pressed.
 //    BX: offset to jump to, within current script.
+//
+// First two bytes are some sort of flag, 0x8000 indicates that
+// we draw an escape table
 static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
 {
   uint8_t al, ah;
@@ -3935,7 +3938,7 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
       al = *(base + cpu.di);
       cpu.ax = (cpu.ax & 0xFF00) | al;
       if (al == 0) {
-        sub_2A4C();
+        sub_2A4C(base);
         return;
       }
       if (al == 0xFF) {
@@ -3966,7 +3969,7 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
             continue;
           }
 
-          sub_2A4C();
+          sub_2A4C(base);
           return;
         }
       }
@@ -3999,13 +4002,13 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
               // 0x29DD
               continue;
             }
-            sub_2A4C();
+            sub_2A4C(base);
             return;
           }
           // Did user press this key??
           if (al == byte_2AA6) {
             // 0x2A4C
-            sub_2A4C();
+            sub_2A4C(base);
             return;
           }
         }
@@ -4168,7 +4171,7 @@ static void sub_2C00()
 {
   // 0x2C0E
   // Acceptable keys:
-  // Flags: 0x824, only 1 acceptable key: 0x9B (Escape)
+  // Flags: 0x8204, only 1 acceptable key: 0x9B (Escape)
   unsigned char data_2C0E[] = { 0x04, 0x82, 0x9B, 0x00, 0x00, 0xFF };
 
   cpu.bx = 0x2C0E; // function pointer.
