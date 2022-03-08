@@ -2836,7 +2836,7 @@ static void sub_1750()
 {
   uint8_t al;
   cpu.bx = 0x17D9;
-  // XXX: How big is data_1777?
+  // data_1777 to 179A
   unsigned char data_1777[] = { 0x80, 0x80, 0x9B, 0x9B, 0x17, 0x88, 0xA7, 0x17,
                                 0xCA, 0xA7, 0x17, 0x95, 0xB3, 0x17, 0xCC, 0xB3,
                                 0x17, 0x8A };
@@ -3739,8 +3739,8 @@ static void sub_2A4C(const unsigned char *base)
     byte_2AA6, word_2AA7, cpu.di);
 
   // Actual jump address
-  cpu.bx = *(cpu.base_pc + cpu.di);
-  cpu.bx += *(cpu.base_pc + cpu.di + 1) << 8;
+  cpu.bx = *(base + cpu.di);
+  cpu.bx += *(base + cpu.di + 1) << 8;
 
   printf("%s: JUMP (BX) - 0x%04X\n", __func__, cpu.bx);
   printf("%s: AX - 0x%04X\n", __func__, cpu.ax);
