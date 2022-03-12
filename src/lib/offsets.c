@@ -26,8 +26,8 @@ uint16_t offsets[NUM_OFFSETS];
 // 0x1053 (always gets set to 0x50 ?)
 unsigned short word_1053 = 0;
 
-// 0x17DD / 0x17E2
-// called with values of 0x50 or 0x80
+// 0x17DD (called with 0x50) / 0x17E2 (called with 0x90)
+// called with values of 0x50 or 0x90
 void init_offsets(unsigned short dx)
 {
   int i;

@@ -55,6 +55,7 @@ uint16_t word_11CC = 0;
 
 uint8_t byte_1949 = 0;
 
+// Minimap offsets?
 uint8_t byte_1960 = 0;
 uint8_t byte_1961 = 0;
 uint8_t byte_1962 = 0;
@@ -361,6 +362,7 @@ static void sub_11A0(int set_11C4);
 static void handle_byte_callback(unsigned char byte);
 static void set_sb_handler_append_string();
 static void append_string(unsigned char byte);
+static void sub_176A();
 static void sub_19C7(uint8_t val);
 static void sub_1A10();
 static void sub_1A72();
@@ -376,7 +378,10 @@ static void set_sign_flag();
 static void clear_sign_flag();
 static void sub_54D8(int x, int y);
 static void sub_536B(int x, int y);
+static void sub_587E();
 static void cache_resources();
+static void mini_map_escape();
+static void mini_map_left();
 
 #define NUM_FUNCS 4
 static void sub_50B2();
@@ -2836,11 +2841,6 @@ static void sub_1750()
 {
   uint8_t al;
   cpu.bx = 0x17D9;
-  // data_1777 to 179A
-  unsigned char data_1777[] = { 0x80, 0x80, 0x9B, 0x9B, 0x17, 0x88, 0xA7, 0x17,
-                                0xCA, 0xA7, 0x17, 0x95, 0xB3, 0x17, 0xCC, 0xB3,
-                                0x17, 0x8A };
-  unsigned char *ptr = data_1777;
 
   // Values embedded in COM file at 0x17D9
   draw_rectangle(1, 0, 39, 192);
@@ -2853,6 +2853,45 @@ static void sub_1750()
   cpu.ax = 0;
   init_offsets(0x90);
   cache_resources();
+  while (1) {
+    // 0x176A
+    sub_176A();
+
+    // 0x1775 jmp near bx
+    if (cpu.bx == 0x179B) {
+      mini_map_escape();
+      return;
+    } else if (cpu.bx == 0x17A7) {
+      mini_map_left();
+    } else {
+      printf("%s: 0x1775 unimplemented 0x%04X\n", __func__, cpu.bx);
+      exit(1);
+    }
+  }
+}
+
+// Not a function really, but a lot of code jumps here
+// 0x176A
+static void sub_176A()
+{
+  // data_1777 to 179A
+  unsigned char data_1777[] = {
+    0x80, 0x80,
+    0x9B, 0x9B, 0x17, // ESC -> 0x179B
+    0x88, 0xA7, 0x17, // Left -> 0x17A7
+    0xCA, 0xA7, 0x17, // 'J' -> 0x17A7
+    0x95, 0xB3, 0x17, // Right -> 0x17B3
+    0xCC, 0xB3, 0x17, // 'L' -> 0x17B3
+    0x8A, 0xC0, 0x17, // Down -> 0x17C0
+    0xDA, 0xC0, 0x17, // 'Z' -> 0x17C0
+    0xCB, 0xC0, 0x17, // 'K' -> 0x17C0
+    0x8B, 0xCC, 0x17, // Up -> 0x17CC
+    0xC1, 0xCC, 0x17, // 'A' -> 0x17CC
+    0xC9, 0xCC, 0x17, // 'I' -> 0x17CC
+    0xFF
+  };
+  unsigned char *ptr = data_1777;
+
   // 0x176A
   sub_17F7();
 
@@ -2860,11 +2899,23 @@ static void sub_1750()
   cpu.bx = 0x1777;
   // cpu.cx = cs
   sub_28B0(&ptr, data_1777);
+}
 
-  // jmp near bx 0x17A7 ??
+// 0x179B
+static void mini_map_escape()
+{
+  init_offsets(0x50);
+  sub_37C8();
+  sub_587E(); // Redraw header?
+  ui_draw_full();
+}
 
-  printf("%s: 0x1775 unimplemented 0x%04X\n", __func__, cpu.bx);
-  exit(1);
+// 0x17A7
+static void mini_map_left()
+{
+  if (byte_1961 != 0) {
+    byte_1961--;
+  }
 }
 
 // 0x45F0
@@ -2873,20 +2924,7 @@ static void op_6D()
 {
   unsigned char *base_pc = cpu.base_pc;
 
-  // 0x45F0: push si
-  uint16_t si = cpu.pc - cpu.base_pc; // is this correct?
-  push_word(si);
-
   sub_1750();
-  
-  printf("%s: 0x4560 unimplemented\n", __func__);
-  exit(1);
-
-  // pop si ?
-//  si = pop_word();
-//  cpu.base_pc = base_pc;
-//  cpu.pc = base_pc + si;
-
 }
 
 // 0x4607
