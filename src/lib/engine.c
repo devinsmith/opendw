@@ -382,6 +382,9 @@ static void sub_587E();
 static void cache_resources();
 static void mini_map_escape();
 static void mini_map_left();
+static void mini_map_right();
+static void mini_map_up();
+static void mini_map_down();
 
 #define NUM_FUNCS 4
 static void sub_50B2();
@@ -2863,6 +2866,12 @@ static void sub_1750()
       return;
     } else if (cpu.bx == 0x17A7) {
       mini_map_left();
+    } else if (cpu.bx == 0x17B3) {
+      mini_map_right();
+    } else if (cpu.bx == 0x17C0) {
+      mini_map_down();
+    } else if (cpu.bx == 0x17CC) {
+      mini_map_up();
     } else {
       printf("%s: 0x1775 unimplemented 0x%04X\n", __func__, cpu.bx);
       exit(1);
@@ -2915,6 +2924,32 @@ static void mini_map_left()
 {
   if (byte_1961 != 0) {
     byte_1961--;
+  }
+}
+
+// 0x17B3
+static void mini_map_right()
+{
+  // Right boundary check
+  if (byte_1961 < game_state.unknown[33]) {
+    byte_1961++;
+  }
+}
+
+// 0x17C0
+static void mini_map_down()
+{
+  if (byte_1960 != 0) {
+    byte_1960--;
+  }
+}
+
+// 0x17CC
+static void mini_map_up()
+{
+  // up boundary check.
+  if (byte_1960 < game_state.unknown[34]) {
+    byte_1960++;
   }
 }
 
