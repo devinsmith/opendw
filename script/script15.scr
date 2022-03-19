@@ -54,7 +54,7 @@ Disassembling script15.bin (944 bytes)
 # P - ?
 0x0034: jmp 0x011E
 
-# ????
+# Quit the game
 0x0036: draw_rectangle 0x0c, 0x40, 0x1d, 0x78
 0x003B: set_msg $("Do you wish to quit the game?\r\r")
 0x0053: prompt 'Y', 'N'
