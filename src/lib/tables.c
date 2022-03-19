@@ -313,6 +313,11 @@ const unsigned char *get_chr(int chr_num)
   return chr_table + chr_num;
 }
 
+uint8_t get_b152_table(uint8_t offset)
+{
+  return b152_table[offset];
+}
+
 uint8_t get_and_table(uint8_t offset)
 {
   return and_table[offset];

@@ -433,6 +433,68 @@ static void sub_E6D(const struct viewport_data *d, unsigned char *data)
   }
 }
 
+static void sub_F3D(const struct viewport_data *d, unsigned char *data)
+{
+  int cf = 0;
+  int ax, bx, dx, word_104A;
+  int di;
+  uint8_t al, bl, bh;
+  unsigned char *p = d->data + 4;
+  unsigned char *q;
+
+  // SAR xpos, 1
+  uint16_t new_x = d->xpos;
+  if (new_x & 1) {
+    cf = 1;
+  }
+  new_x = new_x >> 1;
+
+  ax = d->runlength;
+  word_104A = ax;
+  ax += new_x;
+  ax -= word_1053;
+
+  if (ax > 0) {
+    // F56
+    bx = d->runlength;
+    bx -= ax;
+    word_104A = bx;
+    if (word_104A <= 0) {
+      return;
+    }
+  }
+  // F64
+  bx = d->ypos;
+  dx = new_x;
+  dx += get_offset(bx);
+
+  p += d->runlength;
+  p--;
+  q = p;
+  bh = 0;
+
+  // F7D
+
+  for (int i = 0; i < d->numruns; i++) {
+    di = dx;
+    for (int j = 0; j < word_104A; j++) {
+      bl = *q--;
+
+      bl = get_b152_table(bl);
+
+      al = data[di];
+      al &= get_and_table(bl);
+      al |= get_or_table(bl);
+
+      data[di] = al;
+      di++;
+    }
+    dx += word_1055;
+    p += d->runlength;
+    q = p;
+  }
+}
+
 // 0x1060
 void draw_viewport()
 {
@@ -931,9 +993,11 @@ void sub_CF8(unsigned char *data, struct viewport_data *vp)
   vp->runlength = *ds++;
   vp->numruns = *ds++;
 
+  printf("RL: %d, NR: %d\n", vp->runlength, vp->numruns);
+
   al = *ds++;
   ax = (int8_t)al;
-  if (byte_104E >= 0x80) {
+  if (byte_104E & 0x80) {
     // neg ax;
     ax = -ax;
   }
@@ -946,7 +1010,7 @@ void sub_CF8(unsigned char *data, struct viewport_data *vp)
   al = *ds++;
   ax = (int8_t)al;
 
-  if (byte_104E >= 0x40) {
+  if (byte_104E & 0x40) {
     ax = -ax;
   }
   vp->ypos += ax;
@@ -959,14 +1023,14 @@ void sub_CF8(unsigned char *data, struct viewport_data *vp)
   }
 
   // 0xD52
-  if (byte_104E >= 0x80) {
+  if (byte_104E & 0x80) {
     bx |= 8;
   }
 
   // 0xD5C
   //
   ax = word_1053;
-  if (byte_104E >= 0x40) {
+  if (byte_104E & 0x40) {
     ax = -ax;
   }
   // 0xD67
@@ -985,6 +1049,9 @@ void sub_CF8(unsigned char *data, struct viewport_data *vp)
     break;
   case 6:
     sub_EC5(vp, viewport_memory);
+    break;
+  case 8:
+    sub_F3D(vp, viewport_memory);
     break;
   default:
     printf("%s: An unhandled BX (0x%04X) was specified.\n", __func__, bx);
