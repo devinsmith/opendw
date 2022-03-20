@@ -1,4 +1,4 @@
-Disassembling script1.bin (208 bytes)
+Disassembling script01.bin (208 bytes)
 0x0000: word_3AE2 = 0xff
 0x0002: load_resource res: 0x03, offset: 0x0000
 0x0006: jnc 0x001f

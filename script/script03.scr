@@ -1,4 +1,4 @@
-Disassembling script3.bin (5390 bytes)
+Disassembling script03.bin (5390 bytes)
 0x0000: gamestate[0x28] = word_3AE2
 0x0002: push_byte(running_script_idx)
 0x0003: peek_and_pop
