@@ -280,7 +280,7 @@ struct timer_ctx {
   uint8_t  timer2; // 0x4C37
   uint16_t timer3; // 0x4C38
   uint16_t timer4; // 0x4C3A
-  uint8_t  timer5; // 0x4C3C
+  uint8_t  timer5; // 0x4C3C (appears to be more of a flag)
 };
 
 struct timer_ctx timers;
@@ -939,13 +939,16 @@ static void load_word3AE2_gamestate(void)
 }
 
 // 0x3B8C
+// word_3AE2 = game_state[arg + word_3AE4];
 static void op_0B()
 {
   uint8_t ah, al;
+
   al = *cpu.pc++;
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.ax += word_3AE4;
   cpu.bx = cpu.ax;
+
   al = game_state.unknown[cpu.bx];
   ah = game_state.unknown[cpu.bx + 1];
 
@@ -5811,7 +5814,13 @@ static void run_script(uint8_t script_index, uint16_t src_offset)
 
 void run_engine()
 {
+  // Initialize timers.
+  timers.timer0 = 1;
+  timers.timer1 = 1;
+  timers.timer2 = 1;
   timers.timer3 = 1;
+  timers.timer4 = 1;
+  timers.timer5 = 0;
 
   game_state.unknown[8] = 0xFF;
   memset(&cpu, 0, sizeof(struct virtual_cpu));
