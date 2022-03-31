@@ -62,7 +62,7 @@ op_code op_codes[] = {
   { "gamestate[", op_08, 1 }, // op_08
   { "word_3AE2 =", read_by_mode, 0 }, // op_09
   { "word_3AE2 = gamestate[", read_byte_array_index, 1 }, // op_0A
-  { "op_0B", nullptr, 1 }, // op_0B
+  { "word_3AE2 = gamestate[word_3AE4 + ", read_byte_array_index, 1 }, // op_0B
   { "op_0C", read_word, 0 }, // op_0C
   { "op_0D", read_word, 0 }, // op_0D
   { "op_0E", nullptr, 0 }, // op_0E
