@@ -1214,11 +1214,16 @@ static void op_18(void)
 }
 
 // 0x3D3D
+// Copy gamestate word
 static void op_19()
 {
   uint8_t al = *cpu.pc++;
+
+  // Source
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.di = cpu.ax;
+
+  // Destination
   al = *cpu.pc++;
   cpu.ax = (cpu.ax & 0xFF00) | al;
   cpu.bx = cpu.ax;
