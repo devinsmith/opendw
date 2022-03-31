@@ -6,12 +6,17 @@ Disassembling script03.bin (5390 bytes)
 0x0006: gamestate[0x35] = 0xFF
 0x0008: gamestate[0x36] = 0
 
+# Shifts the bytes by 6
+# gamestate[23] = gamestate[16]
+# gamestate[22] = gamestate[15]
+# ...
+
 0x000A: set loop = 0x06
-0x000C: op_0B 0x0a
-0x000E: gamestate[word_3AE4 + 0x11] = word_3AE2
+0x000C: word_3AE2 = gamestate[word_3AE4 + 10]
+0x000E: gamestate[word_3AE4 + 17] = word_3AE2
 0x0010: loop 0x000c
 
-0x0013: op_19 0x1f, 0x20
+0x0013: gamestate[0x20] = gamestate[0x1F]
 0x0016: call 0x04f1
 0x0019: call 0x016b
 0x001C: call 0x01d2
@@ -936,9 +941,14 @@ Disassembling script03.bin (5390 bytes)
 0x04EE: .word
 0x04EF: .word
 0x04F0: .word
-0x04F1: call 0x0669
+
+# Function 4F1?
+# Purpose unknown
+
+0x04F1: call 0x0669   # Run initialization?
 0x04F4: gamestate[0x27] = 0
-        gamestate[0x28] = 0
+
+# Loads word into gamestate[0x58]
 0x04F6: .word
 0x04F7: gamestate[0x58] = 0
         gamestate[0x59] = 0
@@ -949,10 +959,13 @@ Disassembling script03.bin (5390 bytes)
         word_3AE2 = resource_idx(gamestate[0x5A])->bytes[offset]
         word_3AE2 += resource_idx(gamestate[0x5A])->bytes[offset + 1] << 8
 0x04FD: gamestate[0x58] = word_3AE2
+
+
 0x04FF: .byte
 0x0500: word_3AE2 = gamestate[0x28]
 0x0502: test word_3AE2
 0x0503: jns 0x050a
+
 0x0506: word_3AE4 = 0
 0x0507: var offset = gamestate[0x58]
         offset += gamestate[0x59] << 8
@@ -960,6 +973,7 @@ Disassembling script03.bin (5390 bytes)
         word_3AE2 = resource_idx(gamestate[0x5A])->bytes[offset]
         word_3AE2 += resource_idx(gamestate[0x5A])->bytes[offset + 1] << 8
 0x0509: op_4D
+
 0x050A: op_2A
 0x050B: inc word_3AE2
 0x050C: op_21
@@ -1191,10 +1205,19 @@ Disassembling script03.bin (5390 bytes)
 0x0661: op_31 0x49
 0x0663: op_18 0x41, 0x0a
 0x0666: jmp 0x0658
+
+#
+# Function 669 (initialization?)
+# Mostly zeros out lots of data, except sets some data to 0xB
+#
+
+# Zero outs some memory....
 0x0669: word_3AE2 = 0x00
 0x066B: set loop = 0x63
 0x066D: op_15 0x0278
 0x0670: loop 0x066d
+
+# Zero outs more memory
 0x0673: set loop = 0x31
 0x0675: op_15 0x02dc
 0x0678: op_15 0x030e
@@ -1202,10 +1225,14 @@ Disassembling script03.bin (5390 bytes)
 0x067E: op_15 0x0372
 0x0681: op_15 0x03a4
 0x0684: loop 0x0675
+
+# Clear gamestate 4 bytes [110-113]
+# Clear gamestate 4 bytes [106-109]
 0x0687: set loop = 0x03
 0x0689: gamestate[word_3AE4 + 0x6E] = word_3AE2
 0x068B: gamestate[word_3AE4 + 0x6A] = word_3AE2
 0x068D: loop 0x0689
+
 0x0690: gamestate[0x8c] = 0
 0x0692: gamestate[0x8e] = 0
 0x0694: gamestate[0xdd] = 0
@@ -1217,15 +1244,20 @@ Disassembling script03.bin (5390 bytes)
           call 0x06AA
         }
         game_state[6] = al
+
+# Set memory to 0x0B
 0x069F: word_3AE2 = 0x0b
 0x06A1: set loop = 0x06
 0x06A3: op_15 0x04ce
 0x06A6: loop 0x06a3
 0x06A9: ret
+
+
 0x06AA: word_3AE2 = 0x00
 0x06AC: set_char_prop 0x64
 0x06AE: set_char_prop 0x65
 0x06B0: ret
+
 0x06B1: call 0x06b5
 0x06B4: retf
 0x06B5: push_byte(word_3AE4 & 0xFF)
