@@ -1369,6 +1369,8 @@ static void op_26(void)
 }
 
 // 0x3E06
+// Decrement word_3AE2 (with byte masked).
+// Underflow could occur here.
 static void op_27()
 {
   uint8_t ah;
@@ -5800,6 +5802,9 @@ static void run_script(uint8_t script_index, uint16_t src_offset)
     // xor ah, ah
     cpu.ax = op_code;
     cpu.bx = cpu.ax;
+
+    // TEMPORARY: Dump script and offset
+    printf("%02d: 0x%04X ", running_script->tag, offset);
 
     void (*callfunc)(void) = targets[op_code].func;
     if (callfunc != NULL) {
