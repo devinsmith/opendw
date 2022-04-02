@@ -911,13 +911,13 @@ Disassembling script03.bin (5390 bytes)
 0x04C3: .word
 0x04C4: .word
 0x04C5: .word
-0x04C6: op_D6
-0x04C7: data_res = resource_get(pop_byte())
-0x04C8: gamestate[0x04] = word_3AE2
-0x04CA: op_4E
-0x04CB: push_byte(running_script_idx)
-0x04CC: random_encounter?
-0x04CD: push_byte(running_script_idx)
+
+# Data
+0x04C6: 0x03D6
+0x04C8: 0x0412
+0x04CA: 0x0404
+0x04CC: 0x048A
+
 0x04CE: .word
 0x04CF: .word
 0x04D0: .word
@@ -964,7 +964,7 @@ Disassembling script03.bin (5390 bytes)
 0x04F6: .word
 0x04F7: gamestate[0x58] = 0
         gamestate[0x59] = 0
-0x04F9: set loop = 0x02
+0x04F9: word_3AE4 = 0x02
 0x04FB: var offset = gamestate[0x58]
         offset += gamestate[0x59] << 8
         offset += word_3AE4
@@ -978,13 +978,14 @@ Disassembling script03.bin (5390 bytes)
 0x0502: test word_3AE2
 0x0503: jns 0x050a
 
+# Set multiplier (into word_3AE2)
 0x0506: word_3AE4 = 0
 0x0507: var offset = gamestate[0x58]
         offset += gamestate[0x59] << 8
         offset += word_3AE4
         word_3AE2 = resource_idx(gamestate[0x5A])->bytes[offset]
         word_3AE2 += resource_idx(gamestate[0x5A])->bytes[offset + 1] << 8
-0x0509: op_4D
+0x0509: op_4D # game ticks * multiplier, result back into word_3AE2
 
 0x050A: word_3AE2 = word_3AE2 * 2   # op_2A
 0x050B: inc word_3AE2
@@ -1020,6 +1021,7 @@ Disassembling script03.bin (5390 bytes)
         word_3AE2 += resource_idx(gamestate[0x5A])->bytes[offset + 1] << 8
 0x0521: word_3AE2 &= 0x3f
 0x0523: gamestate[0x5c] = word_3AE2
+
 0x0525: inc byte [word_3AE4]
 0x0526: var offset = gamestate[0x58]
         offset += gamestate[0x59] << 8
@@ -1028,8 +1030,10 @@ Disassembling script03.bin (5390 bytes)
         word_3AE2 += resource_idx(gamestate[0x5A])->bytes[offset + 1] << 8
 0x0528: gamestate[word_3AE4 + 0x28] = word_3AE2
 0x052A: if ++byte_3AE4 != 0x0D jmp 0x0526
+
 0x052E: gamestate[0x47] = 0
 0x0530: gamestate[0x48] = 0
+
 0x0532: .word
 0x0533: gamestate[0x58] = 0
         gamestate[0x59] = 0
@@ -1040,6 +1044,7 @@ Disassembling script03.bin (5390 bytes)
         word_3AE2 = resource_idx(gamestate[0x5A])->bytes[offset]
         word_3AE2 += resource_idx(gamestate[0x5A])->bytes[offset + 1] << 8
 0x0538: gamestate[0x58] = word_3AE2
+
 0x053A: .byte
 0x053B: word_3AE4 = gamestate[0x48]
 0x053D: op_0B 0x29
@@ -1067,6 +1072,7 @@ Disassembling script03.bin (5390 bytes)
 0x0552: .byte
 0x0553: word_3AE2 = gamestate[0x47]
 0x0555: call 0x06b5
+
 0x0558: word_3AE4 = 0
 0x0559: var offset = gamestate[0x58]
         offset += gamestate[0x59] << 8
@@ -1126,10 +1132,13 @@ Disassembling script03.bin (5390 bytes)
 0x05B3: peek_and_pop
 0x05B4: op_2D
 0x05B5: op_18 0x41, 0x24
+
 0x05B8: .word
 0x05B9: word_3AE2 = gamestate[0x41]
 0x05BB: word_3AE2 += 0x0008
 0x05BE: gamestate[0x41] = word_3AE2
+
+# Extract compressed monster string, we know it can be a maximum of 18 bytes
 0x05C0: .byte
 0x05C1: set loop = 0x21
 0x05C3: var offset = gamestate[0x58]
@@ -1137,8 +1146,9 @@ Disassembling script03.bin (5390 bytes)
         offset += word_3AE4
         word_3AE2 = resource_idx(gamestate[0x5A])->bytes[offset]
         word_3AE2 += resource_idx(gamestate[0x5A])->bytes[offset + 1] << 8
-0x05C5: op_16 0x41
+0x05C5: script_data[gamestate[0x41] + word_3AE4] = word_3AE2
 0x05C7: if ++byte_3AE4 != 0x33 jmp 0x05c3
+
 0x05CB: word_3AE2 = gamestate[0x47]
 0x05CD: call 0x06b5
 0x05D0: word_3AE4 = gamestate[0x48]
@@ -1282,13 +1292,13 @@ Disassembling script03.bin (5390 bytes)
 
 # Set monster offset
 0x06B8: .word
-0x06B9: word_3AE2 = op_0D 0x04c6
+0x06B9: word_3AE2 = script_data[0x04C6 + word_3AE4]
 0x06BC: gamestate[0x41] = word_3AE2
 
 0x06BE: .byte
 0x06BF: op_10 0x41, 0x0a
 0x06C2: test word_3AE2
-0x06C3: pop byte
+0x06C3: word_3AE4 = pop byte
 0x06C4: ret
 
 0x06C5: push (word|byte)

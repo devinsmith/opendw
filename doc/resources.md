@@ -7,7 +7,7 @@ Resource data in data1. It is unknown how data2 is used at this point.
 |    0 | 1148 | N          | Initial game script                 |
 |    7 | 5632 | N          | Character data.                     |
 |   29 |      | Y          | Title screen (320x200)              |
-|   31 | 2177 | Y          | ?                                   |
+|   31 | 2177 | Y          | String data for monsters?           |
 |   71 | 5846 | Y          | Purgatory level                     |
 |  110 |11860 | Y          | Castle wall (viewport)              |
 |  111 | 7050 | Y          | Sky portion (viewport)              |

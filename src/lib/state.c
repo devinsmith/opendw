@@ -31,5 +31,11 @@ void set_game_state(const char *func_src, int offset, unsigned char value)
   if (offset == 31) {
     log_trace("   SETTING MONSTER?\n");
   }
+  if (offset == 65) {
+    log_trace("   SETTING MONSTER?\n");
+  }
+  if (offset == 88) {
+    log_trace("   SETTING MONSTER?\n");
+  }
   game_state.unknown[offset] = value;
 }

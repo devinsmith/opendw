@@ -63,10 +63,13 @@ int main(int argc, char *argv[])
 
   unsigned char world0[] = { 0xf4, 0x29, 0x14, 0x0a, 0x6f, 0x8d, 0xc0 };
 
+  unsigned char data5[] = { 0xf1, 0x04, 0xe7, 0x28, 0x62, 0x67, 0xf5, 0x90, 0x00 };
+
   extract_test(data1);
   extract_test(data2);
   extract_test(data3);
   extract_test(data4);
   extract_test(world0);
+  extract_test(data5);
   return 0;
 }
