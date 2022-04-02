@@ -55,8 +55,9 @@ Disassembling script0.bin (1148 bytes)
 0x00F3: inc game_state[0x41]
 0x00F5: ret
 
+# Write out each character
 0x00F6: word_3AE2 = gamestate[0x06]
-0x00F8: op_30 0x31
+0x00F8: word_3AE2 += 0x31
 0x00FA: write_number
 0x00FB: set_msg $(") ")
 0x00FF: write_character_name

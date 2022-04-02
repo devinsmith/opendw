@@ -19,7 +19,9 @@ Disassembling script03.bin (5390 bytes)
 0x0013: gamestate[0x20] = gamestate[0x1F]
 0x0016: call 0x04f1
 0x0019: call 0x016b
+
 0x001C: call 0x01d2
+
 0x001F: load_resource res: 0x12, offset: 0x001a
 0x0023: draw_rectangle 0x16, 0x00, 0x28, 0x98
 0x0028: draw_pattern
@@ -170,11 +172,14 @@ Disassembling script03.bin (5390 bytes)
 0x0167: word_3AE2 = 0xa7
 0x0169: write_number
 0x016A: retf
+
+# Function 16B
 0x016B: gamestate[0x47] = 0
 0x016D: word_3AE2 = 0x03
 0x016F: gamestate[0x45] = word_3AE2
 0x0171: call 0x06b5
 0x0174: jz 0x01c5
+
 0x0177: op_10 0x41, 0x09
 0x017A: gamestate[0x49] = word_3AE2
 0x017C: word_3AE2 = gamestate[0x45]
@@ -212,20 +217,26 @@ Disassembling script03.bin (5390 bytes)
 0x01C0: peek_and_pop
 0x01C1: op_15 0x04c4
 0x01C4: .byte
+
 0x01C5: word_3AE2 = gamestate[0x45]
-0x01C7: op_27
+0x01C7: word_3AE2--
 0x01C8: test word_3AE2
 0x01C9: jnz 0x016f
+
 0x01CC: test game_state[0x47]
 0x01CE: jnz 0x016b
 0x01D1: ret
+
+# Function 1D2
 0x01D2: word_3AE2 = 0x00
 0x01D4: call 0x06b5
 0x01D7: op_27
 0x01D8: gamestate[0x09] = word_3AE2
+
+# Offset to monster string.
 0x01DA: .word
 0x01DB: word_3AE2 = gamestate[0x41]
-0x01DD: op_30 0x0029
+0x01DD: word_3AE2 += 0x0029
 0x01E0: ui_header_random_encounter
 
 0x01E1: .byte
@@ -700,6 +711,7 @@ Disassembling script03.bin (5390 bytes)
 0x03FC: .word
 0x03FD: .word
 0x03FE: .word
+
 0x03FF: .word
 0x0400: .word
 0x0401: .word
@@ -974,9 +986,9 @@ Disassembling script03.bin (5390 bytes)
         word_3AE2 += resource_idx(gamestate[0x5A])->bytes[offset + 1] << 8
 0x0509: op_4D
 
-0x050A: op_2A
+0x050A: word_3AE2 = word_3AE2 * 2   # op_2A
 0x050B: inc word_3AE2
-0x050C: op_21
+0x050C: word_3AE4 = word_3AE2
 0x050D: .word
 0x050E: var offset = gamestate[0x58]
         offset += gamestate[0x59] << 8
@@ -991,12 +1003,14 @@ Disassembling script03.bin (5390 bytes)
         offset += word_3AE4
         word_3AE2 = resource_idx(gamestate[0x5A])->bytes[offset]
         word_3AE2 += resource_idx(gamestate[0x5A])->bytes[offset + 1] << 8
-0x0516: op_2D
-0x0517: op_2D
-0x0518: op_2D
-0x0519: op_2D
-0x051A: op_2D
-0x051B: op_2D
+
+# Shift right 6 places
+0x0516: word_3AE2 = word_3AE2 >> 1
+0x0517: word_3AE2 = word_3AE2 >> 1
+0x0518: word_3AE2 = word_3AE2 >> 1
+0x0519: word_3AE2 = word_3AE2 >> 1
+0x051A: word_3AE2 = word_3AE2 >> 1
+0x051B: word_3AE2 = word_3AE2 >> 1
 0x051C: inc word_3AE2
 0x051D: gamestate[0x28] = word_3AE2
 0x051F: var offset = gamestate[0x58]
@@ -1114,7 +1128,7 @@ Disassembling script03.bin (5390 bytes)
 0x05B5: op_18 0x41, 0x24
 0x05B8: .word
 0x05B9: word_3AE2 = gamestate[0x41]
-0x05BB: op_30 0x0008
+0x05BB: word_3AE2 += 0x0008
 0x05BE: gamestate[0x41] = word_3AE2
 0x05C0: .byte
 0x05C1: set loop = 0x21
@@ -1260,17 +1274,23 @@ Disassembling script03.bin (5390 bytes)
 
 0x06B1: call 0x06b5
 0x06B4: retf
+
+
 0x06B5: push_byte(word_3AE4 & 0xFF)
-0x06B6: op_21
+0x06B6: word_3AE4 = (word_3AE2 & 0xFF)
 0x06B7: shl byte [word_3AE4], 1
+
+# Set monster offset
 0x06B8: .word
-0x06B9: op_0D 0x04c6
+0x06B9: word_3AE2 = op_0D 0x04c6
 0x06BC: gamestate[0x41] = word_3AE2
+
 0x06BE: .byte
 0x06BF: op_10 0x41, 0x0a
 0x06C2: test word_3AE2
 0x06C3: pop byte
 0x06C4: ret
+
 0x06C5: push (word|byte)
 0x06C6: .word
 0x06C7: shl byte [word_3AE4], 1
@@ -1290,6 +1310,7 @@ Disassembling script03.bin (5390 bytes)
 0x06E5: nop
 0x06E6: pop byte
 0x06E7: ret
+
 0x06E8: test word_3AE2
 0x06E9: jz 0x070d
 0x06EC: push (word|byte)
