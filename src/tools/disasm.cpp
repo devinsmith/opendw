@@ -90,13 +90,13 @@ op_code op_codes[] = {
   { "inc word_3AE2", nullptr, 0 }, // op_24
   { "inc byte [word_3AE4]", nullptr, 0 }, // op_25
   { "dec game_state[", read_byte_array_index, 1 }, // op_26
-  { "op_27", nullptr, 0 }, // op_27
+  { "dec word_3AE2", nullptr, 0 }, // op_27
   { "dec [mem]", nullptr, 0 }, // op_28
   { "op_29", nullptr, 0 }, // op_29
   { "op_2A", nullptr, 0 }, // op_2A
   { "shl byte [word_3AE4], 1", nullptr, 0 }, // op_2B
   { "op_2C", nullptr, 0 }, // op_2C
-  { "op_2D", nullptr, 0 }, // op_2D
+  { "word_3AE2 = word_3AE2 >> 1", nullptr, 0 }, // op_2D
   { "op_2E", nullptr, 0 }, // op_2E
   { "op_2F", nullptr, 1 }, // op_2F
   { "op_30", read_by_mode, 0 }, // op_30
