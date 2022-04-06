@@ -438,7 +438,7 @@ static void op_27();
 static void op_28();
 static void op_2A();
 static void op_2B();
-static void op_2D();
+static void op_right_shift();
 static void op_2F();
 static void op_30();
 static void op_31();
@@ -572,7 +572,7 @@ struct op_call_table targets[] = {
   { op_2A, "0x3E36" },
   { op_2B, "0x3E45" },
   { NULL, "0x3E4C" },
-  { op_2D, "0x3E67" },
+  { op_right_shift, "0x3E67" }, // op_2D
   { NULL, "0x3E6E" },
   { op_2F, "0x3E75" },
   { op_30, "0x3E9D" },
@@ -1415,7 +1415,8 @@ static void op_2B()
 }
 
 // 0x3E67
-static void op_2D()
+// 0x2D
+static void op_right_shift()
 {
   word_3AE2 = word_3AE2 >> 1;
 }
@@ -1942,6 +1943,7 @@ static void op_4C()
 }
 
 // 0x4132
+// Pseudo random number generator?
 static void op_4D()
 {
   uint32_t mul_result;
