@@ -41,7 +41,7 @@ struct game_state {
   // 0x03 - Current direction (0 = North, 1 = East, 2 = South, 3 = West)
   // 0x06 - Currently selected player.
   // 0x1F - Number of characters in the party.
-  // 0x56 - Script index?
+  // 0x56 - Resource index.
   // 0x6A - 0x6D (Gold)
   // 0x6E - 0x71 (Experience)
   // 0xC6 - 0x?? - New character name.

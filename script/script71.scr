@@ -1,6 +1,9 @@
 Disassembling script71.bin (5846 bytes)
 
 # Sets gamestate with word_3AE2 ?
+# These are likely multipliers (although a value
+# of 0xff indicates that we should use the resource
+# file's multiplier and multiply by clock ticks).
 0x0E69: word_3AE2 = 0xff
 0x0E6B: jmp 0x0e8e
 0x0E6E: word_3AE2 = 0x04
@@ -15,6 +18,8 @@ Disassembling script71.bin (5846 bytes)
 0x0E84: jmp 0x0e8e
 0x0E87: word_3AE2 = 0x09
 0x0E89: jmp 0x0e8e
+
+# Encounter?
 0x0E8C: word_3AE2 = 0x01
 0x0E8E: load_resource res: 0x01, offset: 0x0002
 0x0E92: jc 0x0e96

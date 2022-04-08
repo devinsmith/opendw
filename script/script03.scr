@@ -1,4 +1,9 @@
 Disassembling script03.bin (5390 bytes)
+
+# Script 3 is loaded with word_3AE2 set to some value
+# Common values values are 01-09 and 0xFF (see script71)
+# This typically is the multiplier used.
+
 0x0000: gamestate[0x28] = word_3AE2
 0x0002: push_byte(running_script_idx)
 0x0003: peek_and_pop
@@ -17,7 +22,7 @@ Disassembling script03.bin (5390 bytes)
 0x0010: loop 0x000c
 
 0x0013: gamestate[0x20] = gamestate[0x1F]
-0x0016: call 0x04f1
+0x0016: call 0x04F1
 0x0019: call 0x016b
 
 0x001C: call 0x01d2
@@ -976,7 +981,8 @@ Disassembling script03.bin (5390 bytes)
         word_3AE2 += resource_idx(gamestate[0x5A])->bytes[offset + 1] << 8
 0x04FD: gamestate[0x58] = word_3AE2
 
-
+# Check input parameter of script.
+# Check if we need to get the multiplier from the resource.
 0x04FF: .byte
 0x0500: word_3AE2 = gamestate[0x28]
 0x0502: test word_3AE2
@@ -989,8 +995,9 @@ Disassembling script03.bin (5390 bytes)
         offset += word_3AE4
         word_3AE2 = resource_idx(gamestate[0x5A])->bytes[offset]
         word_3AE2 += resource_idx(gamestate[0x5A])->bytes[offset + 1] << 8
-0x0509: op_4D # game ticks * multiplier, result back into word_3AE2
+0x0509: word_3AE2 = op_4D # game ticks * multiplier, result back into word_3AE2
 
+# Controlling value
 0x050A: word_3AE2 = word_3AE2 * 2   # op_2A
 0x050B: inc word_3AE2
 0x050C: word_3AE4 = word_3AE2
@@ -1001,6 +1008,8 @@ Disassembling script03.bin (5390 bytes)
         word_3AE2 = resource_idx(gamestate[0x5A])->bytes[offset]
         word_3AE2 += resource_idx(gamestate[0x5A])->bytes[offset + 1] << 8
 0x0510: gamestate[0x58] = word_3AE2
+
+# Set unknown1?
 0x0512: .byte
 0x0513: word_3AE4 = 0
 0x0514: var offset = gamestate[0x58]
@@ -1018,6 +1027,7 @@ Disassembling script03.bin (5390 bytes)
 0x051B: word_3AE2 = word_3AE2 >> 1
 0x051C: inc word_3AE2
 0x051D: gamestate[0x28] = word_3AE2
+
 0x051F: var offset = gamestate[0x58]
         offset += gamestate[0x59] << 8
         offset += word_3AE4
@@ -1056,6 +1066,7 @@ Disassembling script03.bin (5390 bytes)
 0x0541: word_3AE2--
 0x0542: test word_3AE2
 0x0543: jns 0x054a
+
 0x0546: word_3AE4 = 0
 0x0547: var offset = gamestate[0x58]
         offset += gamestate[0x59] << 8
@@ -1063,6 +1074,7 @@ Disassembling script03.bin (5390 bytes)
         word_3AE2 = resource_idx(gamestate[0x5A])->bytes[offset]
         word_3AE2 += resource_idx(gamestate[0x5A])->bytes[offset + 1] << 8
 0x0549: word_3AE2 = op_4D # multiplier
+
 0x054A: word_3AE4 = word_3AE2
 0x054B: shl byte [word_3AE4], 1
 0x054C: inc byte [word_3AE4]

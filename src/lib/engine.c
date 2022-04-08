@@ -414,7 +414,7 @@ static void load_word3AE2_gamestate();
 static void op_0B();
 static void op_0C();
 static void op_0D();
-static void op_0F();
+static void op_extract_resource_data();
 static void op_10();
 static void op_11();
 static void op_12();
@@ -542,7 +542,7 @@ struct op_call_table targets[] = {
   { op_0C, "0x3BA2" },
   { op_0D, "0x3BB7" },
   { NULL, "0x3BD0" },
-  { op_0F, "0x3BED" },
+  { op_extract_resource_data, "0x3BED" }, // op_0F
   { op_10, "0x3C10" },
   { op_11, "0x3C2D" },
   { op_12, "0x3C59" },
@@ -1003,7 +1003,9 @@ static void op_0D()
 }
 
 // 0x3BED
-static void op_0F(void)
+// op_0F
+// Extracts data from a resource and stores to word_3AE2
+static void op_extract_resource_data(void)
 {
   uint8_t ah, al;
   al = *cpu.pc++;
@@ -1011,22 +1013,28 @@ static void op_0F(void)
   cpu.bx = cpu.ax;
 
   // load di properly...
-  printf("OP_0F: BX: 0x%04X\n", cpu.bx);
+  printf("%s: BX: 0x%04X\n", __func__, cpu.bx);
+
+  // Base offset.
   cpu.di = game_state.unknown[cpu.bx];
   cpu.di += (game_state.unknown[cpu.bx + 1] << 8);
   uint8_t bl = game_state.unknown[cpu.bx + 2];
   cpu.bx = (cpu.bx & 0xFF00) | bl;
 
   const struct resource *r = resource_get_by_index(cpu.bx);
-  //dump_hex(r->bytes, 0x10);
+  printf("%s: Resource: %d\n", __func__, r->tag);
+  if (r->tag == 31) {
+    printf("Loading tag 31\n");
+  }
 
+
+  // Additional offset.
   cpu.di += word_3AE4;
 
   // little endian load
   // mov ax, es:[di]
   al = r->bytes[cpu.di];
   ah = r->bytes[cpu.di + 1];
-  cpu.ax = (ah << 8) | al;
   ah = ah & byte_3AE1;
   cpu.ax = ah << 8 | al;
   word_3AE2 = (ah << 8) | al;
@@ -5806,7 +5814,7 @@ static void run_script(uint8_t script_index, uint16_t src_offset)
     cpu.bx = cpu.ax;
 
     // TEMPORARY: Dump script and offset
-    printf("%02d: 0x%04X ", running_script->tag, offset);
+    //printf("%02d: 0x%04X ", running_script->tag, offset);
 
     void (*callfunc)(void) = targets[op_code].func;
     if (callfunc != NULL) {
