@@ -9,7 +9,7 @@ set(DISASM_SOURCES disasm.cpp)
 set(RESEXT_SOURCES resextract.cpp)
 set(STREXT_SOURCES strextract.cpp)
 set(PPMWRITE_SOURCES ppm.cpp)
-set(RESPARS_SOURCES resparse.cpp)
+set(MONSTER_INFO_SOURCES monster_info.cpp)
 
 add_executable(disasm ${DISASM_SOURCES})
 target_include_directories(disasm PRIVATE ${CMAKE_SOURCE_DIR}/src/lib)
@@ -40,9 +40,9 @@ else()
   target_compile_options(ppmwrite PRIVATE -Wall -Werror)
 endif()
 
-add_executable(resparse ${RESPARS_SOURCES})
-target_include_directories(resparse PRIVATE ${CMAKE_SOURCE_DIR}/src/lib)
-target_link_libraries(resparse PUBLIC dragon)
+add_executable(monster_info ${MONSTER_INFO_SOURCES})
+target_include_directories(monster_info PRIVATE ${CMAKE_SOURCE_DIR}/src/lib)
+target_link_libraries(monster_info PUBLIC dragon)
 
 
 
