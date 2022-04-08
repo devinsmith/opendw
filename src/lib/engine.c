@@ -3862,6 +3862,14 @@ static void sub_1F8F()
   exit(1);
 }
 
+// 0x4B10
+static void timer_tick_proc()
+{
+  if (timers.timer2 > 0) {
+    timers.timer2--;
+  }
+}
+
 // 0x28B0
 // The inputs here have to do with the keys we accept.
 // Inputs:
@@ -4003,6 +4011,7 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
 
       // dragon.com invokes a system tick timer that runs 18.2 times per second
       // This simulates that effect.
+      timer_tick_proc();
       sys_delay(1000/18);
 
       // 0x29B1
