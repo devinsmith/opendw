@@ -190,8 +190,8 @@ int main(int argc, char *argv[])
 
     printf("Multiplier: 0x%02X\n", multiplier);
 
-    mul_result = 0x18; // Hardcoding for now, but it's the result of multiplier times game ticks
-    // See op_04 for more information.
+    mul_result = 0x15; // Hardcoding for now, but it's the result of multiplier times game ticks
+    // See op_4D for more information.
     byte_3AE2 = mul_result;
   }
 
@@ -215,7 +215,11 @@ int main(int argc, char *argv[])
 
   for (int i = 0; i < 21; i++) {
     uint8_t unknown2 = buf_get8(rdr);
-    printf("  0x%02X\n", unknown2);
+    if (i == 0xB) {
+      printf("0x%02X - 0x%02X (Resource index of monster)\n", i, unknown2 + 0x8A);
+    } else {
+      printf("0x%02X - 0x%02X\n", i, unknown2);
+    }
     monster_data[i] = unknown2;
   }
 
