@@ -219,13 +219,12 @@ shifted(const SDL_Keysym *key)
   return key->sym;
 }
 
-static uint16_t
-get_key()
+static uint16_t get_key()
 {
   SDL_Event e;
 
 
-  while (SDL_WaitEventTimeout(&e, 2000)) {
+  while (SDL_PollEvent(&e)) {
     if (e.type == SDL_KEYDOWN) {
       const SDL_KeyboardEvent *ke = &e.key;
       const SDL_Keysym *ksym = &ke->keysym;
@@ -318,6 +317,11 @@ static int poll_events()
   return should_exit;
 }
 
+static void delay(unsigned int ms)
+{
+  SDL_Delay(ms);
+}
+
 struct vga_driver sdl_driver = {
   "SDL", // 2.0
   display_start,
@@ -326,7 +330,8 @@ struct vga_driver sdl_driver = {
   waitkey,
   get_fb_mem,
   get_key,
-  poll_events
+  poll_events,
+  delay
 };
 
 void video_setup()

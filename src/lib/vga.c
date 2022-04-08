@@ -124,6 +124,13 @@ void vga_poll_events()
   }
 }
 
+void sys_delay(unsigned int ms)
+{
+  if (vga != NULL && vga->delay != NULL) {
+    vga->delay(ms);
+  }
+}
+
 void vga_addkey(int key)
 {
   if (vga_keyb.count == nitems(vga_keyb.buffer)) {

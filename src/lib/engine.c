@@ -4000,6 +4000,11 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
         }
       }
     } else {
+
+      // dragon.com invokes a system tick timer that runs 18.2 times per second
+      // This simulates that effect.
+      sys_delay(1000/18);
+
       // 0x29B1
       if (sub_2BD9() == 0) {
         // No event occurred, keep looping.
