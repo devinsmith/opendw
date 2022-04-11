@@ -110,7 +110,8 @@ uint8_t byte_2AA9;
 uint8_t data_2AAA[32] = { 0 };
 
 // 0x2D09
-uint16_t word_2D09; // timer ticks?
+uint16_t random_seed = 0x1234;
+
 uint16_t word_2DD7 = 0xFFFF;
 uint16_t word_2DD9 = 0xFFFF;
 uint8_t data_2DDB[160] = { 0 };
@@ -3689,9 +3690,9 @@ static void sub_1F10()
 // Get timer ticks?
 static void sub_2CF5()
 {
-  cpu.ax = 0x1234; // can we just use random?
-  cpu.ax += word_2D09;
-  word_2D09 = cpu.ax; // can we just use random?
+  cpu.ax = sys_ticks();
+  cpu.ax += random_seed;
+  random_seed = cpu.ax;
 }
 
 // 0x3824

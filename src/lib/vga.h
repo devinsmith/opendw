@@ -33,6 +33,7 @@ struct vga_driver {
   uint16_t (*getkey)();
   int (*poll)();
   void (*delay)(unsigned int ms);
+  unsigned short (*ticks)();
 };
 
 struct mouse_status {
@@ -64,6 +65,7 @@ void vga_addkey(int key);
 int vga_getkey2();
 void vga_poll_events();
 void sys_delay(unsigned int ms);
+unsigned short sys_ticks();
 
 // Intended for use by various vga drivers.
 void video_setup();

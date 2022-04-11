@@ -23,7 +23,7 @@
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif /* nitems */
 
-static struct vga_driver *vga = NULL;
+static struct vga_driver *sys_ctx = NULL;
 
 #define VGA_WIDTH 320
 #define VGA_HEIGHT 200
@@ -63,7 +63,7 @@ get_fb_mem()
 
 void register_vga_driver(struct vga_driver *driver)
 {
-  vga = driver;
+  sys_ctx = driver;
 }
 
 int vga_initialize(int game_width, int game_height)
@@ -72,46 +72,46 @@ int vga_initialize(int game_width, int game_height)
   vga_keyb.tail = 0;
   vga_keyb.count = 0;
 
-  if (vga != NULL && vga->initialize != NULL) {
-    return vga->initialize(game_width, game_height);
+  if (sys_ctx != NULL && sys_ctx->initialize != NULL) {
+    return sys_ctx->initialize(game_width, game_height);
   }
   return display_start(game_width, game_height);
 }
 
 uint8_t* vga_memory()
 {
-  if (vga != NULL && vga->memory != NULL) {
-    return vga->memory();
+  if (sys_ctx != NULL && sys_ctx->memory != NULL) {
+    return sys_ctx->memory();
   }
   return get_fb_mem();
 }
 
 void vga_update()
 {
-  if (vga != NULL && vga->update != NULL) {
-    vga->update();
+  if (sys_ctx != NULL && sys_ctx->update != NULL) {
+    sys_ctx->update();
   }
 }
 
 uint16_t vga_getkey()
 {
-  if (vga != NULL && vga->getkey != NULL) {
-    return vga->getkey();
+  if (sys_ctx != NULL && sys_ctx->getkey != NULL) {
+    return sys_ctx->getkey();
   }
   return 0;
 }
 
 void vga_waitkey()
 {
-  if (vga != NULL && vga->waitkey != NULL) {
-    vga->waitkey();
+  if (sys_ctx != NULL && sys_ctx->waitkey != NULL) {
+    sys_ctx->waitkey();
   }
 }
 
 void vga_end()
 {
-  if (vga != NULL && vga->end != NULL) {
-    vga->end();
+  if (sys_ctx != NULL && sys_ctx->end != NULL) {
+    sys_ctx->end();
   } else {
     display_end();
   }
@@ -119,16 +119,25 @@ void vga_end()
 
 void vga_poll_events()
 {
-  if (vga != NULL && vga->poll != NULL) {
-    vga->poll();
+  if (sys_ctx != NULL && sys_ctx->poll != NULL) {
+    sys_ctx->poll();
   }
 }
 
 void sys_delay(unsigned int ms)
 {
-  if (vga != NULL && vga->delay != NULL) {
-    vga->delay(ms);
+  if (sys_ctx != NULL && sys_ctx->delay != NULL) {
+    sys_ctx->delay(ms);
   }
+}
+
+unsigned short sys_ticks()
+{
+  if (sys_ctx != NULL && sys_ctx->ticks != NULL) {
+    return sys_ctx->ticks();
+  }
+  // Default?
+  return 0x1234;
 }
 
 void vga_addkey(int key)

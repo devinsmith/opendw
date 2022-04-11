@@ -322,6 +322,11 @@ static void delay(unsigned int ms)
   SDL_Delay(ms);
 }
 
+static unsigned short ticks()
+{
+  return SDL_GetTicks() & 0xFFFF;
+}
+
 struct vga_driver sdl_driver = {
   "SDL", // 2.0
   display_start,
@@ -331,7 +336,8 @@ struct vga_driver sdl_driver = {
   get_fb_mem,
   get_key,
   poll_events,
-  delay
+  delay,
+  ticks
 };
 
 void video_setup()
