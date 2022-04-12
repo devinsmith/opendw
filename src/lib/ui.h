@@ -95,6 +95,7 @@ uint8_t ui_get_byte_3236();
 void init_viewport_memory();
 void viewport_save();
 void sub_4C95(struct resource *r);
+void sub_4DE3(uint16_t input, const struct resource *r);
 void draw_rectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
 
 unsigned char *ui_get_minimap_viewport();

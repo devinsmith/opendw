@@ -30,6 +30,30 @@ void extract_b152(FILE *fp)
   printf("\r};\n");
 }
 
+void extract_ba52(FILE *fp)
+{
+  uint16_t com_start = 0xBA52;
+
+  if (fseek(fp, com_start - 0x100, SEEK_SET) != 0) {
+    printf("Can't seek to offset\n");
+    return;
+  }
+
+  printf("static uint16_t ba52_table[256] = {\n ");
+  for (int i = 0; i < (256 / 8); i++)
+  {
+    for (int j = 0; j < 8; j++) {
+      uint16_t dval = fgetc(fp);
+      dval += fgetc(fp) << 8;
+      printf(" ");
+      printf("0x%04X,", dval);
+    }
+    printf(" // 0x%04X\n ", com_start);
+    com_start += 0x10;
+  }
+  printf("\r};\n");
+}
+
 // Little endian 16 bit extractor
 void extract_b652(FILE *fp)
 {
@@ -66,7 +90,8 @@ int main(void)
     return -1;
   }
 
-  extract_b152(fp);
+  extract_ba52(fp);
+  //extract_b152(fp);
   //extract_b652(fp);
 
   fclose(fp);

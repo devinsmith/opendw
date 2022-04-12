@@ -48,6 +48,7 @@ static unsigned short word_1055 = 0;
 static void draw_indexed_picture9();
 static void sub_1F54(uint8_t al);
 static void sub_27CC();
+static void sub_4EF4(uint16_t bx, uint16_t dx, uint16_t ax);
 
 void (*ui_draw_funcs[5])() = {
   draw_indexed_picture9,
@@ -1251,6 +1252,98 @@ void sub_4C95(struct resource *r)
   sub_4D26();
 
   sub_4CB2(viewport_mem_save, r);
+}
+
+// 0x4DE3
+void sub_4DE3(uint16_t input, const struct resource *r)
+{
+  uint8_t al;
+  uint16_t bx, dx, di, saved_si, si;
+
+  sub_1F54(0xA);
+
+  si = input;
+  al = r->bytes[si];
+  if (al == 0xFF) {
+    // 0x4E55
+    return;
+  }
+
+  // 0x4DF4
+  dx = 5;
+  bx = 0;
+  // Jumps to 0x4E0C, which jumps back to 0x4DFC if al == 0
+
+  while (1) {
+    // 0x40EC
+    al = r->bytes[si++];
+    if (al == 0x00) {
+      // 0x4DFC
+      al = r->bytes[si++];
+      if (al == 0xFF) {
+        return;
+      }
+      // 0x4E02
+      al += 5;
+      dx = (dx & 0xFF00) | al;
+      al = r->bytes[si++];
+      bx = al;
+      //cpu.bx = cpu.bx << 1;
+      continue;
+    } else {
+      // 0x4E14
+      // push si
+      saved_si = si;
+      di = get_offset(bx);
+      di += dx;
+
+      al = al ^ viewport_mem_save[di];
+      viewport_mem_save[di] = al;
+
+      si = al;
+      al = viewport_memory[di];
+      al = al & get_and_table(si);
+      al = al | get_or_table(si);
+
+      sub_4EF4(bx + 8, dx + 8, al);
+
+      si = saved_si;
+      dx++;
+      if (dx < 0x4B) {
+        continue;
+      }
+      dx = 5;
+      bx += 2;
+      if (bx < 0x110) {
+        continue;
+      }
+      return;
+    }
+  }
+}
+
+// Technically we call 4E57, but that's a function pointer to
+// code that calls different functions based on graphic mode.
+// 0x4EF4
+static void sub_4EF4(uint16_t bx, uint16_t dx, uint16_t ax)
+{
+  uint16_t di;
+  uint8_t *framebuffer = vga_memory();
+
+  di = get_line_offset(bx);
+  di += dx;
+  di += dx;
+  ax &= 0x00FF;
+
+
+  bx = ax;
+  ax = get_ba52_data(bx);
+
+  int color1 = (ax >> 8) & 0xFF;
+  int color2 = (ax & 0x00FF);
+
+  framebuffer[di] = color1;
+  framebuffer[di + 1] = color2;
 }
 
 void init_viewport_memory()

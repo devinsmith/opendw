@@ -154,8 +154,9 @@ unsigned char data_49AB[] = { 0xFE, 0x6, 0x97, 0x7F, 0x2B, 0xC0 };
 unsigned char byte_4F0F;
 unsigned char byte_4F10 = 0;
 
-// 0x4F19 - 0x4F2A ? (how big is this really?)
+// 0x4F19 - 0x4F28 ? (how big is this really?)
 unsigned char data_4F19[17] = { 0 };
+const struct resource *word_4F29 = NULL;
 uint8_t byte_4F2B = 0;
 
 // Another function pointer.
@@ -375,6 +376,8 @@ static void set_ui_header(unsigned char *base_ptr, uint16_t offset);
 static void sub_2CF5();
 static void set_sb_handler_ui_draw_chr();
 static void sub_4A79(uint8_t al);
+static void sub_4D37(int al, int index, const struct resource *r);
+static void sub_4D97(uint16_t index);
 static void set_sign_flag();
 static void clear_sign_flag();
 static void sub_54D8(int x, int y);
@@ -3453,24 +3456,28 @@ static void sub_4B60()
   // 0x4BE7
 }
 
-// 0x4D97
-static void sub_4D97(uint16_t index)
+// 0x4D37
+static void sub_4D37(int al, int index, const struct resource *r)
 {
-  // 4D97
-  if (data_4F19[index + 12] == 0) { // 4F25
-    return;
+  int cl = al;
+  int si = index;
+  uint8_t dl;
+
+  si = si << 1;
+
+  cpu.dx = r->bytes[si];
+  cpu.dx += (r->bytes[si + 1]) << 8;
+  dl = cpu.dx & 0xFF;
+
+  cpu.ax = cpu.dx;
+
+  if (cpu.dx != 0) {
+    data_4F19[index + 8] = cl;   // bx + 4F21
+    dl = 0xFF; // also set cpu.dx ?
   }
-  // 4D9E
-  if (data_4F19[index + 8] != 0) { // 4F21
-    data_4F19[index + 8]--;
-    return;
-  }
-  // 0x4DAA
-  cpu.bx = index << 1;
-  cpu.si = data_4F19[cpu.bx];
-  cpu.si += data_4F19[cpu.bx + 1] << 8;
-  printf("%s: 0x4DAA unimplemented\n", __func__);
-  exit(1);
+  data_4F19[index + 12] = dl; // bx + 4F25
+  data_4F19[index * 2] = cpu.ax & 0xFF;
+  data_4F19[(index * 2) + 1] = (cpu.ax & 0xFF00) >> 8;
 }
 
 // 0x4D5C
@@ -3487,9 +3494,58 @@ static void sub_4D5C()
   cpu.ax = (cpu.ax & 0xFF00) | 0x0A;
   ui_rect_redraw(10);
 
-  for (int index = 3; index <= 0; index--) {
+  for (int index = 3; index >= 0; index--) {
     sub_4D97(index);
   }
+}
+
+// 0x4D97
+static void sub_4D97(uint16_t index)
+{
+  uint8_t al, ah;
+  uint16_t start_index;
+
+  // 4D97
+  if (data_4F19[index + 12] == 0) { // 4F25
+    return;
+  }
+  // 4D9E
+  if (data_4F19[index + 8] != 0) { // 4F21
+    data_4F19[index + 8]--;
+    return;
+  }
+
+  // 0x4DAA
+  // push old bx (but it was index)
+  cpu.bx = index << 1;
+  start_index = data_4F19[cpu.bx];
+  start_index += data_4F19[cpu.bx + 1] << 8;
+  // 0x4DB1
+  cpu.si = start_index + 1;
+
+  cpu.bx = word_4F29->bytes[cpu.si];
+  cpu.bx += word_4F29->bytes[cpu.si + 1] << 8;
+
+  sub_4DE3(cpu.bx, word_4F29);
+  vga_update();
+  // 0x4DC0
+
+  al = word_4F29->bytes[start_index];
+  ah = word_4F29->bytes[start_index + 3];
+  if (ah == 0xFF) {
+    sub_4D37(al, index, word_4F29);
+    // Jump to 4D37
+    return;
+  }
+  // 0x4DD7
+  data_4F19[index + 8] = al; // load 0x4F21
+  cpu.di = start_index;
+  cpu.di += 3;
+  cpu.ax = cpu.di;
+  // jmp 0x4D55
+
+  data_4F19[index * 2] = cpu.ax & 0xFF;
+  data_4F19[(index * 2) + 1] = (cpu.ax & 0xFF00) >> 8;
 }
 
 // 0x1A68
@@ -4317,30 +4373,6 @@ static void wait_event(void)
   word_3AE2 = cpu.ax; // key pressed
 }
 
-// 0x4D37
-static void sub_4D37(int al, int index, struct resource *r)
-{
-  int cl = al;
-  int si = index;
-  uint8_t dl;
-
-  si = si << 1;
-
-  cpu.dx = r->bytes[si];
-  cpu.dx += (r->bytes[si + 1]) << 8;
-  dl = cpu.dx & 0xFF;
-
-  cpu.ax = cpu.dx;
-
-  if (cpu.dx != 0) {
-    data_4F19[index + 8] = cl;   // bx + 4F21
-    dl = 0xFF; // also set cpu.dx ?
-  }
-  data_4F19[index + 12] = dl; // bx + 4F25
-  data_4F19[index * 2] = cpu.ax & 0xFF;
-  data_4F19[(index * 2) + 1] = (cpu.ax & 0xFF00) >> 8;
-}
-
 // 0x4C40
 // Random Encounter!
 static void sub_4C40()
@@ -4366,7 +4398,7 @@ static void sub_4C40()
     // BX will contain the monster's graphic to load
 
     // XXX TEMPORARY BEGIN
-    cpu.bx = 0xC8; // Load a specific resource
+    cpu.bx = 0xA8; // Load a specific resource
     // XXX TEMPORARY END
 
     printf("Loading Resource: %d\n", cpu.bx);
@@ -4386,6 +4418,7 @@ static void sub_4C40()
 
       // 4F10 = r2->index;
       // 4F29 = r2->bytes
+      word_4F29 = r2;
       for (int bx = 3; bx >= 0; bx--) {
         sub_4D37(0, bx, r2);
       }
