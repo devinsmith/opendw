@@ -1314,7 +1314,7 @@ void sub_4DE3(uint16_t input, const struct resource *r)
       }
       dx = 5;
       bx += 2;
-      if (bx < 0x110) {
+      if (bx < 0x88) {
         continue;
       }
       return;
@@ -1342,8 +1342,8 @@ static void sub_4EF4(uint16_t bx, uint16_t dx, uint16_t ax)
   int color1 = (ax >> 8) & 0xFF;
   int color2 = (ax & 0x00FF);
 
-  framebuffer[di] = color1;
-  framebuffer[di + 1] = color2;
+  framebuffer[di] = color2;
+  framebuffer[di + 1] = color1;
 }
 
 void init_viewport_memory()
