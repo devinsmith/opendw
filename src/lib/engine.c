@@ -4398,7 +4398,7 @@ static void sub_4C40()
     // BX will contain the monster's graphic to load
 
     // XXX TEMPORARY BEGIN
-    cpu.bx = 0xA8; // Load a specific resource
+    //cpu.bx = 0xA8; // Load a specific resource
     // XXX TEMPORARY END
 
     printf("Loading Resource: %d\n", cpu.bx);
