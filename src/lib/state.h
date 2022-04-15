@@ -40,6 +40,13 @@ struct game_state {
   // 0x02 - Current world number? (e.g. Purgatory?)
   // 0x03 - Current direction (0 = North, 1 = East, 2 = South, 3 = West)
   // 0x06 - Currently selected player.
+  // 0x18 - Boolean flag for if we have player 1 (0 = yes, -1 = no)
+  // 0x19 - Boolean flag for if we have player 2 (0 = yes, -1 = no)
+  // 0x1A - Boolean flag for if we have player 3 (0 = yes, -1 = no)
+  // 0x1B - Boolean flag for if we have player 4 (0 = yes, -1 = no)
+  // 0x1C - Boolean flag for if we have player 5 (0 = yes, -1 = no)
+  // 0x1D - Boolean flag for if we have player 6 (0 = yes, -1 = no)
+  // 0x1E - Boolean flag for if we have player 7 (0 = yes, -1 = no)
   // 0x1F - Number of characters in the party.
   // 0x56 - Resource index.
   // 0x6A - 0x6D (Gold)
@@ -51,6 +58,7 @@ struct game_state {
 extern struct game_state game_state;
 
 void set_game_state(const char *func_src, int offset, unsigned char value);
+unsigned char get_game_state(const char *func_src, int offset);
 
 #ifdef __cplusplus
 }

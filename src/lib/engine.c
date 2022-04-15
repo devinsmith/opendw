@@ -145,6 +145,9 @@ const struct resource *word_3ADF = NULL;
 uint16_t word_42D6 = 0;
 uint16_t word_4454 = 0;
 
+// 0x4A5B
+unsigned short data_4A5B[] = { 0x005A };
+
 // 0x4A99
 unsigned char data_4A99[] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 
@@ -514,6 +517,7 @@ static void prompt_no_yes();
 static void op_8D();
 static void op_90();
 static void op_91();
+static void op_92();
 static void op_93();
 static void op_94();
 static void op_95();
@@ -677,7 +681,7 @@ struct op_call_table targets[] = {
   { NULL, "0x49DD" },
   { op_90, "0x49E7" },
   { op_91, "0x49F3" },
-  { NULL, "0x49FD" },
+  { op_92, "0x49FD" },
   { op_93, "0x4A67" },
   { op_94, "0x4A6D" },
   { op_95, "0x4894" },
@@ -939,7 +943,6 @@ static void load_word3AE2_gamestate(void)
   ah = game_state.unknown[gs_idx + 1];
   ah = ah & byte_3AE1; // mask if in byte mode.
   word_3AE2 = (ah << 8) | al;
-  printf("%s - 0x%02X -> word_3AE2: 0x%04X\n", __func__, gs_idx, word_3AE2);
 }
 
 // 0x3B8C
@@ -3581,6 +3584,8 @@ static void sub_1A72()
     al = game_state.unknown[0x18 + counter];
     if (al < 0x80) {
       // 0x1A93
+
+      // Set currently selected player.
       set_game_state(__func__, 6, counter & 0xFF);
       ah = 0;
       // si = ax
@@ -3828,7 +3833,7 @@ static uint16_t sub_2D0B()
       return cpu.ax;
     }
     if (cpu.ax == 0x93) {
-      // Ctrl-S
+      // Ctrl-S (turn on/off sound)
       printf("xor byte_107, 0x40\n");
     }
   } while (cpu.ax == 0x93);
@@ -3924,6 +3929,10 @@ static void timer_tick_proc()
 {
   if (timers.timer2 > 0) {
     timers.timer2--;
+  }
+
+  if (timers.timer4 > 0) {
+    timers.timer4--;
   }
 }
 
@@ -5417,6 +5426,52 @@ static void op_90(void)
 static void op_91(void)
 {
   sub_1A72();
+}
+
+// 0x49FD
+static void op_92(void)
+{
+  uint8_t al;
+
+  sub_1A72();
+  ui_draw_string();
+  cpu.bx = get_game_state(__func__, 0xDC);
+  if (cpu.bx != 0) {
+    printf("%s: 0x%02X unhandled\n", __func__, cpu.bx);
+    exit(1);
+  }
+  cpu.ax = data_4A5B[cpu.bx];
+  timers.timer4 = cpu.ax;
+
+  while(timers.timer4 != 0) {
+    poll_mouse();
+    uint8_t clicked = mouse_get_clicked();
+    if (clicked != 0x80) {
+      // 0x4A1F
+      al = sub_2D0B();
+      if (al < 0x80) {
+        // 0x4A24
+        sub_4D5C();
+        sub_4B60();
+        sub_1F10();
+      } else {
+        // 4A38
+        printf("%s: 0x4A38 unhandled\n", __func__);
+        exit(1);
+      }
+    } else {
+      // 0x4A57
+      printf("%s: 0x4A57 unhandled\n", __func__);
+      exit(1);
+    }
+    // XXX: HACK XXX
+    // dragon.com invokes a system tick timer that runs 18.2 times per second
+    // This simulates that effect.
+    timer_tick_proc();
+    sys_delay(1000 / 18);
+    // 0x4A38
+  }
+  // 0x4A47
 }
 
 // 0x4A67

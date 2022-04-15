@@ -157,6 +157,8 @@ main(int argc, char *argv[])
     goto done;
   }
 
+  set_game_state("main", 0xDC, 0); // Not sure this if correct.
+
   ui_set_background(0);
   run_title();
   ui_load();

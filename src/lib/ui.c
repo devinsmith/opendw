@@ -962,19 +962,19 @@ int ui_adjust_rect(uint8_t input)
   ui_rect_expand();
 
   // 0x2764
-  if (draw_rect.w < rect_dimensions[input].w) {
+  if (draw_rect.w <= rect_dimensions[input].w) {
     ui_rect_shrink();
     return 0;
   }
-  if (draw_rect.h < rect_dimensions[input].h) {
+  if (draw_rect.h <= rect_dimensions[input].h) {
     ui_rect_shrink();
     return 0;
   }
-  if (draw_rect.x > rect_dimensions[input].x) {
+  if (draw_rect.x >= rect_dimensions[input].x) {
     ui_rect_shrink();
     return 0;
   }
-  if (draw_rect.y > rect_dimensions[input].y) {
+  if (draw_rect.y >= rect_dimensions[input].y) {
     ui_rect_shrink();
     return 0;
   }

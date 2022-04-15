@@ -42,3 +42,9 @@ void set_game_state(const char *func_src, int offset, unsigned char value)
   }
   game_state.unknown[offset] = value;
 }
+
+unsigned char get_game_state(const char *func_src, int offset)
+{
+  log_trace("%s: [%d] (%s)", __func__, offset, func_src);
+  return game_state.unknown[offset];
+}
