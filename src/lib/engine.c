@@ -5429,11 +5429,11 @@ static void op_91(void)
 // 0x49FD
 static void op_92(void)
 {
-  uint8_t al;
+  uint8_t al, dl;
 
   sub_1A72();
   ui_draw_string();
-  cpu.bx = get_game_state(__func__, 0xDC);
+  cpu.bx = get_game_state(__func__, 0xDC); // 0x393C
   if (cpu.bx != 0) {
     printf("%s: 0x%02X unhandled\n", __func__, cpu.bx);
     exit(1);
@@ -5454,13 +5454,28 @@ static void op_92(void)
         sub_1F10();
       } else {
         // 4A38
-        printf("%s: 0x4A38 unhandled\n", __func__);
-        exit(1);
+        // mov dl, [0x393C]
+        dl = get_game_state(__func__, 0xDC); // 0x393C
+        if (al == 0x88) { // LEFT
+          printf("%s: 0x4A40 unhandled\n", __func__);
+          exit(1);
+          dl--;
+          if (dl < 0x80) {
+            dl++;
+          }
+        }
+        if (al == 0x95) { // RIGHT
+          dl++;
+          printf("%s: 0x4A4A unhandled\n", __func__);
+          exit(1);
+        }
+        // 0x4A53
+        set_game_state(__func__, 0xDC, dl);
+        return;
       }
     } else {
       // 0x4A57
-      printf("%s: 0x4A57 unhandled\n", __func__);
-      exit(1);
+      return;
     }
     // XXX: HACK XXX
     // dragon.com invokes a system tick timer that runs 18.2 times per second
