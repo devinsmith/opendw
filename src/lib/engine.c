@@ -2010,9 +2010,7 @@ static void op_51()
   // 419E
   word_3AE2 = cpu.ax & 0xFF;
   word_3AE4 = (word_3AE4 & 0xFF00) | bl;
-  while (bl != 0xFF) {
-    bl--;
-
+  while (--bl != 0xFF) {
     uint8_t al = es[cpu.di + bl];
     if (al >= word_3AE2) {
       word_3AE2 = al;
