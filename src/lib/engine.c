@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Devin Smith <devin@devinsmith.net>
+ * Copyright (c) 2020-2022 Devin Smith <devin@devinsmith.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
