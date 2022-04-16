@@ -65,7 +65,7 @@ op_code op_codes[] = {
   { "word_3AE2 = gamestate[word_3AE4 + ", read_byte_array_index, 1 }, // op_0B
   { "op_0C", read_word, 0 }, // op_0C
   { "op_0D", read_word, 0 }, // op_0D
-  { "op_0E", nullptr, 0 }, // op_0E
+  { "op_0E", nullptr, 1 }, // op_0E
   { "var offset =", op_0F, 1 }, // op_0F
   { "op_10", nullptr, 2 }, // op_10
   { "gamestate[", op_11, 1 }, // op_11

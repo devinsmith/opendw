@@ -423,7 +423,8 @@ static void load_word3AE2_gamestate();
 static void op_0B();
 static void op_0C();
 static void op_0D();
-static void op_extract_resource_data();
+static void op_0E();
+static void op_extract_resource_data(); // op_0F
 static void op_10();
 static void op_11();
 static void op_12();
@@ -552,7 +553,7 @@ struct op_call_table targets[] = {
   { op_0B, "0x3B8C" },
   { op_0C, "0x3BA2" },
   { op_0D, "0x3BB7" },
-  { NULL, "0x3BD0" },
+  { op_0E, "0x3BD0" },
   { op_extract_resource_data, "0x3BED" }, // op_0F
   { op_10, "0x3C10" },
   { op_11, "0x3C2D" },
@@ -1009,6 +1010,28 @@ static void op_0D()
   ah = ah & byte_3AE1;
   al = cpu.ax & 0xFF;
   cpu.ax = (ah << 8) | al;
+  word_3AE2 = cpu.ax;
+}
+
+// 0x3BD0
+static void op_0E()
+{
+  uint8_t al, ah;
+
+  al = *cpu.pc++;
+
+  cpu.bx = game_state.unknown[al];
+  cpu.bx += (game_state.unknown[al + 1] << 8);
+
+  cpu.bx += word_3AE4;
+
+  unsigned char *es = word_3ADF->bytes;
+  cpu.ax = es[cpu.bx];
+  cpu.ax += es[cpu.bx + 1] << 8;
+
+  ah = (cpu.ax & 0xFF00) >> 8;
+  ah = ah & byte_3AE1;
+  cpu.ax = (ah << 8) | (cpu.ax & 0xFF);
   word_3AE2 = cpu.ax;
 }
 
