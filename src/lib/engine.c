@@ -5977,6 +5977,7 @@ static void run_script(uint8_t script_index, uint16_t src_offset)
 
     } else {
       printf("OpenDW has reached an unhandled op code and will terminate.\n");
+      printf("  Script: %d - 0x%04X\n", running_script->tag, offset);
       printf("  Opcode: 0x%02X (Addr: %s), Previous op: 0x%02X\n", op_code,
           targets[op_code].src_offset, prev_op);
       exit(1);
