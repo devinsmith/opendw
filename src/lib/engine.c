@@ -457,12 +457,15 @@ static void op_34();
 static void op_35();
 static void op_38();
 static void op_39();
+static void op_3A();
+static void op_3C();
 static void op_3D();
 static void op_3E();
 static void op_3F();
 static void op_40();
 static void op_41();
 static void op_42();
+static void op_43();
 static void op_jnz();
 static void op_jz();
 static void op_js();
@@ -484,9 +487,11 @@ static void op_57();
 static void op_58();
 static void op_59();
 static void op_5A();
+static void op_5B();
 static void op_5C();
 static void get_character_data();
 static void set_character_data();
+static void op_60();
 static void test_player_property();
 static void op_63();
 static void op_66();
@@ -597,16 +602,16 @@ struct op_call_table targets[] = {
   { NULL, "0x3FAD" },
   { op_38, "0x3FBC" },
   { op_39, "0x3FD4" },
-  { NULL, "0x3FEA" },
+  { op_3A, "0x3FEA" },
   { NULL, "0x4002" },
-  { NULL, "0x4018" },
+  { op_3C, "0x4018" },
   { op_3D, "0x4030" },
   { op_3E, "0x4051" },
   { op_3F, "0x4067" },
   { op_40, "0x4074" },
   { op_41, "0x407C" },
   { op_42, "0x4085" },
-  { NULL, "0x408E" },
+  { op_43, "0x408E" },
   { op_jz, "0x4099" },
   { op_jnz, "0x40A3" },
   { op_js, "0x40AF" },
@@ -630,12 +635,12 @@ struct op_call_table targets[] = {
   { op_58, "0x4239" },
   { op_59, "0x41C8" },
   { op_5A, "0x3AEE" },
-  { NULL, "0x427A" },
+  { op_5B, "0x427A" },
   { op_5C, "0x4295" },
-  { get_character_data, "0x42D8" },
-  { set_character_data, "0x4322" },
-  { NULL, "0x4372" },
-  { NULL, "0x438B" },
+  { get_character_data, "0x42D8" }, // 0x5D
+  { set_character_data, "0x4322" }, // 0x5E
+  { NULL, "0x4372" }, // 0x5F
+  { op_60, "0x438B" },
   { test_player_property, "0x43A6" },
   { NULL, "0x43BF" },
   { op_63, "0x43F7" },
@@ -1710,6 +1715,38 @@ static void op_39()
   word_3AE2 = cpu.ax;
 }
 
+// 0x3FEA
+static void op_3A()
+{
+  uint8_t al, ah;
+
+  if (byte_3AE1 == 0) {
+    al = *cpu.pc++;
+    ah = *cpu.pc++;
+    cpu.ax = (ah << 8) | al;
+    word_3AE2 = word_3AE2 | cpu.ax;
+  } else {
+    al = *cpu.pc++;
+    word_3AE2 = word_3AE2 | al;
+  }
+}
+
+// 0x4018
+static void op_3C()
+{
+  uint8_t al, ah;
+
+  if (byte_3AE1 == 0) {
+    al = *cpu.pc++;
+    ah = *cpu.pc++;
+    cpu.ax = (ah << 8) | al;
+    word_3AE2 = word_3AE2 ^ cpu.ax;
+  } else {
+    al = *cpu.pc++;
+    word_3AE2 = word_3AE2 ^ al;
+  }
+}
+
 // 0x4030
 static void op_3D()
 {
@@ -1877,6 +1914,24 @@ static void op_42(void)
     cpu.ax = new_address;
     printf("(op42)    New address: 0x%04x\n", new_address);
     cpu.pc = cpu.base_pc + new_address;
+  }
+}
+
+// 0x408E
+static void op_43()
+{
+  uint8_t al;
+
+  al = word_3AE6;
+  al &= 0x41;
+  if (al == 1) {
+    // 40A0 -> 41B9
+    op_52();
+    return;
+  } else {
+    // 40AA
+    cpu.pc++;
+    cpu.pc++;
   }
 }
 
@@ -2278,6 +2333,13 @@ static void op_5A(void)
   word_3AE2 = (al << 8) | (word_3AE2 & 0xFF); // lower portion of word_3AE2 takes al.
 }
 
+// 0x427A
+static void op_5B()
+{
+  printf("%s not complete\n", __func__);
+  exit(1);
+}
+
 // 0x4295
 static void op_5C(void)
 {
@@ -2380,7 +2442,29 @@ static void set_character_data(void)
   if (byte_3AE1 != 0) {
     c960[cpu.bx - 0xC960 + 1] = (cpu.cx & 0xFF00) >> 8;
   }
+}
 
+// 0x438B
+static void op_60()
+{
+  // 0x4A7D
+  sub_4A79(word_3AE2);
+  cpu.cx = game_state.unknown[6]; // Current player.
+
+  cpu.di = cpu.cx;
+  cpu.cx = 0xC960;
+
+  uint8_t ch = (cpu.cx & 0xFF00) >> 8;
+  ch += game_state.unknown[cpu.di + 0xA];
+  cpu.cx = ch << 8 | (cpu.cx & 0xFF);
+
+  cpu.di = cpu.cx;
+  uint8_t al = cpu.ax & 0xFF;
+  al = ~al; // not al
+
+  unsigned char *c960 = get_player_data_base();
+  // cpu.bx is property to AND.
+  c960[(cpu.bx + cpu.di) - 0xC960] &= al;
 }
 
 static void set_flags()
