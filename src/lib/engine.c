@@ -635,7 +635,7 @@ struct op_call_table targets[] = {
   { op_58, "0x4239" },
   { op_59, "0x41C8" },
   { op_5A, "0x3AEE" },
-  { op_5B, "0x427A" },
+  { NULL, "0x427A" },
   { op_5C, "0x4295" },
   { get_character_data, "0x42D8" }, // 0x5D
   { set_character_data, "0x4322" }, // 0x5E
@@ -1722,12 +1722,12 @@ static void op_3A()
 
   if (byte_3AE1 == 0) {
     al = *cpu.pc++;
+    word_3AE2 = word_3AE2 | al;
+  } else {
+    al = *cpu.pc++;
     ah = *cpu.pc++;
     cpu.ax = (ah << 8) | al;
     word_3AE2 = word_3AE2 | cpu.ax;
-  } else {
-    al = *cpu.pc++;
-    word_3AE2 = word_3AE2 | al;
   }
 }
 
@@ -1738,12 +1738,12 @@ static void op_3C()
 
   if (byte_3AE1 == 0) {
     al = *cpu.pc++;
+    word_3AE2 = word_3AE2 ^ al;
+  } else {
+    al = *cpu.pc++;
     ah = *cpu.pc++;
     cpu.ax = (ah << 8) | al;
     word_3AE2 = word_3AE2 ^ cpu.ax;
-  } else {
-    al = *cpu.pc++;
-    word_3AE2 = word_3AE2 ^ al;
   }
 }
 
@@ -2336,6 +2336,15 @@ static void op_5A(void)
 // 0x427A
 static void op_5B()
 {
+  uint8_t dl, bl;
+
+  dl = game_state.unknown[1];
+  bl = game_state.unknown[0];
+  // 53DB
+
+  // les di, [0x551f]
+  // mov es:[di+0x2], 0x0
+
   printf("%s not complete\n", __func__);
   exit(1);
 }
