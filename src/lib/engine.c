@@ -396,18 +396,25 @@ static void mini_map_right();
 static void mini_map_up();
 static void mini_map_down();
 
-#define NUM_FUNCS 4
+#define NUM_FUNCS 9
 static void sub_50B2();
 static void sub_5088();
 static void sub_5080();
 static void sub_5090();
+static void sub_50B3();
 
-// 0x5060
+// 0x5060 sound effects
 void (*func_5060[NUM_FUNCS])() = {
   sub_50B2,
   sub_5088,
   sub_5080,
-  sub_5090
+  sub_5090,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  sub_50B3
 };
 
 // Decoded opcode calls, forward definition.
@@ -5596,6 +5603,34 @@ static void sub_5090()
   cpu.dx = 0xC8;
   cpu.bx = 0x800;
   sub_5096();
+}
+
+// Extract and play a sound from resources
+static void sub_50B3()
+{
+  // Check sound
+#if 0
+  if (byte_107 < 0x40) {
+    return;
+  }
+#endif
+
+  cpu.ax += 0xFC;
+  cpu.bx = cpu.ax; // Resource to load.
+
+  cpu.ax = (cpu.ax & 0xFF00) | 1;
+
+  struct resource *r = resource_load(cpu.bx);
+
+  cpu.dx = r->tag;
+  // ax
+  // cx
+  // bx
+  // sub_12B5
+  //
+
+  printf("%s: unhandled\n", __func__);
+  exit(1);
 }
 
 // 49E7
