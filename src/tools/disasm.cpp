@@ -105,7 +105,7 @@ op_code op_codes[] = {
   { "op_33", nullptr, 0 }, // op_33
   { "op_34", nullptr, 1 }, // op_34
   { "op_35", nullptr, 1 }, // op_35
-  { "op_36", nullptr, 0 }, // op_36
+  { "op_36", nullptr, 1 }, // op_36
   { "op_37", nullptr, 0 }, // op_37
   { "word_3AE2 &=", read_by_mode, 0 }, // op_38
   { "op_39", nullptr, 1 },

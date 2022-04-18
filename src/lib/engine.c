@@ -379,6 +379,7 @@ static void sub_28B0(unsigned char **src_ptr, unsigned char *base);
 static void set_ui_header(unsigned char *base_ptr, uint16_t offset);
 static void sub_2CF5();
 static void sub_3F2F();
+static void sub_3F7E();
 static void set_sb_handler_ui_draw_chr();
 static void sub_4A79(uint8_t al);
 static void sub_4D37(int al, int index, const struct resource *r);
@@ -455,6 +456,7 @@ static void op_31();
 static void op_32();
 static void op_34();
 static void op_35();
+static void op_36();
 static void op_38();
 static void op_39();
 static void op_3A();
@@ -598,7 +600,7 @@ struct op_call_table targets[] = {
   { NULL, "0x3F11" },
   { op_34, "0x3F4D" },
   { op_35, "0x3F66" },
-  { NULL, "0x3F8C" },
+  { op_36, "0x3F8C" },
   { NULL, "0x3FAD" },
   { op_38, "0x3FBC" },
   { op_39, "0x3FD4" },
@@ -1668,6 +1670,13 @@ static void op_35()
   cpu.ax = word_3AE2;
   word_11C0 = cpu.ax;
 
+  // 0x3F7E
+  sub_3F7E();
+}
+
+// 0x3F7E
+static void sub_3F7E()
+{
   sub_11CE();
   cpu.ax = word_11CA;
 
@@ -1675,6 +1684,29 @@ static void op_35()
   set_game_state(__func__, 0x3C, (cpu.ax & 0xFF00) >> 8);
 
   sub_3F2F();
+}
+
+// 0x3F8C
+static void op_36()
+{
+  uint8_t al, ah;
+
+  cpu.cx = word_3AE2;
+  word_11C6 = cpu.cx;
+
+  cpu.ax = 0;
+  ah = 0;
+
+  word_11C8 = cpu.ax;
+
+  al = *cpu.pc++;
+  if (byte_3AE1 != 0) {
+    ah = *cpu.pc++;
+  }
+  cpu.ax = (ah << 8) | al;
+  word_11C0 = cpu.ax;
+
+  sub_3F7E();
 }
 
 
