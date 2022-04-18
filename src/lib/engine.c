@@ -526,7 +526,7 @@ static void op_8A();
 static void op_8B();
 static void prompt_no_yes();
 static void op_8D();
-static void op_90();
+static void op_sound_effect(); // 0x90
 static void op_91();
 static void op_92();
 static void op_93();
@@ -690,7 +690,7 @@ struct op_call_table targets[] = {
   { op_8D, "0x49D3" },
   { NULL, "0x0000" },
   { NULL, "0x49DD" },
-  { op_90, "0x49E7" },
+  { op_sound_effect, "0x49E7" },
   { op_91, "0x49F3" },
   { op_92, "0x49FD" },
   { op_93, "0x4A67" },
@@ -5551,6 +5551,12 @@ static void sub_5076(int function_idx)
     exit(1);
   }
 
+  if (func_5060[function_idx] == NULL) {
+    printf("%s unknown function %d\n", __func__, function_idx);
+    exit(1);
+  }
+
+  cpu.ax = function_idx;
   func_5060[function_idx]();
 }
 
@@ -5594,7 +5600,7 @@ static void sub_5090()
 
 // 49E7
 // Sound Movement?
-static void op_90(void)
+static void op_sound_effect(void)
 {
   uint8_t al;
 

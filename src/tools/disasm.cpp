@@ -195,7 +195,7 @@ op_code op_codes[] = {
   { "op_8D", nullptr, 0 }, // op_8D: Read string??
   { nullptr, nullptr, 0 },
   { "op_8F", nullptr, 0 }, // op_8F
-  { "op_90", nullptr, 1 }, // op_90
+  { "sound_effect", nullptr, 1 }, // op_90
   { "op_91", nullptr, 0 }, // op_91
   { "op_92", nullptr, 0 }, // op_92
   { "push_byte(word_3AE4 & 0xFF)", nullptr, 0 }, // op_93
