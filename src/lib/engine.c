@@ -21,6 +21,7 @@
 
 #include "compress.h"
 #include "engine.h"
+#include "log.h"
 #include "offsets.h"
 #include "player.h"
 #include "resource.h"
@@ -396,12 +397,12 @@ static void mini_map_right();
 static void mini_map_up();
 static void mini_map_down();
 
-#define NUM_FUNCS 9
+#define NUM_FUNCS 10
 static void sub_50B2();
 static void sub_5088();
 static void sub_5080();
 static void sub_5090();
-static void sub_50B3();
+static void snd_pcm_resource();
 
 // 0x5060 sound effects
 void (*func_5060[NUM_FUNCS])() = {
@@ -414,7 +415,7 @@ void (*func_5060[NUM_FUNCS])() = {
   NULL,
   NULL,
   NULL,
-  sub_50B3
+  snd_pcm_resource
 };
 
 // Decoded opcode calls, forward definition.
@@ -5605,8 +5606,9 @@ static void sub_5090()
   sub_5096();
 }
 
-// Extract and play a sound from resources
-static void sub_50B3()
+// Extract and play a PCM sound from resources
+// 0x50B3
+static void snd_pcm_resource()
 {
   // Check sound
 #if 0
@@ -5620,17 +5622,15 @@ static void sub_50B3()
 
   cpu.ax = (cpu.ax & 0xFF00) | 1;
 
-  struct resource *r = resource_load(cpu.bx);
+  // struct resource *r = resource_load(cpu.bx);
 
-  cpu.dx = r->tag;
+  // cpu.dx = r->tag;
   // ax
   // cx
   // bx
   // sub_12B5
   //
-
-  printf("%s: unhandled\n", __func__);
-  exit(1);
+  log_trace("%s: PCM Playback [Resource: %d] (unhandled)", __func__, cpu.bx);
 }
 
 // 49E7
