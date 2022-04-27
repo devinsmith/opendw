@@ -102,7 +102,7 @@ op_code op_codes[] = {
   { "op_30", read_by_mode, 0 }, // op_30
   { "op_31", nullptr, 1 }, // op_31
   { "op_32", read_by_mode, 0 }, // op_32
-  { "op_33", nullptr, 0 }, // op_33
+  { "op_33", nullptr, 1 }, // op_33
   { "op_34", nullptr, 1 }, // op_34
   { "op_35", nullptr, 1 }, // op_35
   { "op_36", nullptr, 1 }, // op_36

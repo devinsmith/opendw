@@ -462,6 +462,7 @@ static void op_2F();
 static void op_30();
 static void op_31();
 static void op_32();
+static void op_33();
 static void op_34();
 static void op_35();
 static void op_36();
@@ -605,7 +606,7 @@ struct op_call_table targets[] = {
   { op_30, "0x3E9D" },
   { op_31, "0x3EC1" },
   { op_32, "0x3EEB" },
-  { NULL, "0x3F11" },
+  { op_33, "0x3F11" },
   { op_34, "0x3F4D" },
   { op_35, "0x3F66" },
   { op_36, "0x3F8C" },
@@ -1605,7 +1606,32 @@ static void op_32()
     // rcl byte [3AE6], 1
     word_3AE6 = (word_3AE6 & 0xFF00) | (((word_3AE6 & 0xFF) << 1) | cpu.cf);
   }
+}
 
+// 0x3F11
+static void op_33()
+{
+  uint8_t al, ah;
+
+  al = *cpu.pc++; // es:lodsb
+
+  cpu.bx = al;
+
+  cpu.ax = game_state.unknown[cpu.bx];
+  cpu.ax += game_state.unknown[cpu.bx + 1] << 8;
+  word_11C2 = cpu.ax;
+
+  cpu.ax = game_state.unknown[cpu.bx + 2];
+  cpu.ax += game_state.unknown[cpu.bx + 3] << 8;
+  word_11C4 = cpu.ax;
+
+  cpu.ax = word_3AE2;
+  word_11C0 = cpu.ax;
+
+  sub_11A0(word_11C4); // 11A6
+  cpu.ax = word_11C8;
+
+  sub_3F2F();
 }
 
 // 0x3F23
