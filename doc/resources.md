@@ -13,7 +13,7 @@ Resource data in data1. It is unknown how data2 is used at this point.
 |  111 | 7050 | Y          | Sky portion (viewport)              |
 |  112 | 5054 | Y          | Red clay road portion (viewport)    |
 |  116 |  936 | Y          | Water puddle (viewport)             |
-|  261 |12452 | Y          | Scream (audio)                      |
+|  261 |12452 | Y          | Scream (PCM audio)                  |
 
 # Resource 7 (Character data)
 
