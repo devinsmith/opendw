@@ -1768,7 +1768,7 @@ Disassembling script03.bin (5390 bytes)
 0x09C0: gamestate[0x43] = 0xFF
         gamestate[0x44] = 0xFF
 0x09C2: set loop = 0x6a
-0x09C4: call 0x09f4
+0x09C4: call 0x09F4
 0x09C7: jc 0x09dc
 0x09CA: test game_state[0x43]
 0x09CC: jz 0x09d4
@@ -1791,7 +1791,7 @@ Disassembling script03.bin (5390 bytes)
 0x09F3: ret
 
 
-# Function 9F4
+# Function 9F4 (inputs word_3AE4)
 # Sets or clears carry flag based on experience won.
 0x09F4: word_3AE2 = gamestate[word_3AE4 + 0x00]
 0x09F6: gamestate[0x37] = word_3AE2
@@ -1801,8 +1801,7 @@ Disassembling script03.bin (5390 bytes)
 0x09FE: test word_3AE2
 0x09FF: jz 0x0a1d
 0x0A02: word_3AE2 = gamestate[0x1F] # Members in party
-0x0A04: word_3AE2 &= 0xff
-0x0A06: .word
+0x0A04: word_3AE2 &= 0x00FF
 0x0A07: op_35 0x37
 0x0A09: word_3AE2 = gamestate[0x37]
 0x0A0B: op_39 0x39
