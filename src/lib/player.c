@@ -301,6 +301,9 @@ const char *player_property_name(int prop_idx)
   case 0x4C:
     return "Status";
     break;
+  case 0x4E:
+    return "Gender";
+    break;
   }
 
   return "Unknown Property";
