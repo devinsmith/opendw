@@ -502,6 +502,7 @@ static void op_5B();
 static void op_5C();
 static void get_character_data();
 static void set_character_data();
+static void op_5F();
 static void op_60();
 static void test_player_property();
 static void op_63();
@@ -646,11 +647,11 @@ struct op_call_table targets[] = {
   { op_58, "0x4239" },
   { op_59, "0x41C8" },
   { op_5A, "0x3AEE" },
-  { NULL, "0x427A" },
+  { op_5B, "0x427A" },
   { op_5C, "0x4295" },
   { get_character_data, "0x42D8" }, // 0x5D
   { set_character_data, "0x4322" }, // 0x5E
-  { NULL, "0x4372" }, // 0x5F
+  { op_5F, "0x4372" }, // 0x5F
   { op_60, "0x438B" },
   { test_player_property, "0x43A6" },
   { NULL, "0x43BF" },
@@ -2406,6 +2407,11 @@ static void op_5B()
 
   dl = game_state.unknown[1];
   bl = game_state.unknown[0];
+
+  sub_54D8(dl, bl);
+
+  data_5521[word_551F + 2] = 0;
+
   // 53DB
 
   // les di, [0x551f]
@@ -2517,6 +2523,28 @@ static void set_character_data(void)
   if (byte_3AE1 != 0) {
     c960[cpu.bx - 0xC960 + 1] = (cpu.cx & 0xFF00) >> 8;
   }
+}
+
+// 0x4372
+static void op_5F()
+{
+  // 0x4A7D
+  sub_4A79(word_3AE2);
+  cpu.cx = game_state.unknown[6];
+
+  cpu.di = cpu.cx;
+  cpu.cx = 0xC960;
+
+  uint8_t ch = (cpu.cx & 0xFF00) >> 8;
+  ch += game_state.unknown[cpu.di + 0xA];
+  cpu.cx = ch << 8 | (cpu.cx & 0xFF);
+
+  cpu.di = cpu.cx;
+  uint8_t al = cpu.ax & 0xFF;
+
+  unsigned char *c960 = get_player_data_base();
+  // cpu.bx is property to OR.
+  c960[(cpu.bx + cpu.di) - 0xC960] |= al;
 }
 
 // 0x438B
