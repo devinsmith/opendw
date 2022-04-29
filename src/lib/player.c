@@ -283,6 +283,12 @@ unsigned char *get_player_data(int player)
   return data_C960 + offset;
 }
 
+unsigned char get_player_data_byte(int player, int property)
+{
+  size_t offset = player * SIZE_OF_PLAYER;
+  return data_C960[offset + property];
+}
+
 const char *player_property_name(int prop_idx)
 {
   switch (prop_idx) {

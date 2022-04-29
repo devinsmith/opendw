@@ -505,6 +505,7 @@ static void set_character_data();
 static void op_5F();
 static void op_60();
 static void test_player_property();
+static void op_62();
 static void op_63();
 static void op_66();
 static void op_69();
@@ -654,7 +655,7 @@ struct op_call_table targets[] = {
   { op_5F, "0x4372" }, // 0x5F
   { op_60, "0x438B" },
   { test_player_property, "0x43A6" },
-  { NULL, "0x43BF" },
+  { op_62, "0x43BF" },
   { op_63, "0x43F7" },
   { NULL, "0x446E" },
   { NULL, "0x44B8" },
@@ -2609,6 +2610,47 @@ static void test_player_property()
   set_flags();
 }
 
+// 0x43BF
+static void op_62()
+{
+  uint8_t cl;
+
+  // 7246
+  uint8_t byte_3AE6 = word_3AE6 & 0xFF;
+  byte_3AE6 = byte_3AE6 >> 1;
+  word_3AE6 = (word_3AE6 & 0xFF00) | byte_3AE6;
+
+  cpu.ax = *cpu.pc++;
+  cpu.dx = cpu.ax;
+  cpu.ax = *cpu.pc++;
+
+  cl = cpu.ax;
+  cpu.bx = 0;
+
+  do {
+    cpu.ax = 0xC960;
+
+    uint8_t ah = (cpu.ax & 0xFF00) >> 8;
+    ah += game_state.unknown[cpu.bx + 0xA];
+    cpu.ax = ah << 8 | (cpu.ax & 0xFF);
+
+    cpu.ax += cpu.dx; // property
+    cpu.di = cpu.ax;
+    set_game_state(__func__, 6, cpu.bx);
+
+    unsigned char data = get_player_data_byte(cpu.bx, cpu.dx);
+    if (data >= cl) {
+      // 0x43F0
+      byte_3AE6 = byte_3AE6 << 1;
+      word_3AE6 = (word_3AE6 & 0xFF00) | byte_3AE6;
+      return;
+    }
+    cpu.bx++;
+  } while (cpu.bx < game_state.unknown[0x1F]);
+  cpu.cf = 1;
+}
+
+
 // 0x43F7
 static void op_63()
 {
@@ -3015,7 +3057,7 @@ static void sub_19C7(uint8_t val)
   cpu.ax = byte_1962;
   cpu.ax = cpu.ax << 5;
 
-  if (cpu.di != 0) {
+  if (cpu.di > 6) {
     printf("%s: Dump more data_19FE, cpu.di: 0x%04X\n", __func__, cpu.di);
     exit(1);
   }
