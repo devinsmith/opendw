@@ -2408,17 +2408,12 @@ static void op_5B()
   dl = game_state.unknown[1];
   bl = game_state.unknown[0];
 
+  cpu.dx = (cpu.dx & 0xFF00) | dl;
+  cpu.bx = (cpu.bx & 0xFF00) | bl;
+
   sub_54D8(dl, bl);
 
   data_5521[word_551F + 2] = 0;
-
-  // 53DB
-
-  // les di, [0x551f]
-  // mov es:[di+0x2], 0x0
-
-  printf("%s not complete\n", __func__);
-  exit(1);
 }
 
 // 0x4295
