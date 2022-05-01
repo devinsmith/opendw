@@ -66,6 +66,7 @@ int main(int argc, char *argv[])
   unsigned char data5[] = { 0xf1, 0x04, 0xe7, 0x28, 0x62, 0x67, 0xf5, 0x90, 0x00 };
 
   unsigned char data6[] = { 0xf4, 0x5E, 0x45, 0x87, 0xd2, 0x82, 0x8a, 0x68, 0xff };
+  unsigned char data7[] = { 0x54, 0x82, 0x00};
 
   extract_test(data1);
   extract_test(data2);
@@ -74,5 +75,6 @@ int main(int argc, char *argv[])
   extract_test(world0);
   extract_test(data5);
   extract_test(data6);
+  extract_test(data7);
   return 0;
 }

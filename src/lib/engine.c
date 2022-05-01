@@ -69,10 +69,22 @@ unsigned short data_1997[] = { 0x0000, 0x0010, 0x0028, 0x0040, 0x0058, 0x0070, 0
 unsigned short data_19A7[] = { 0x0010, 0x0028, 0x0040, 0x0058, 0x0070, 0x0088, 0x00A0, 0x00A8 };
 unsigned short data_19B7[] = { 0x0030, 0x0020, 0x0020, 0x0020, 0x0020, 0x0020, 0x0020, 0x0020 };
 
-// 0x19FE - 0x1A0F (each triplet means something)
-unsigned short data_19FE[] = { 0x0000, 0x0018, 0x0000,
-  0xFFF8, 0x0010, 0x0000,
-  0xFFF8, 0x0010, 0x0002};
+// 0x19FE - 0x1A0C (each triplet means something)
+unsigned short data_19FE[] = {
+  0x0000, 0x0018, 0x0000, // 0x19FE-0x1A02
+  0xFFF8, 0x0010, 0x0000, // 0x1A04-0x1A08
+  0xFFF8, 0x0010, 0x0002  // 0x1A0A-0x1A0E
+};
+
+// 0x1BC5 -> 0x1BC8 ?
+unsigned char data_1BC5[] = { 0x1C, 0x1C, 0x1C, 0x1E};
+
+static unsigned char data_1BD1[] = { 0x22, 0x44, 0xA7, 0x18, 0xA0 };
+static unsigned char data_1BD6[] = { 0x83, 0xD5, 0x27, 0xB8, 0xC5, 0x0 };
+static unsigned char data_1BDC[] = { 0x94, 0xE8, 0xE7, 0x18, 0xA0 };
+static unsigned char data_1BE1[] = { 0x29, 0x84, 0x50, 0x0};
+
+unsigned char *data_1BC9_table[4] = { data_1BD1, data_1BD6, data_1BDC, data_1BE1 };
 
 uint8_t byte_1CE1 = 0;
 uint8_t byte_1CE2 = 0;
@@ -370,12 +382,13 @@ static void handle_byte_callback(unsigned char byte);
 static void set_sb_handler_append_string();
 static void append_string(unsigned char byte);
 static void sub_176A();
-static void sub_19C7(uint8_t val);
+static void sub_19C7(uint8_t val, uint16_t di);
 static void sub_1A10();
 static void sub_1A72();
 static void sub_1ABD(uint8_t val);
-static void sub_280E();
 static void sub_1BF8(uint8_t color, uint8_t y_adjust);
+static void sub_1C70(unsigned char *src_ptr);
+static void sub_280E();
 static void sub_28B0(unsigned char **src_ptr, unsigned char *base);
 static void set_ui_header(unsigned char *base_ptr, uint16_t offset);
 static void sub_2CF5();
@@ -2909,7 +2922,7 @@ static void sub_1861(uint8_t input)
     bl = bl & 0x3;
     al = data_56E5[bl + 4];
     cpu.di = 0;
-    sub_19C7(al);
+    sub_19C7(al, 0);
     bl = word_11C6;
     bl = bl >> 4;
     bl = bl & 0xF;
@@ -2919,7 +2932,7 @@ static void sub_1861(uint8_t input)
       // 0x18AC
       al = data_56C6[bl];
       cpu.di = 6;
-      sub_19C7(al);
+      sub_19C7(al, 6);
     }
     // 0x18B6
     bl = word_11C6;
@@ -2928,7 +2941,7 @@ static void sub_1861(uint8_t input)
       // 0x18C0
       al = data_56C6[bl];
       cpu.di = 0xC;
-      sub_19C7(al);
+      sub_19C7(al, 0xC);
     }
     if ((byte_1966 & 0x80) != 0) {
       // 0x1945
@@ -2944,7 +2957,7 @@ static void sub_1861(uint8_t input)
     }
     al = data_56E5[bl + 7];
     cpu.di = 0;
-    sub_19C7(al);
+    sub_19C7(al, 0);
     return;
   }
   // 18E4
@@ -2970,7 +2983,7 @@ static void sub_1861(uint8_t input)
       // 0x1911
       al = data_56C6[bl];
       cpu.di = 0x6;
-      sub_19C7(al);
+      sub_19C7(al, 6);
     }
   }
 
@@ -2989,7 +3002,7 @@ static void sub_1861(uint8_t input)
       // 0x1934
       al = data_56C6[bl];
       cpu.di = 0x0C;
-      sub_19C7(al);
+      sub_19C7(al, 0xC);
     }
     if ((byte_1966 & 0x80) == 0) {
       return;
@@ -3041,7 +3054,7 @@ static void sub_1967(uint8_t input)
 
 // 0x19C7
 // Plot resource onto minimap
-static void sub_19C7(uint8_t val)
+static void sub_19C7(uint8_t val, uint16_t di)
 {
   struct resource *r;
   struct viewport_data vp;
@@ -3057,17 +3070,19 @@ static void sub_19C7(uint8_t val)
   cpu.ax = byte_1962;
   cpu.ax = cpu.ax << 5;
 
-  if (cpu.di > 6) {
+  if (di > 0xC) {
     printf("%s: Dump more data_19FE, cpu.di: 0x%04X\n", __func__, cpu.di);
     exit(1);
   }
 
-  cpu.ax += data_19FE[cpu.di];
+  di = di >> 1;
+
+  cpu.ax += data_19FE[di];
   vp.xpos = cpu.ax;
-  cpu.ax = data_19FE[cpu.di + 1]; // 1A00
+  cpu.ax = data_19FE[di + 1]; // 1A00
   vp.ypos = cpu.ax;
 
-  cpu.bx = data_19FE[cpu.di + 2]; // 1A02
+  cpu.bx = data_19FE[di + 2]; // 1A02
 
   sub_CE7(&vp, cpu.bx);
 }
@@ -3467,11 +3482,8 @@ static void op_7D(void)
   write_character_name();
 }
 
-static void sub_1BE6()
+static void sub_1BE6(int counter)
 {
-  int counter;
-  counter = cpu.ax & 0xFF;
-
   counter -= draw_point.x;
   if (counter <= 0)
     return;
@@ -3496,7 +3508,7 @@ static void advance_cursor(void)
   al += draw_rect.x;
   cpu.ax = (cpu.ax & 0xFF00) | al;
 
-  sub_1BE6();
+  sub_1BE6(al);
 }
 
 // 0x1DCA
@@ -3969,11 +3981,11 @@ static void sub_1ABD(uint8_t val)
   al = al >> 1;
   al = al + 0x1B + carry; // adc al, 0x1B
   cpu.ax = (cpu.ax & 0xFF00) | al;
-  sub_1BE6();
+  sub_1BE6(al);
   write_character_name();
   al = 0x27;
   cpu.ax = (cpu.ax & 0xFF00) | al;
-  sub_1BE6();
+  sub_1BE6(al);
   di = c960 + (player_base_offset - 0xC960);
   al = di[0x4C];
 
@@ -4020,8 +4032,20 @@ static void sub_1ABD(uint8_t val)
     return;
   }
   // 1B95
-  printf("%s 0x1B95 %d %d unimplemented\n", __func__, si, found);
-  exit(1);
+  draw_point.y += 8;
+  draw_point.x = 0x1B;
+
+  al = data_1BC5[si];
+  sub_1BE6(al);
+
+  unsigned char data_1BAA[] = { 0x54, 0x82, 0x00 }; // "is "
+  sub_1C70(data_1BAA);
+  // 1BAD
+
+  extract_string(data_1BC9_table[si], 0, handle_byte_callback);
+  al = 0x27;
+  sub_1BE6(0x27);
+  reset_ui_background();
 }
 
 // 0x1F10
@@ -5856,8 +5880,7 @@ static void op_96()
 
   ui_draw_string();
   al = draw_rect.w;
-  cpu.ax = (cpu.ax & 0xFF00) | al;
-  sub_1BE6();
+  sub_1BE6(al);
 }
 
 // 0x42FB
