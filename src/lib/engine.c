@@ -471,6 +471,7 @@ static void op_28();
 static void op_2A();
 static void op_2B();
 static void op_right_shift();
+static void op_2E();
 static void op_2F();
 static void op_30();
 static void op_31();
@@ -616,7 +617,7 @@ struct op_call_table targets[] = {
   { op_2B, "0x3E45" },
   { NULL, "0x3E4C" },
   { op_right_shift, "0x3E67" }, // op_2D
-  { NULL, "0x3E6E" },
+  { op_2E, "0x3E6E" },
   { op_2F, "0x3E75" },
   { op_30, "0x3E9D" },
   { op_31, "0x3EC1" },
@@ -1491,6 +1492,15 @@ static void op_2B()
 static void op_right_shift()
 {
   word_3AE2 = word_3AE2 >> 1;
+}
+
+// 0x3E62
+// 0x2E
+static void op_2E()
+{
+  uint8_t byte_3AE4 = (word_3AE4 & 0x00FF);
+  byte_3AE4 = byte_3AE4 >> 1;
+  word_3AE4 = (word_3AE4 & 0xFF00) | byte_3AE4;
 }
 
 // 0x3E75
