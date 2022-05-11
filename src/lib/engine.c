@@ -1675,8 +1675,8 @@ static void sub_3F2F()
 {
   // 0x3F2F
   // XXX: Fix this endian save
-  set_game_state(__func__, 57, cpu.ax & 0xFF);
-  set_game_state(__func__, 58, (cpu.ax & 0xFF00) >> 8);
+  set_game_state(__func__, 57, word_11C8 & 0xFF);
+  set_game_state(__func__, 58, (word_11C8 & 0xFF00) >> 8);
   cpu.ax = word_11C6;
   set_game_state(__func__, 55, cpu.ax & 0xFF);
   set_game_state(__func__, 56, (cpu.ax & 0xFF00) >> 8);
@@ -1720,6 +1720,7 @@ static void op_35()
 
   cpu.ax = game_state.unknown[cpu.bx];
   cpu.ax += game_state.unknown[cpu.bx + 1] << 8;
+
   word_11C6 = cpu.ax;
 
   cpu.ax = game_state.unknown[cpu.bx + 2];
@@ -1727,7 +1728,9 @@ static void op_35()
   word_11C8 = cpu.ax;
 
   cpu.ax = word_3AE2;
-  word_11C0 = cpu.ax;
+  word_11C0 = cpu.ax; // divisor?
+
+  printf("%s: 0x%04X 0x%04X 0x%04X\n", __func__, word_11C6, word_11C8, word_11C0);
 
   // 0x3F7E
   sub_3F7E();
@@ -6373,6 +6376,7 @@ static void sub_11A0(int set_11C4)
   word_11C8 += result & 0xFFFF;
 }
 
+// Input is 11C0, 11C6, 11C8
 static void sub_11CE()
 {
   int old_carry = 0;
@@ -6403,6 +6407,7 @@ static void sub_11CE()
 
     printf("%s: 0x%04X 0x%04X 0x%04X 0x%04X\n", __func__, word_11C6, word_11C8, word_11CA, word_11CC);
 
+    // 0x11ED
     cpu.ax = word_11CA;
     uint16_t old16 = cpu.ax;
     cpu.ax -= word_11C0;
