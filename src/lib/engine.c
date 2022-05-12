@@ -378,6 +378,7 @@ static void run_script(uint8_t script_index, uint16_t src_offset);
 static void sub_CE7(struct viewport_data *vp, uint16_t sprite_offset);
 static void sub_11A0(int set_11C4);
 static void sub_11CE();
+static uint16_t resource_get_size(int input); // 12B5
 static void handle_byte_callback(unsigned char byte);
 static void set_sb_handler_append_string();
 static void append_string(unsigned char byte);
@@ -564,6 +565,7 @@ static void op_99();
 static void op_9A();
 static void op_9B();
 static void op_9D();
+static void op_9E();
 
 struct op_call_table {
   void (*func)();
@@ -729,7 +731,7 @@ struct op_call_table targets[] = {
   { op_9B, "0x416B" },
   { NULL, "0x4175" },
   { op_9D, "0x4181" },
-  { NULL, "0x492D" },
+  { op_9E, "0x492D" },
   { NULL, "0x4AF0" },
   { NULL, "0x8A06" },
   { NULL, "0xE80E" },
@@ -2383,6 +2385,14 @@ static void op_58(void)
 static void sub_128D(int index)
 {
   resource_set_usage_type(index, 0x2);
+}
+
+// 0x12B5
+static uint16_t resource_get_size(int input)
+{
+  // All resources are assumed to be smaller than 64k (uint16_t)
+  struct resource *r = resource_get_by_index(input);
+  return r->len;
 }
 
 // 0x41C8
@@ -6043,6 +6053,12 @@ static void op_9D(void)
   cpu.cf = 0;
   cpu.zf = (game_state.unknown[cpu.bx] & cpu.ax) == 0 ? 1 : 0;
   set_flags();
+}
+
+// 0x492D
+static void op_9E()
+{
+  word_3AE2 = resource_get_size(word_3AE2);
 }
 
 // Extract string from stream, call func for each character
