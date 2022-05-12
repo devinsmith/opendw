@@ -502,6 +502,7 @@ static void op_4A();
 static void op_stc();
 static void op_4C();
 static void op_4D();
+static void op_4E();
 static void op_4F();
 static void op_51();
 static void op_52();
@@ -651,7 +652,7 @@ struct op_call_table targets[] = {
   { op_stc, "0x4122" },
   { op_4C, "0x412A" },
   { op_4D, "0x4132" },
-  { NULL, "0x414B" },
+  { op_4E, "0x414B" },
   { op_4F, "0x4155" },
   { NULL, "0x4161" },
   { op_51, "0x418B" },
@@ -2181,6 +2182,17 @@ static void op_4D()
   if (byte_3AE1 != 0) {
     word_3AE2 = (mul_result & 0xFFFF0000) >> 16;
   }
+}
+
+// 0x414B
+static void op_4E()
+{
+  uint8_t val;
+
+  sub_4A79(word_3AE2);
+  val = game_state.unknown[cpu.bx];
+  val |= (cpu.ax & 0xFF);
+  set_game_state(__func__, cpu.bx, val);
 }
 
 // 0x4155
@@ -6019,6 +6031,7 @@ static void op_9A(void)
 
 // 0x4A79
 // also 0x4A7D (taking 3AE2)
+// Returns cpu.bx, cpu.ax (al)
 static void sub_4A79(uint8_t al)
 {
   cpu.ax = al;
