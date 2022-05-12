@@ -461,6 +461,7 @@ static void op_19();
 static void op_1A();
 static void op_1C();
 static void op_1D();
+static void op_1F();
 static void op_21();
 static void op_22();
 static void op_23();
@@ -605,7 +606,7 @@ struct op_call_table targets[] = {
   { op_1C, "0x3D92" },
   { op_1D, "0x4ACC" },
   { NULL, "0x01B2" },
-  { NULL, "0x4AF6" },
+  { op_1F, "0x4AF6" },
   { NULL, "0x0000" },
   { op_21, "0x3DAE" },
   { op_22, "0x3DB7" },
@@ -1367,6 +1368,15 @@ static void op_1D(void)
   }
   // repe movsw (move word ds:si to es:di (si, di += 2), repeat 0x380 times.
   memcpy(dest + dest_offset, src + src_offset, 0x700);
+}
+
+// 0x4AF6
+static void op_1F()
+{
+  uint8_t al = word_3AE2;
+  // 2FBC
+  // open data1 file?
+  log_warn("Load DATA1?");
 }
 
 // 0x3DAE
