@@ -1751,25 +1751,27 @@ Disassembling script03.bin (5390 bytes)
 
 0x0986: .word
 0x0987: word_3AE2 = gamestate[0x6E]
-0x0989: word_3AE2 = op_39 0x70
-0x098B: word_3AE2 = op_39 0x6a
-0x098D: word_3AE2 = op_39 0x6c
+0x0989: word_3AE2 |= gamestate[0x70]
+0x098B: word_3AE2 |= gamestate[0x6A]
+0x098D: word_3AE2 |= gamestate[0x6C]
 0x098F: test word_3AE2
 0x0990: jz 0x09E6
 0x0993: gamestate[0x43] = 0
         gamestate[0x44] = 0
 0x0995: draw_rectangle 0x0a, 0x30, 0x1e, 0x70
 0x099A: set_msg $("Each member gets ")
-0x09A7: set loop = 0x6e
+
+0x09A7: set loop = 0x6e # Experience
 0x09A9: call 0x09F4
 0x09AC: jc 0x09C2
 0x09AF: op_82 0x6e
 0x09B1: set_msg $(" experience points ")
 0x09C0: gamestate[0x43] = 0xFF
         gamestate[0x44] = 0xFF
+
 0x09C2: set loop = 0x6a
 0x09C4: call 0x09F4
-0x09C7: jc 0x09dc
+0x09C7: jc 0x09dc # Was gold awarded?
 0x09CA: test game_state[0x43]
 0x09CC: jz 0x09d4
 0x09CF: set_msg $("and ")
@@ -1777,6 +1779,7 @@ Disassembling script03.bin (5390 bytes)
 0x09D6: set_msg $(" gold ")
 0x09DC: set_msg $("for combat.")
 0x09E5: wait_escape
+
 0x09E6: .byte
 0x09E7: gamestate[0x43] = 0
 0x09E9: var al = game_state[6]
@@ -1790,9 +1793,8 @@ Disassembling script03.bin (5390 bytes)
 0x09F2: .byte
 0x09F3: ret
 
-
 # Function 9F4 (inputs word_3AE4)
-# Sets or clears carry flag based on experience won.
+# Sets or clears carry flag based on gold/experience won.
 0x09F4: word_3AE2 = gamestate[word_3AE4 + 0x00]
 0x09F6: gamestate[0x37] = word_3AE2
 0x09F8: word_3AE2 = gamestate[word_3AE4 + 0x02]
@@ -1804,7 +1806,7 @@ Disassembling script03.bin (5390 bytes)
 0x0A04: word_3AE2 &= 0x00FF
 0x0A07: op_35 0x37
 0x0A09: word_3AE2 = gamestate[0x37]
-0x0A0B: op_39 0x39
+0x0A0B: word_3AE2 |= gamestate[0x39]
 0x0A0D: test word_3AE2
 0x0A0E: jnz 0x0a13
 0x0A11: inc game_state[0x37]
@@ -2251,7 +2253,7 @@ Disassembling script03.bin (5390 bytes)
 0x0DF4: .byte
 0x0DF5: word_3AE2 = gamestate[0x5D]
 0x0DF7: op_27
-0x0DF8: word_3AE2 = op_39 0x5E # Points of damage?
+0x0DF8: word_3AE2 |= gamestate[0x5E]  # Points of damage?
 0x0DFA: gamestate[0x09] = word_3AE2
 0x0DFC: set_msg $(" point of damage")
 0x0E0B: word_3AE2 = gamestate[0x66]
@@ -2657,7 +2659,7 @@ Disassembling script03.bin (5390 bytes)
 0x1278: gamestate[0x5f] = 0
         gamestate[0x60] = 0
 0x127A: word_3AE2 = gamestate[0x5D]
-0x127C: op_39 0x5F
+0x127C: word_3AE2 |= gamestate[0x5F]
 0x127E: test word_3AE2
 0x127F: .byte
 0x1280: jz 0x12f3
