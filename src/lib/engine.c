@@ -505,6 +505,7 @@ static void op_4C();
 static void op_4D();
 static void op_4E();
 static void op_4F();
+static void op_50();
 static void op_51();
 static void op_52();
 static void op_53();
@@ -655,7 +656,7 @@ struct op_call_table targets[] = {
   { op_4D, "0x4132" },
   { op_4E, "0x414B" },
   { op_4F, "0x4155" },
-  { NULL, "0x4161" },
+  { op_50, "0x4161" },
   { op_51, "0x418B" },
   { op_52, "0x41B9" },
   { op_53, "0x41C0" },
@@ -2218,6 +2219,33 @@ static void op_4F()
   uint8_t val = game_state.unknown[cpu.bx];
   val = val & al;
   set_game_state(__func__, cpu.bx, val);
+}
+
+// 0x4161
+static void op_50()
+{
+  uint8_t al;
+  uint16_t flags;
+
+  sub_4A79(word_3AE2);
+  al = cpu.ax & 0xFF;
+
+  // test [bx+3860], al
+  cpu.zf = al == game_state.unknown[cpu.bx];
+  cpu.cf = al < game_state.unknown[cpu.bx];
+  cpu.sf = al >= 0x80;
+
+  flags = 0;
+  flags |= cpu.sf << 7;
+  flags |= cpu.zf << 6;
+  flags |= 1 << 1; // Always 1, reserved.
+  flags |= cpu.cf << 0;
+  flags &= 0xFFFE;
+
+  // 0x40D1
+  // clear carry flag, don't care
+  word_3AE6 &= CARRY_FLAG_MASK;
+  word_3AE6 |= flags;
 }
 
 // 0x418B
