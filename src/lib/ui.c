@@ -850,16 +850,20 @@ void ui_draw_chr_piece(uint8_t chr)
     }
   }
   if (chr == 0x8D) {
+    // 0x3264
     draw_point.x = draw_rect.x;
     uint8_t al = draw_point.y;
     al += 8;
     if (al > draw_rect.h) {
+      //sub_343A();
       printf("BP CS:3275\n");
       exit(1);
+      al = draw_point.y;
     }
     draw_point.y = al;
     return;
   }
+  // 0x3280
   draw_character(draw_point.x, draw_point.y, get_chr(chr));
   draw_point.x++;
 }
