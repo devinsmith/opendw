@@ -411,7 +411,7 @@ static void mini_map_right();
 static void mini_map_up();
 static void mini_map_down();
 
-#define NUM_FUNCS 10
+#define NUM_FUNCS 11
 static void sub_50B2();
 static void sub_5088();
 static void sub_5080();
@@ -420,16 +420,17 @@ static void snd_pcm_resource();
 
 // 0x5060 sound effects
 void (*func_5060[NUM_FUNCS])() = {
-  sub_50B2,
-  sub_5088,
-  sub_5080,
-  sub_5090,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-  snd_pcm_resource
+  sub_50B2, // 0x5060
+  sub_5088, // 0x5062
+  sub_5080, // 0x5064
+  sub_5090, // 0x5066
+  snd_pcm_resource, // 0x5068
+  snd_pcm_resource, // 0x506A
+  snd_pcm_resource, // 0x506C
+  snd_pcm_resource, // 0x506E
+  snd_pcm_resource, // 0x5070
+  snd_pcm_resource, // 0x5072
+  snd_pcm_resource  // 0x5074
 };
 
 // Decoded opcode calls, forward definition.
