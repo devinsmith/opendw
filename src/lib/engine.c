@@ -1949,6 +1949,7 @@ static void op_3F()
 
   // cmp and set flags.
   // I think these are the only flags that matter.
+  // cmp al, [bx+3860]
   cpu.zf = al == game_state.unknown[cpu.bx];
   cpu.cf = al < game_state.unknown[cpu.bx];
 
@@ -1976,6 +1977,7 @@ static void op_40(void)
   int cf = 0;
   int zf = 0;
 
+  // cmp [byte_3AE4], al
   cf = (byte_3AE4 - al) < 0;
   zf = (byte_3AE4 - al) == 0;
   cf = !cf;
@@ -2231,9 +2233,9 @@ static void op_50()
   al = cpu.ax & 0xFF;
 
   // test [bx+3860], al
-  cpu.zf = al == game_state.unknown[cpu.bx];
-  cpu.cf = al < game_state.unknown[cpu.bx];
-  cpu.sf = al >= 0x80;
+  cpu.zf = (game_state.unknown[cpu.bx] & al) == 0 ? 1 : 0;
+  cpu.cf = 0;
+  cpu.sf = (game_state.unknown[cpu.bx] & al) >= 0x80 ? 1 : 0;
 
   flags = 0;
   flags |= cpu.sf << 7;
