@@ -486,6 +486,7 @@ static void op_36();
 static void op_38();
 static void op_39();
 static void op_3A();
+static void op_3B();
 static void op_3C();
 static void op_3D();
 static void op_3E();
@@ -636,7 +637,7 @@ struct op_call_table targets[] = {
   { op_38, "0x3FBC" },
   { op_39, "0x3FD4" },
   { op_3A, "0x3FEA" },
-  { NULL, "0x4002" },
+  { op_3B, "0x4002" },
   { op_3C, "0x4018" },
   { op_3D, "0x4030" },
   { op_3E, "0x4051" },
@@ -1838,6 +1839,24 @@ static void op_3A()
     cpu.ax = (ah << 8) | al;
     word_3AE2 = word_3AE2 | cpu.ax;
   }
+}
+
+// 0x4002
+static void op_3B()
+{
+  uint8_t al, ah;
+
+  al = *cpu.pc++;
+  cpu.bx = al;
+
+  cpu.ax = game_state.unknown[cpu.bx];
+  cpu.ax += game_state.unknown[cpu.bx + 1] << 8;
+  cpu.ax = cpu.ax ^ word_3AE2;
+
+  ah = (cpu.ax & 0xFF00) >> 8;
+  ah = ah & byte_3AE1;
+  cpu.ax = (ah << 8) | (cpu.ax & 0xFF);
+  word_3AE2 = cpu.ax;
 }
 
 // 0x4018
