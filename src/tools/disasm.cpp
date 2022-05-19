@@ -84,7 +84,7 @@ op_code op_codes[] = {
   { "op_1E", nullptr, 0 }, // op_1E
   { "op_1F", nullptr, 0 }, // op_1F
   { "NOP_XXX", nullptr, 0 }, // op_20
-  { "op_21", nullptr, 0 }, // op_21
+  { "word_3AE4 = word_3AE2", nullptr, 0 }, // op_21
   { "word_3AE2 = word_3AE4", nullptr, 0 }, // op_22
   { "inc game_state[", read_byte_array_index, 1 }, // op_23
   { "inc word_3AE2", nullptr, 0 }, // op_24
@@ -110,7 +110,7 @@ op_code op_codes[] = {
   { "word_3AE2 &=", read_by_mode, 0 }, // op_38
   { "op_39", nullptr, 1 },
   { "op_3A", nullptr, 1 }, // op_3A
-  { "op_3B", nullptr, 0 }, // op_3B
+  { "op_3B", nullptr, 1 }, // op_3B
   { "op_3C", read_by_mode, 0 }, // op_3C
   { "cmp word_3AE2, gamestate[", read_byte_array_index, 1 }, // op_3D
   { "cmp word_3EA2,", read_by_mode, 0 }, // op_3E
