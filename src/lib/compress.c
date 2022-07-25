@@ -166,8 +166,7 @@ static void decompress(struct buf_rdr *input, struct compress_ctx *ctx,
  * Decompress buffered data from input and write to output. The expected
  * output is written into size.
  *
- * The algorithm used is unknown but it seems to be based on a dictionary.
- * Maybe LZ based or DEFLATE. ?
+ * The algorithm used is likely LZSS.
  *
  */
 void decompress_data1(struct buf_rdr *input, struct buf_wri *output, int size)
