@@ -50,7 +50,7 @@ struct op_code {
   int arg_count;
 };
 
-op_code op_codes[] = {
+const op_code op_codes[] = {
   { ".word", set_word, 0 }, // op_00
   { ".byte", set_byte, 0 }, // op_01
   { "op_02", nullptr, 0 }, // op_02
@@ -192,7 +192,7 @@ op_code op_codes[] = {
   { "random_encounter?", nullptr, 0 }, // op_8A
   { "refresh_viewport", nullptr, 0 }, // op_8B
   { "prompt 'Y', 'N'", nullptr, 0 }, // op_8C
-  { "op_8D", nullptr, 0 }, // op_8D: Read string??
+  { "read_string", nullptr, 0 }, // op_8D
   { nullptr, nullptr, 0 },
   { "op_8F", nullptr, 0 }, // op_8F
   { "sound_effect", nullptr, 1 }, // op_90
@@ -652,7 +652,7 @@ int main(int argc, char *argv[])
   while (i < script.len) {
     unsigned char op = *iter;
 
-    op_code *code = &op_codes[op];
+    const op_code *code = &op_codes[op];
     if (code->name == nullptr) {
       fprintf(stderr, "Cannot proceed, unhandled op: 0x%02X\n", op);
       break;

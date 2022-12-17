@@ -576,7 +576,7 @@ Disassembling script06.bin (3466 bytes)
 0x09E0: op_15 0x09ea
 0x09E3: write_number
 0x09E4: op_7E 0x09
-0x09E6: op_8D
+0x09E6: read_string
 0x09E7: write_number
 0x09E8: clc
 0x09E9: ret

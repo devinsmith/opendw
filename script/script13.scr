@@ -210,7 +210,7 @@ Disassembling script13.bin (1769 bytes)
 0x02A1: set_msg $("\rHow much gold does ")
 0x02B0: write_character_name
 0x02B1: set_msg $(" want to trade?\r\r")
-0x02BE: op_8D
+0x02BE: read_string
 0x02BF: op_8F
 0x02C0: .word
 0x02C1: word_3AE2 = gamestate[0x37]

@@ -202,7 +202,7 @@ Disassembling res12.bin (1489 bytes)
 0x036C: gamestate[0x86] = word_3AE2
 0x036E: .byte
 0x036F: set_msg $(" points maximum.\r\r")
-0x037D: op_8D
+0x037D: read_string
 0x037E: op_8F
 0x037F: .word
 0x0380: test game_state[0x39]
