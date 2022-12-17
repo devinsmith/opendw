@@ -369,6 +369,8 @@ struct virtual_cpu {
 #define ZERO_FLAG_MASK 0x40
 #define SIGN_FLAG_MASK 0x80
 
+#define EVENT_FLAG_ALLOW_ANY_CASE 0x02 // Allows lower or upper case input
+
 struct virtual_cpu cpu;
 
 // 0x3854 - 0x3859
@@ -4355,8 +4357,10 @@ static void timer_tick_proc()
 // we draw an escape table
 static void sub_28B0(uint16_t flags, unsigned char **src_ptr, const unsigned char *base)
 {
-  uint8_t al, ah;
-  uint8_t bl, bh;
+  uint8_t al;
+  uint8_t ah;
+  uint8_t bl;
+  uint8_t bh;
 
   ui_draw_string();
 
@@ -4457,7 +4461,8 @@ static void sub_28B0(uint16_t flags, unsigned char **src_ptr, const unsigned cha
       // A-Z letters.
       if (al >= 0xE1 && al <= 0xFA) {
         // 0x2992
-        if ((word_2AA7 & 0x2) == 0) {
+        if ((word_2AA7 & EVENT_FLAG_ALLOW_ANY_CASE) == 0) {
+          // Force this letter to be upper case.
           al = al & 0xDF;
         }
       }
@@ -4927,7 +4932,7 @@ static void sub_1E49()
   while (1) {
     cpu.bx = 0x1EB9; // function pointer.
     unsigned char *ptr = data_1EB9;
-    sub_28B0(0x00C2, &ptr, data_1EB9);
+    sub_28B0(0x00C0 | EVENT_FLAG_ALLOW_ANY_CASE, &ptr, data_1EB9);
 
     // Checking for keys.
     al = cpu.ax & 0xFF;
