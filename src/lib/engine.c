@@ -390,7 +390,7 @@ static void sub_1ABD(uint8_t val);
 static void sub_1BF8(uint8_t color, uint8_t y_adjust);
 static void sub_1C70(unsigned char *src_ptr);
 static void sub_280E();
-static void sub_28B0(unsigned char **src_ptr, unsigned char *base);
+static void sub_28B0(uint16_t flags, unsigned char **src_ptr, const unsigned char *base);
 static void set_ui_header(unsigned char *base_ptr, uint16_t offset);
 static void sub_2CF5();
 static void sub_3F2F();
@@ -556,7 +556,7 @@ static void wait_event();
 static void op_8A();
 static void op_8B();
 static void prompt_no_yes();
-static void op_8D();
+static void op_read_string(); // 0x8D
 static void op_sound_effect(); // 0x90
 static void op_91();
 static void op_92();
@@ -719,7 +719,7 @@ struct op_call_table targets[] = {
   { op_8A, "0x498E" },
   { op_8B, "0x499B" },
   { prompt_no_yes, "0x49A5" },
-  { op_8D, "0x49D3" },
+  { op_read_string, "0x49D3" },
   { NULL, "0x0000" },
   { NULL, "0x49DD" },
   { op_sound_effect, "0x49E7" },
@@ -3304,7 +3304,6 @@ static void sub_176A()
 {
   // data_1777 to 179A
   unsigned char data_1777[] = {
-    0x80, 0x80,
     0x9B, 0x9B, 0x17, // ESC -> 0x179B
     0x88, 0xA7, 0x17, // Left -> 0x17A7
     0xCA, 0xA7, 0x17, // 'J' -> 0x17A7
@@ -3326,7 +3325,7 @@ static void sub_176A()
   // 0x176D
   cpu.bx = 0x1777;
   // cpu.cx = cs
-  sub_28B0(&ptr, data_1777);
+  sub_28B0(0x8080, &ptr, data_1777);
 }
 
 // 0x179B
@@ -4354,25 +4353,18 @@ static void timer_tick_proc()
 //
 // First two bytes are some sort of flag, 0x8000 indicates that
 // we draw an escape table
-static void sub_28B0(unsigned char **src_ptr, unsigned char *base)
+static void sub_28B0(uint16_t flags, unsigned char **src_ptr, const unsigned char *base)
 {
   uint8_t al, ah;
   uint8_t bl, bh;
 
   ui_draw_string();
 
-  // Read flags (word)
-  // It is currently unknown what the first 2 bytes (word)
-  // does in this function.
-  cpu.ax = **src_ptr;
-  (*src_ptr)++;
-  cpu.ax += **src_ptr << 8;
-  (*src_ptr)++;
-
   bl = cpu.bx & 0xFF;
 
   // 0x28BA
-  word_2AA7 = cpu.ax;
+  word_2AA7 = flags;
+  cpu.ax = flags;
 
   // cpu.ax &= 20FF
   ah = (cpu.ax & 0xFF00) >> 8;
@@ -4756,7 +4748,7 @@ static void sub_2C00()
 
   cpu.bx = 0x2C0E; // function pointer.
   unsigned char *ptr = data_2C0E;
-  sub_28B0(&ptr, data_2C0E);
+  sub_28B0(0x8204, &ptr, data_2C0E);
   draw_pattern(&draw_rect);
 }
 
@@ -4772,6 +4764,8 @@ static void op_wait_escape()
 // until reading a 0xff character.
 static void wait_event(void)
 {
+  uint16_t flags;
+
   printf("%s : 0x4977\n", __func__);
 
   // offset to start at.
@@ -4779,9 +4773,12 @@ static void wait_event(void)
   cpu.base_pc = running_script->bytes;
   cpu.bx = word_3ADB;
 
-  sub_28B0(&cpu.pc, cpu.base_pc);
+  flags = *cpu.pc++;
+  flags += *cpu.pc++ << 8;
 
-  // 0x4984 (A good idea to break here so you can trap keypresses).
+  sub_28B0(flags, &cpu.pc, cpu.base_pc);
+
+  // 0x4984 (A good idea to break here, so you can trap keypresses).
   // the key pressed will be in AX (OR'd with 0x80).
   cpu.ax = cpu.ax & 0x00FF;
   printf("%s: BX: 0x%04X\n", __func__, cpu.bx);
@@ -4930,7 +4927,7 @@ static void sub_1E49()
   while (1) {
     cpu.bx = 0x1EB9; // function pointer.
     unsigned char *ptr = data_1EB9;
-    sub_28B0(&ptr, data_1EB9);
+    sub_28B0(0x00C2, &ptr, data_1EB9);
 
     // Checking for keys.
     al = cpu.ax & 0xFF;
@@ -5730,12 +5727,12 @@ static void op_8B()
 static void prompt_no_yes()
 {
   // 0x49CA (keys: 0xCE = 'N', 0xD9 = 'Y', unknown about other bytes)
-  unsigned char data_49CA[] = { 0x00, 0x00, 0xCE, 0x00, 0x00, 0xD9, 0x00, 0x00, 0xFF };
+  unsigned char data_49CA[] = { 0xCE, 0x00, 0x00, 0xD9, 0x00, 0x00, 0xFF };
 
   sub_1C70(data_49AB);
   cpu.bx = 0x49CA;
   unsigned char *ptr = data_49CA;
-  sub_28B0(&ptr, data_49CA);
+  sub_28B0(0, &ptr, data_49CA);
   uint8_t key = cpu.ax;
 
   draw_pattern(&draw_rect);
@@ -5760,8 +5757,8 @@ static void prompt_no_yes()
   word_3AE6 |= cpu.cf << 0;
 }
 
-// 0x49D3
-static void op_8D()
+// 0x49D3 (0x8D)
+static void op_read_string()
 {
   printf("%s : 0x49D3\n", __func__);
   sub_1E49();
