@@ -45,13 +45,13 @@ static int viewport_width = 0x50;
 
 static unsigned short word_1055 = 0;
 
-static void draw_indexed_picture9();
+static void draw_right_pillar();
 static void sub_1F54(uint8_t al);
 static void sub_27CC();
 static void sub_4EF4(uint16_t bx, uint16_t dx, uint16_t ax);
 
 void (*ui_draw_funcs[5])() = {
-  draw_indexed_picture9,
+  draw_right_pillar,
   draw_viewport,
   reset_game_state,
   ui_header_draw,
@@ -150,6 +150,7 @@ struct viewport_data viewports[] = {
 #define COLOR_BLACK 0
 #define COLOR_WHITE 0xF
 
+#define UI_RIGHT_PILLAR 9
 #define UI_PIECE_COUNT 0x2B
 #define UI_BRICK_FIRST_PICTURE 0x17
 static struct pic_data ui_pieces[UI_PIECE_COUNT];
@@ -695,9 +696,9 @@ void ui_draw_full(void)
 }
 
 // 0x4C22
-void draw_indexed_picture9()
+static void draw_right_pillar()
 {
-  draw_ui_piece(&ui_pieces[9]);
+  draw_ui_piece(&ui_pieces[UI_RIGHT_PILLAR]);
 
   word_4C31[0] = 0;
   word_4C31[1] = 0;

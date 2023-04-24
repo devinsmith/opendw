@@ -15,6 +15,21 @@ Resource data in data1. It is unknown how data2 is used at this point.
 |  116 |  936 | Y          | Water puddle (viewport)             |
 |  261 |12452 | Y          | Scream (PCM audio)                  |
 
+There are also resources in the game executable:
+
+| Num  | Size | Description                         |
+|------|------|-------------------------------------|
+|    0 | 2560 | Bottom bricks (msg window)          |
+|    1 |  128 | Lower left bricks (msg)             |
+|    2 |  128 | Lower right bricks (msg)            |
+|    3 | 1280 | Top bricks (msg)                    |
+|    4 |  576 | Right character border              |
+|    5 | 1536 | Character banner (Dragon Wars)      |
+|    6 | 1152 | Left green pillar                   |
+|    7 |   64 | Left brick pillar connector         |
+|    8 |   64 | Right brick pillar connector        |
+|    9 | 2880 | Right green pillar                  |
+
 # Resource 7 (Character data)
 
 The first 3584 (7 * 512) are individual player records.
