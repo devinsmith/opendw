@@ -45,7 +45,6 @@ static int viewport_width = 0x50;
 
 static unsigned short word_1055 = 0;
 
-static void draw_right_pillar();
 static void sub_1F54(uint8_t al);
 static void sub_27CC();
 static void sub_4EF4(uint16_t bx, uint16_t dx, uint16_t ax);
@@ -696,7 +695,7 @@ void ui_draw_full(void)
 }
 
 // 0x4C22
-static void draw_right_pillar()
+void draw_right_pillar()
 {
   draw_ui_piece(&ui_pieces[UI_RIGHT_PILLAR]);
 

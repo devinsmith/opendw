@@ -2527,7 +2527,8 @@ static void op_5B()
   data_5521[word_551F + 2] = 0;
 }
 
-// 0x4295
+// 0x4295 (op_5C)
+// Executes a loop over each character in a party
 static void op_5C(void)
 {
   set_byte_mode();
@@ -3770,24 +3771,28 @@ static void load_word3AE2_resource(void)
 }
 
 // 0x4C07
-static void sub_4C07()
+// Side effects: can modify cpu.ax, cpu.cf and cpu.zf
+static void sub_4C07(int offset)
 {
   uint8_t al;
 
-  al = game_state.unknown[0xBE + cpu.bx];
+  al = game_state.unknown[0xBE + offset];
   cpu.ax = (cpu.ax & 0xFF00) | al;
   if (al != 0) {
-    if (al == word_4C31[cpu.bx]) {
+    if (al == word_4C31[offset]) {
       cpu.zf = 1;
     }
-    word_4C31[cpu.bx] = al;
+    word_4C31[offset] = al;
     cpu.cf = 0;
     return;
   }
   // 0x4C19
-  if (word_4C31[cpu.bx] == 0) {
+  if (word_4C31[offset] == 0) {
     cpu.cf = 1;
+    return;
   }
+  // al == 0 and word_4C31[offset] != 0
+  draw_right_pillar();
 }
 
 // 0x4B60
@@ -3799,18 +3804,17 @@ static void sub_4B60()
     return;
   }
   // 0x4B68
-  cpu.bx = 0;
-  sub_4C07();
+  sub_4C07(0);
   if (cpu.cf == 0 && cpu.zf == 0) {
     // 0x4B71
+    // Draw north/east/south/west arrow
     al = cpu.ax & 0xFF;
     al += 9;
     cpu.ax = (cpu.ax & 0xFF00) | al;
     sub_35A0(cpu.ax & 0xFF);
   }
   // 0x4B76
-  cpu.bx = 1;
-  sub_4C07();
+  sub_4C07(1);
   if (cpu.cf == 0) {
     if (cpu.zf == 1) {
       // 0x4B80
@@ -3822,16 +3826,14 @@ static void sub_4B60()
     exit(1);
   }
   // 0x4BA7
-  cpu.bx = 2;
-  sub_4C07();
+  sub_4C07(2);
   if (cpu.cf == 0 && cpu.zf == 0) {
     // 0x4BB1
     printf("%s: 0x4BB1 unimplemented\n", __func__);
     exit(1);
   }
   // 0x4BB6
-  cpu.bx = 3;
-  sub_4C07();
+  sub_4C07(3);
   if (cpu.cf == 0) {
     if (cpu.zf == 0) {
       // 0x4BC0
@@ -4528,7 +4530,7 @@ static void sub_28B0(uint16_t flags, unsigned char **src_ptr, const unsigned cha
         bl = dl;
         bl -= 0xB1; // '1' + 0x80
 
-        // Did we press a key to corresponds to a member of our party.
+        // Did we press a key that corresponds to a member of our party?
         if (bl < game_state.unknown[0x1F]) {
           // 0x29FE
           bh = 0;
@@ -4749,7 +4751,7 @@ static void sub_2C00()
   // 0x2C0E
   // Acceptable keys:
   // Flags: 0x8204, only 1 acceptable key: 0x9B (Escape)
-  unsigned char data_2C0E[] = { 0x04, 0x82, 0x9B, 0x00, 0x00, 0xFF };
+  unsigned char data_2C0E[] = { 0x9B, 0x00, 0x00, 0xFF };
 
   cpu.bx = 0x2C0E; // function pointer.
   unsigned char *ptr = data_2C0E;

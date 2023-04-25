@@ -82,6 +82,7 @@ void ui_set_background(uint16_t val);
 void ui_draw_string(void);
 void ui_draw_solid_color(uint8_t color, uint16_t line_num,
     uint16_t inset, uint16_t count);
+void draw_right_pillar();
 void reset_ui_background();
 
 void ui_rect_expand();
