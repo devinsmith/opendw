@@ -51,6 +51,7 @@ struct game_state {
   // 0x56 - Resource index.
   // 0x6A - 0x6D (Gold)
   // 0x6E - 0x71 (Experience)
+  // 0xBE - Direction? (0 = North, 1 = East, 2 = South, 3 = West)
   // 0xC6 - 0x?? - New character name.
   unsigned char unknown[256];
 };
