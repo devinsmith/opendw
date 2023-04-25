@@ -29,6 +29,11 @@ There are also resources in the game executable:
 |    7 |   64 | Left brick pillar connector         |
 |    8 |   64 | Right brick pillar connector        |
 |    9 | 2880 | Right green pillar                  |
+|   10 |  364 | North arrow                         |
+|   11 |  364 | East arrow                          |
+|   12 |  364 | South arrow                         |
+|   13 |  364 | West arrow                          |
+
 
 # Resource 7 (Character data)
 
