@@ -40,6 +40,9 @@ void set_game_state(const char *func_src, int offset, unsigned char value)
   if (offset == 88) { // 0x58
     log_trace("   SETTING MONSTER?\n");
   }
+  if (offset == 0xBE) {
+    log_trace("   SETTING Direction to %d\n", value);
+  }
   game_state.unknown[offset] = value;
 }
 
