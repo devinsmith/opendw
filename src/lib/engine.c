@@ -2455,12 +2455,6 @@ static void op_58(void)
   cpu.base_pc = running_script->bytes;
 }
 
-// 0x128D
-static void sub_128D(int index)
-{
-  resource_set_usage_type(index, 0x2);
-}
-
 // 0x12B5
 static uint16_t resource_get_size(int input)
 {
@@ -2479,7 +2473,7 @@ static void op_59(void)
   if (ah != cpu.stack[cpu.sp]) {
     // 0x41CF
     al = word_3AE8;
-    sub_128D(al);
+    resource_set_flagged(al);
   }
   cpu.ax = pop_word();
   ah = (cpu.ax & 0xFF00) >> 8;
@@ -3803,6 +3797,8 @@ static void sub_4B60()
   if (ui_rect_redraw(9) == 1) {
     return;
   }
+
+  // Check if we need to change the direction icon
   // 0x4B68
   sub_4C07(0);
   if (cpu.cf == 0 && cpu.zf == 0) {
@@ -3889,7 +3885,7 @@ static void sub_4D5C()
   cpu.ax = (cpu.ax & 0xFF00) | 0x0A;
   if (ui_rect_redraw(10) == 1) {
     if (byte_4F10 != 0xFF) {
-      sub_128D(byte_4F10);
+      resource_set_flagged(byte_4F10);
     }
     byte_4F2B = 0;
     byte_4F10 = 0xFF;
@@ -4510,6 +4506,7 @@ static void sub_28B0(uint16_t flags, unsigned char **src_ptr, const unsigned cha
     *src_ptr -= 3;
 
     uint8_t dl = byte_2AA6;
+
     // 0x29DD
     // Loop through all possible key presses
     while (1) {
@@ -4825,7 +4822,7 @@ static void sub_4C40()
     r = resource_load(cpu.bx);
     if (r != NULL) {
       sub_4C95(r);
-      sub_128D(r->index);
+      resource_set_flagged(r->index);
 
       uint16_t tag = r->tag;
       tag++;
@@ -5000,7 +4997,7 @@ void sub_4D82()
   // byte_4F10 is some kind of memory/resource index flag, 0xFF means that it
   // hasn't been initialized.
   if (byte_4F10 != 0xFF) {
-    sub_128D(byte_4F10);
+    resource_set_flagged(byte_4F10);
   }
   byte_4F2B = 0;
   byte_4F10 = 0xFF;
@@ -5403,7 +5400,7 @@ static void sub_5764()
     // 0x57C0
     set_game_state(__func__, 0x5B, al);
     al = game_state.unknown[0x5A];
-    sub_128D(al);
+    resource_set_flagged(al);
     bl = game_state.unknown[4];
     cpu.bx = bl;
     cpu.bx += 0x1E;
@@ -5543,7 +5540,7 @@ static void sub_587E()
     al = data_5897[counter + 0xf];
     if (al <= 0x7F) {
       // 5889
-      sub_128D(al);
+      resource_set_flagged(al);
     }
     // 0x588E
     data_5897[counter + 0xf] = 0xFF;

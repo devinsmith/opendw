@@ -204,6 +204,14 @@ void resource_set_usage_type(int index, int usage_type)
   allocations[index].usage_type = usage_type;
 }
 
+// 0x128D
+void resource_set_flagged(int index)
+{
+  // We still don't really know what usage_type 0x2 means, so we're
+  // going with "flagged" for now.
+  resource_set_usage_type(index, 0x2);
+}
+
 static struct resource *
 resource_load_cache_miss(enum resource_section sec)
 {

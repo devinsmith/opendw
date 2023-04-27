@@ -57,6 +57,8 @@ struct resource* resource_get_by_index(int index);
 void resource_index_release(int index);
 void resource_set_usage_type(int index, int usage_type);
 
+void resource_set_flagged(int index);
+
 // 0x2EB0
 struct resource* resource_load(enum resource_section sec);
 
@@ -69,4 +71,4 @@ void setup_memory();
 }
 #endif
 
-#endif /* __DW_RESOURCE_H__ */
+#endif /* DW_RESOURCE_H */
