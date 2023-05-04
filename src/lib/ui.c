@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include "engine.h"
+#include "mouse.h"
 #include "offsets.h"
 #include "resource.h"
 #include "tables.h"
@@ -45,7 +46,6 @@ static int viewport_width = 0x50;
 
 static unsigned short word_1055 = 0;
 
-static void sub_1F54(uint8_t al);
 static void sub_27CC();
 static void sub_4EF4(uint16_t bx, uint16_t dx, uint16_t ax);
 
@@ -703,16 +703,6 @@ void draw_right_pillar()
   word_4C31[1] = 0;
   word_4C31[2] = 0;
   word_4C31[3] = 0;
-}
-
-static void sub_1F54(uint8_t al)
-{
-  if (byte_2476 == 0) {
-    return;
-  }
-  // 0x1F5B
-  printf("%s: 0x1F5B unhandled.\n", __func__);
-  exit(1);
 }
 
 // 0x35A0

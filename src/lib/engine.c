@@ -22,6 +22,7 @@
 #include "compress.h"
 #include "engine.h"
 #include "log.h"
+#include "mouse.h"
 #include "offsets.h"
 #include "player.h"
 #include "resource.h"
@@ -108,10 +109,6 @@ unsigned char data_1EB9[] = { 0xC2, 0x00 };
 uint8_t byte_1F07 = 0;
 uint8_t byte_1F08 = 0;
 
-// 0x246D
-uint16_t word_246D;
-
-unsigned char byte_2476;
 
 uint16_t word_2AA2;
 unsigned char *word_2AA4;
@@ -372,9 +369,6 @@ struct virtual_cpu {
 #define EVENT_FLAG_ALLOW_ANY_CASE 0x02 // Allows lower or upper case input
 
 struct virtual_cpu cpu;
-
-// 0x3854 - 0x3859
-struct mouse_status mouse;
 
 static void run_script(uint8_t script_index, uint16_t src_offset);
 static void sub_CE7(struct viewport_data *vp, uint16_t sprite_offset);
@@ -3809,6 +3803,7 @@ static void sub_4B60()
     cpu.ax = (cpu.ax & 0xFF00) | al;
     sub_35A0(cpu.ax & 0xFF);
   }
+
   // 0x4B76
   sub_4C07(1);
   if (cpu.cf == 0) {
@@ -3877,6 +3872,7 @@ static void sub_4D5C()
   if (timers.timer2 != 0)
     return;
 
+  // Are we in random encounter?
   if (byte_4F2B == 0)
     return;
 
@@ -3889,10 +3885,12 @@ static void sub_4D5C()
     }
     byte_4F2B = 0;
     byte_4F10 = 0xFF;
-  } else {
-    for (int index = 3; index >= 0; index--) {
-      sub_4D97(index);
-    }
+    return;
+  }
+
+  // 0x4D79
+  for (int index = 3; index >= 0; index--) {
+    sub_4D97(index);
   }
 }
 
@@ -4142,16 +4140,7 @@ static void sub_1ABD(uint8_t val)
   reset_ui_background();
 }
 
-// 0x1F10
-static void sub_1F10()
-{
-  if (mouse.enabled == 0) {
-    return;
-  }
 
-  printf("%s: 0x1F17 unimplemented\n", __func__);
-  exit(1);
-}
 
 // 0x2CF5
 // Get timer ticks?
@@ -4160,67 +4149,6 @@ static void sub_2CF5()
   cpu.ax = sys_ticks();
   cpu.ax += random_seed;
   random_seed = cpu.ax;
-}
-
-// 0x3824
-static void poll_mouse()
-{
-  // No support for reading mouse position at this point.
-  // This is determined by 0x3855.
-  cpu.ax = 0;
-
-  mouse.enabled = 0;
-  mouse.x = 0;
-  mouse.y = 0;
-  mouse.clicked = 0;
-}
-
-// 0x2AEE
-// Check if mouse is inbounds on a rectangle?
-static int sub_2AEE()
-{
-  word_246D = 2;
-  cpu.ax = mouse.x;
-  cpu.ax = cpu.ax << 3;
-
-  if (cpu.ax > draw_rect.x) {
-    printf("%s: 0x2BO2 unimplemented\n", __func__);
-    exit(1);
-  }
-
-  if ((word_2AA7 & 0x04) != 0) {
-    cpu.ax = cpu.ax & 0xFF00;
-    word_246D = 0;
-    cpu.cf = 1;
-    return 1;
-  }
-  if ((word_2AA7 & 0x10) != 0) {
-    cpu.ax = mouse.x;
-    if (cpu.ax >= 0xD8) {
-      // 0x2B4B
-      printf("%s: 0x2B4B unimplemented\n", __func__);
-      exit(1);
-    }
-  }
-  // 0x2B81
-  if ((word_2AA7 & 0x20) != 0) {
-    cpu.ax = mouse.x;
-    if (cpu.ax >= 0x10) {
-      printf("%s: 0x2B8E unimplemented\n", __func__);
-      exit(1);
-    }
-  }
-
-  // 0x2BCF
-  return 0;
-}
-
-// 0x3840
-static uint8_t mouse_get_clicked()
-{
-  // Mouse clicked will store the last 2 clicks in the high bits
-  // of mouse.clicked.
-  return mouse.clicked & 0xC0;
 }
 
 // 0x2D0B
@@ -4318,16 +4246,6 @@ static void sub_2A4C(const unsigned char *base)
   }
   al = byte_2AA6;
   cpu.ax = (cpu.ax & 0xFF00) | al;
-}
-
-// 0x1F8F
-static void sub_1F8F()
-{
-  if (byte_2476 == 0)
-    return;
-
-  printf("%s: 0x1F96 unimplemented\n", __func__);
-  exit(1);
 }
 
 // 0x4B10
@@ -4445,8 +4363,9 @@ static void sub_28B0(uint16_t flags, unsigned char **src_ptr, const unsigned cha
       sub_1F10();
     }
     sub_2CF5(); // timer
+    cpu.ax = 0; // Was in poll mouse (still useful?)
     poll_mouse(); // mouse ?
-    sub_2AEE(); // Mouse in bounds?
+    sub_2AEE(word_2AA7); // Mouse in bounds?
     uint8_t clicked = mouse_get_clicked();
     if (clicked == 0x80) {
       printf("%s: 0x2965 unimplemented\n", __func__);
@@ -5884,7 +5803,7 @@ static void op_92(void)
   cpu.ax = data_4A5B[cpu.bx];
   timers.timer4 = cpu.ax;
 
-  while(timers.timer4 != 0) {
+  while (timers.timer4 != 0) {
     poll_mouse();
     uint8_t clicked = mouse_get_clicked();
     if (clicked != 0x80) {
