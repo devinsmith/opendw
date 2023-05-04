@@ -33,9 +33,9 @@ static struct mouse_cursor cursors[6] = {
   { "Pointer with finger", 0x647C },
   { "Hand Stop/Wait cursor", 0x64EE },
   { "Forward",0x6654, },
-    { "Turn around", 0x65D2, },
-    { "Turn right", 0x66C6, },
-    { "Turn left", 0x6550 }
+  { "Turn around", 0x65D2, },
+  { "Turn right", 0x66C6, },
+  { "Turn left", 0x6550 }
 };
 
 static constexpr size_t num_cursors = sizeof(cursors) / sizeof(cursors[0]);
@@ -94,21 +94,10 @@ static void sub_2463(int line_num, int color, int x_off)
   uint16_t ax, cx, dx;
   int line_pos;
   uint16_t save_cx, save_ax;
-  uint8_t byte_2478;
   const uint8_t *ds = cursor->data;
 
-  ax = cursor->height;
-  ax = ax & 0xFF;
-  ax += y_pos;
-  if (ax >= 0xC8) {
-    ax = 0xC8;
-  }
-
-  ax -= y_pos;
-  byte_2478 = ax;
-
   ax = cursor->width;
-  cx = byte_2478;
+  cx = cursor->height;
   cx = cx & 0xff;
   line_pos = y_pos;
 
