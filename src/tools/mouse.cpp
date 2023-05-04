@@ -40,8 +40,8 @@ static struct mouse_cursor cursors[6] = {
 
 static constexpr size_t num_cursors = sizeof(cursors) / sizeof(cursors[0]);
 
-static const size_t fb_width = 320;
-static const size_t fb_height = 200;
+static const int fb_width = 320;
+static const int fb_height = 200;
 static const int BYTES_PER_PIXEL = 3; // RGB
 static const size_t fb_size = fb_width * fb_height * BYTES_PER_PIXEL; // RGB
 static unsigned char *fb_mem;
@@ -78,7 +78,8 @@ static void init_buffers()
   memset(fb_mem, 0, fb_size);
 }
 
-static void sub_2463(int line_num, int color, int x_off)
+// 0x2463
+static void plot_pixel(uint8_t line_num, int color, int x_off)
 {
   size_t fb_off = get_line_offset(line_num);
   fb_off *= BYTES_PER_PIXEL;
@@ -91,55 +92,49 @@ static void sub_2463(int line_num, int color, int x_off)
 
  void sub_23A1(const struct mouse_cursor *cursor, int x_pos, int y_pos)
 {
-  uint16_t ax, cx, dx;
-  int line_pos;
-  uint16_t save_cx, save_ax;
+  int dx;
+  uint8_t line_pos;
   const uint8_t *ds = cursor->data;
 
-  ax = cursor->width;
-  cx = cursor->height;
-  cx = cx & 0xff;
-  line_pos = y_pos;
+  line_pos = (uint8_t)y_pos;
 
   // 241E
-  do {
-    save_cx = cx;
-    save_ax = ax;
-    cx = ax;
+  for (int i = 0; i < cursor->height; i++) {
     dx = x_pos;
     // 0x2426
-    do {
-      ax = *ds++;
-      if (dx >= 0x140) {
+    for (int j = 0; j < cursor->width; j++) {
+      uint8_t pixel_byte = *ds++;
+      if (dx >= fb_width) {
         // 245E
-        cx--;
-        ds += cx;
+        ds += (cursor->width - j);
         break;
       }
-      uint16_t tmp_ax = ax;
-      ax = ax >> 4;
-      ax = ax & 0xF;
-      if (ax != 6) { // Don't plot brown pixels?
-        sub_2463(line_pos, ax, dx);
+
+      // Extract nibble (4 bits) out of byte
+      // Most significant nibble
+      uint8_t msn = pixel_byte;
+      msn = msn >> 4;
+      msn = msn & 0xF;
+      if (msn != 6) { // Don't plot brown pixels?
+        plot_pixel(line_pos, msn, dx);
       }
-      ax = tmp_ax;
+
       dx++;
-      if (dx >= 0x140) {
+      if (dx >= fb_width) {
         // 245E
-        cx--;
-        ds += cx;
+        ds += (cursor->width - j);
         break;
       }
-      ax = ax & 0x0F;
-      if (ax != 6) {
-        sub_2463(line_pos, ax, dx);
+
+      // Least significant nibble
+      pixel_byte = pixel_byte & 0x0F;
+      if (pixel_byte != 6) {
+        plot_pixel(line_pos, pixel_byte, dx);
       }
       dx++;
-    } while (--cx > 0);
+    }
     line_pos++;
-    ax = save_ax;
-    cx = save_cx;
-  } while (--cx > 0);
+  }
 }
 
 static bool load_cursors()
@@ -175,7 +170,8 @@ static bool load_cursors()
 
 int main()
 {
-  load_cursors();
+  if (!load_cursors())
+    return -1;
 
   init_buffers();
 
@@ -198,7 +194,7 @@ int main()
   }
 
   fprintf(imageFile,"P6\n");               // P6 filetype
-  fprintf(imageFile,"%zu %zu\n", fb_width, fb_height);   // dimensions
+  fprintf(imageFile,"%d %d\n", fb_width, fb_height);   // dimensions
   fprintf(imageFile,"255\n");              // Max pixel
 
   fwrite(fb_mem, 1, fb_size, imageFile);
