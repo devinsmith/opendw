@@ -502,7 +502,7 @@ void draw_viewport()
   int ret = ui_rect_redraw(10);
   printf("%s: %d", __func__, ret);
 
-  sub_1F54(0x0a);
+  mouse_restore_screen_buffer(0x0a);
 
   // 0x1175
   ui_update_viewport(0);
@@ -713,7 +713,7 @@ void sub_35A0(uint8_t piece_index)
     exit(1);
   }
 
-  sub_1F54(9);
+  mouse_restore_screen_buffer(9);
 
   draw_ui_piece(&ui_pieces[piece_index]);
 }
@@ -1254,7 +1254,7 @@ void sub_4DE3(uint16_t input, const struct resource *r)
   uint8_t al;
   uint16_t bx, dx, di, saved_si, si;
 
-  sub_1F54(0xA);
+  mouse_restore_screen_buffer(0xA);
 
   si = input;
   al = r->bytes[si];

@@ -25,9 +25,9 @@
 extern "C" {
 #endif
 
-void sub_1F10();
-void sub_1F54(uint8_t al);
-void sub_1F8F();
+void mouse_show_cursor();
+void mouse_restore_screen_buffer(uint8_t al);
+void mouse_disable_cursor();
 int sub_2AEE(uint16_t flags);
 void poll_mouse();
 uint8_t mouse_get_clicked();

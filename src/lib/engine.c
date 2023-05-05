@@ -367,6 +367,7 @@ struct virtual_cpu {
 #define SIGN_FLAG_MASK 0x80
 
 #define EVENT_FLAG_ALLOW_ANY_CASE 0x02 // Allows lower or upper case input
+#define EVENT_FLAG_DISABLE_MOUSE  0x80
 
 struct virtual_cpu cpu;
 
@@ -3316,7 +3317,7 @@ static void sub_176A()
   // 0x176D
   cpu.bx = 0x1777;
   // cpu.cx = cs
-  sub_28B0(0x8080, &ptr, data_1777);
+  sub_28B0(0x8000 | EVENT_FLAG_DISABLE_MOUSE, &ptr, data_1777);
 }
 
 // 0x179B
@@ -4308,7 +4309,7 @@ static void sub_28B0(uint16_t flags, unsigned char **src_ptr, const unsigned cha
   word_2AA4 = *src_ptr;
 
   if ((word_2AA7 & 0x80) != 0) {
-    sub_1F8F();
+    mouse_disable_cursor();
   }
   // 0x28E4
   if ((word_2AA7 & 0x8000) != 0) {
@@ -4360,7 +4361,7 @@ static void sub_28B0(uint16_t flags, unsigned char **src_ptr, const unsigned cha
   // 0x294B:
   while (1) {
     if ((word_2AA7 & 0x0080) == 0) {
-      sub_1F10();
+      mouse_show_cursor();
     }
     sub_2CF5(); // timer
     cpu.ax = 0; // Was in poll mouse (still useful?)
@@ -5813,7 +5814,7 @@ static void op_92(void)
         // 0x4A24
         sub_4D5C();
         sub_4B60();
-        sub_1F10();
+        mouse_show_cursor();
       } else {
         // 4A38
         // mov dl, [0x393C]

@@ -28,8 +28,8 @@
 uint16_t mouse_cursor_idx;
 
 // 0x2476
-// Indicates whether mouse cursor is set?
-unsigned char byte_2476 = 0;
+// Indicates whether mouse cursor is visible?
+unsigned char mouse_cursor_visible = 0;
 
 // 0x3854 - 0x3859
 struct mouse_status mouse;
@@ -40,20 +40,20 @@ uint16_t data_6470[] = { 0x647C, 0x64EE, 0x6654, 0x65D2, 0x66C6, 0x6550 };
 static void sub_2061();
 
 // 0x1F10
-void sub_1F10()
+void mouse_show_cursor()
 {
   if (mouse.enabled == 0) {
     return;
   }
 
-  if (byte_2476 == 0) {
+  if (mouse_cursor_visible == 0) {
     // 0x1F26
     sub_2061(); // Draw mouse cursor
   } else {
     // 0x1F1E
   }
 
-  if (byte_2476 != 0) {
+  if (mouse_cursor_visible != 0) {
     //sub_1F38();
   }
 
@@ -62,20 +62,23 @@ void sub_1F10()
   exit(1);
 }
 
-void sub_1F54(uint8_t al)
+// Restores saved screen buffer where cursor was.
+// 0x1F54
+void mouse_restore_screen_buffer(uint8_t al)
 {
-  if (byte_2476 == 0) {
+  if (mouse_cursor_visible == 0) {
     return;
   }
+
   // 0x1F5B
   printf("%s: 0x1F5B unhandled.\n", __func__);
   exit(1);
 }
 
 // 0x1F8F
-void sub_1F8F()
+void mouse_disable_cursor()
 {
-  if (byte_2476 == 0)
+  if (mouse_cursor_visible == 0)
     return;
 
   printf("%s: 0x1F96 unimplemented\n", __func__);
@@ -89,7 +92,7 @@ static void sub_2061()
 
   //sub_23A1();
 
-  byte_2476 = 0xff;
+  mouse_cursor_visible = 0xff;
 }
 
 // 0x2AEE
@@ -135,8 +138,6 @@ int sub_2AEE(uint16_t flags)
   // 0x2BCF
   return 0;
 }
-
-
 
 // 0x3824
 void poll_mouse()
