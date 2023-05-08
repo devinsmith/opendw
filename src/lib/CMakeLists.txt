@@ -6,7 +6,8 @@ set(TARGET_NAME dragon)
 set(SOURCES
   bufio.c bufio.h compress.c compress.h engine.c engine.h log.c
   log.h mouse.c mouse.h offsets.c offsets.h player.c player.h
-  resource.c resource.h state.c state.h tables.c tables.h ui.c ui.h
+  resource.c resource.h state.c state.h tables.c tables.h
+  timers.c timers.h ui.c ui.h
   utils.c utils.h vga.c vga.h)
 
 add_library(${TARGET_NAME} STATIC ${SOURCES})

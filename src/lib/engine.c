@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "compress.h"
 #include "engine.h"
@@ -28,6 +29,7 @@
 #include "resource.h"
 #include "state.h"
 #include "tables.h"
+#include "timers.h"
 #include "ui.h"
 #include "utils.h"
 #include "vga.h"
@@ -80,12 +82,17 @@ unsigned short data_19FE[] = {
 // 0x1BC5 -> 0x1BC8 ?
 unsigned char data_1BC5[] = { 0x1C, 0x1C, 0x1C, 0x1E};
 
-static unsigned char data_1BD1[] = { 0x22, 0x44, 0xA7, 0x18, 0xA0 };
-static unsigned char data_1BD6[] = { 0x83, 0xD5, 0x27, 0xB8, 0xC5, 0x0 };
-static unsigned char data_1BDC[] = { 0x94, 0xE8, 0xE7, 0x18, 0xA0 };
-static unsigned char data_1BE1[] = { 0x29, 0x84, 0x50, 0x0};
+// 0x1BD1
+static unsigned char str_chained[] = { 0x22, 0x44, 0xA7, 0x18, 0xA0 }; // chained
+// 0x1BD6
+static unsigned char str_poisoned[] = { 0x83, 0xD5, 0x27, 0xB8, 0xC5, 0x0 }; // poisoned
+// 0x1BDC
+static unsigned char str_stunned[] = { 0x94, 0xE8, 0xE7, 0x18, 0xA0 }; // stunned
+// 0x1BE1
+static unsigned char str_dead[] = { 0x29, 0x84, 0x50, 0x0}; // dead
 
-unsigned char *data_1BC9_table[4] = { data_1BD1, data_1BD6, data_1BDC, data_1BE1 };
+// 0x1BC9
+static unsigned char *str_table_status[4] = { str_chained, str_poisoned, str_stunned, str_dead };
 
 uint8_t byte_1CE1 = 0;
 uint8_t byte_1CE2 = 0;
@@ -288,18 +295,6 @@ unsigned char data_5897[256];
 // 0x4C31 - 0x4C34
 unsigned char word_4C31[4];
 
-/* Timers? */
-struct timer_ctx {
-  uint8_t  timer0; // 0x4C35
-  uint8_t  timer1; // 0x4C36
-  uint8_t  timer2; // 0x4C37
-  uint16_t timer3; // 0x4C38
-  uint16_t timer4; // 0x4C3A
-  uint8_t  timer5; // 0x4C3C (appears to be more of a flag)
-};
-
-struct timer_ctx timers;
-
 unsigned short data_5A04[128]; // offsets
 unsigned char data_5A56[128]; // 0x5A56-0x5AD5 (? pre-loaded)
 
@@ -338,6 +333,8 @@ struct virtual_cpu {
   uint8_t cf;
   uint8_t zf;
   uint8_t sf;
+
+  bool key_wait_inited;
 
   // program counter
   unsigned char *pc;
@@ -387,7 +384,7 @@ static void sub_1ABD(uint8_t val);
 static void sub_1BF8(uint8_t color, uint8_t y_adjust);
 static void sub_1C70(unsigned char *src_ptr);
 static void sub_280E();
-static void sub_28B0(uint16_t flags, unsigned char **src_ptr, const unsigned char *base);
+static void sub_28B0(uint16_t flags, unsigned char *src_ptr, const unsigned char *base);
 static void set_ui_header(unsigned char *base_ptr, uint16_t offset);
 static void sub_2CF5();
 static void sub_3F2F();
@@ -715,7 +712,7 @@ struct op_call_table targets[] = {
   { wait_event, "0x4977" },
   { op_8A, "0x498E" },
   { op_8B, "0x499B" },
-  { prompt_no_yes, "0x49A5" },
+  { prompt_no_yes, "0x49A5" }, // op_8C
   { op_read_string, "0x49D3" },
   { NULL, "0x0000" },
   { NULL, "0x49DD" },
@@ -3317,7 +3314,7 @@ static void sub_176A()
   // 0x176D
   cpu.bx = 0x1777;
   // cpu.cx = cs
-  sub_28B0(0x8000 | EVENT_FLAG_DISABLE_MOUSE, &ptr, data_1777);
+  sub_28B0(0x8000 | EVENT_FLAG_DISABLE_MOUSE, ptr, data_1777);
 }
 
 // 0x179B
@@ -3568,6 +3565,7 @@ static void op_7D(void)
   write_character_name();
 }
 
+// 0x1BE6
 static void sub_1BE6(int counter)
 {
   counter -= draw_point.x;
@@ -4135,7 +4133,7 @@ static void sub_1ABD(uint8_t val)
   sub_1C70(data_1BAA);
   // 1BAD
 
-  extract_string(data_1BC9_table[si], 0, handle_byte_callback);
+  extract_string(str_table_status[si], 0, handle_byte_callback);
   al = 0x27;
   sub_1BE6(0x27);
   reset_ui_background();
@@ -4249,18 +4247,6 @@ static void sub_2A4C(const unsigned char *base)
   cpu.ax = (cpu.ax & 0xFF00) | al;
 }
 
-// 0x4B10
-static void timer_tick_proc()
-{
-  if (timers.timer2 > 0) {
-    timers.timer2--;
-  }
-
-  if (timers.timer4 > 0) {
-    timers.timer4--;
-  }
-}
-
 // 0x28B0
 // The inputs here have to do with the keys we accept.
 // Inputs:
@@ -4272,91 +4258,94 @@ static void timer_tick_proc()
 //
 // First two bytes are some sort of flag, 0x8000 indicates that
 // we draw an escape table
-static void sub_28B0(uint16_t flags, unsigned char **src_ptr, const unsigned char *base)
+static void sub_28B0(uint16_t flags, unsigned char *src_ptr, const unsigned char *base)
 {
   uint8_t al;
   uint8_t ah;
   uint8_t bl;
   uint8_t bh;
 
-  ui_draw_string();
-
-  bl = cpu.bx & 0xFF;
-
-  // 0x28BA
-  word_2AA7 = flags;
-  cpu.ax = flags;
-
-  // cpu.ax &= 20FF
-  ah = (cpu.ax & 0xFF00) >> 8;
-  ah = ah & 0x20;
-  al = cpu.ax & 0xFF;
-  cpu.ax = (ah << 8) | al;
-
-  printf("%s: 2AA7: 0x%04X AX: 0x%04X\n", __func__, word_2AA7, cpu.ax);
-
-  timers.timer5 = ah;
-  // extract 0x2AA8
-  al = (word_2AA7 & 0xFF00) >> 8;
-  al = al & 0x10;
-  if (al != 0) {
-    al = **src_ptr;
-    (*src_ptr)++;
-  }
-  byte_2AA9 = al;
-  word_2AA2 = *src_ptr - base; // is this correct? (si)
-
-  word_2AA4 = *src_ptr;
-
-  if ((word_2AA7 & 0x80) != 0) {
-    mouse_disable_cursor();
-  }
-  // 0x28E4
-  if ((word_2AA7 & 0x8000) != 0) {
-    // 0x28EB
-    al = draw_rect.h;
-    al -= 8;
-    draw_point.y = al;
-    // 0x32BF, 0x32C1, 0x80
-    ui_set_byte_3236(0);
-
-    bl = (word_2AA7 & 0xFF00) >> 8;
-    cpu.bx = (cpu.bx & 0xFF00) | bl;
-    cpu.bx = cpu.bx & 0x3;
-    al = draw_rect.w;
-    al -= draw_rect.x;
-    al -= escape_string_table[cpu.bx];
-    if (al <= 0) {
-      al = 0;
-    }
-    al = al >> 1;
-    al += draw_rect.x;
-    draw_point.x = al;
-    cpu.bx = cpu.bx << 1;
-    bl = cpu.bx & 0xFF;
-    printf("%s: bl = 0x%02X\n", __func__, bl);
-    // mov bx, [bx + 0x2A6C]
-    cpu.bx = escape_string_table[bl + 4];
-    cpu.bx += escape_string_table[bl + 5] << 8;
-
-    printf("%s: cpu.bx = 0x%04X\n", __func__, cpu.bx);
-
-    cpu.bx = extract_string(escape_string_table, (cpu.bx - 0x2A68), handle_byte_callback);
+  if (!cpu.key_wait_inited) {
     ui_draw_string();
 
-    bl = draw_point.y;
-    bl -= draw_rect.y;
-    bl = bl >> 3;
-    al = 0xFF;
-    data_2AAA[bl] = 0xFF;
-    data_2AAA[bl + 25] = 0x9B; // ESC?
-  }
+    bl = cpu.bx & 0xFF;
 
-  // 0x2942
-  sub_4D5C();
-  sub_4B60();
-  sub_1A72();
-  printf("%s: word_2AA7: 0x%04X\n", __func__, word_2AA7);
+    // 0x28BA
+    word_2AA7 = flags;
+    cpu.ax = flags;
+
+    // cpu.ax &= 20FF
+    ah = (cpu.ax & 0xFF00) >> 8;
+    ah = ah & 0x20;
+    al = cpu.ax & 0xFF;
+    cpu.ax = (ah << 8) | al;
+
+    printf("%s: 2AA7: 0x%04X AX: 0x%04X\n", __func__, word_2AA7, cpu.ax);
+
+    timers.timer5 = ah;
+    // extract 0x2AA8
+    al = (word_2AA7 & 0xFF00) >> 8;
+    al = al & 0x10;
+    if (al != 0) {
+      al = *src_ptr;
+      src_ptr++;
+    }
+    byte_2AA9 = al;
+    word_2AA2 = src_ptr - base; // is this correct? (si)
+
+    word_2AA4 = src_ptr;
+
+    if ((word_2AA7 & 0x80) != 0) {
+      mouse_disable_cursor();
+    }
+    // 0x28E4
+    if ((word_2AA7 & 0x8000) != 0) {
+      // 0x28EB
+      al = draw_rect.h;
+      al -= 8;
+      draw_point.y = al;
+      // 0x32BF, 0x32C1, 0x80
+      ui_set_byte_3236(0);
+
+      bl = (word_2AA7 & 0xFF00) >> 8;
+      cpu.bx = (cpu.bx & 0xFF00) | bl;
+      cpu.bx = cpu.bx & 0x3;
+      al = draw_rect.w;
+      al -= draw_rect.x;
+      al -= escape_string_table[cpu.bx];
+      if (al <= 0) {
+        al = 0;
+      }
+      al = al >> 1;
+      al += draw_rect.x;
+      draw_point.x = al;
+      cpu.bx = cpu.bx << 1;
+      bl = cpu.bx & 0xFF;
+      printf("%s: bl = 0x%02X\n", __func__, bl);
+      // mov bx, [bx + 0x2A6C]
+      cpu.bx = escape_string_table[bl + 4];
+      cpu.bx += escape_string_table[bl + 5] << 8;
+
+      printf("%s: cpu.bx = 0x%04X\n", __func__, cpu.bx);
+
+      cpu.bx = extract_string(escape_string_table, (cpu.bx - 0x2A68), handle_byte_callback);
+      ui_draw_string();
+
+      bl = draw_point.y;
+      bl -= draw_rect.y;
+      bl = bl >> 3;
+      al = 0xFF;
+      data_2AAA[bl] = 0xFF;
+      data_2AAA[bl + 25] = 0x9B; // ESC?
+    }
+
+    // 0x2942
+    sub_4D5C();
+    sub_4B60();
+    sub_1A72();
+    printf("%s: word_2AA7: 0x%04X\n", __func__, word_2AA7);
+  }
+  cpu.key_wait_inited = true;
 
   // 0x294B:
   while (1) {
@@ -4416,6 +4405,7 @@ static void sub_28B0(uint16_t flags, unsigned char **src_ptr, const unsigned cha
     if ((word_2AA7 & 0x40) != 0) {
       sub_2ADC();
       cpu.bx = word_2AA2;
+      cpu.key_wait_inited = false;
       return;
     }
 
@@ -4423,7 +4413,7 @@ static void sub_28B0(uint16_t flags, unsigned char **src_ptr, const unsigned cha
     // ax = word_2AA4
     cpu.di = word_2AA2;
     cpu.di -= 3;
-    *src_ptr -= 3;
+    src_ptr -= 3;
 
     uint8_t dl = byte_2AA6;
 
@@ -4435,6 +4425,7 @@ static void sub_28B0(uint16_t flags, unsigned char **src_ptr, const unsigned cha
       cpu.ax = (cpu.ax & 0xFF00) | al;
       if (al == 0) {
         sub_2A4C(base);
+        cpu.key_wait_inited = false;
         return;
       }
       if (al == 0xFF) {
@@ -4466,6 +4457,7 @@ static void sub_28B0(uint16_t flags, unsigned char **src_ptr, const unsigned cha
           }
 
           sub_2A4C(base);
+          cpu.key_wait_inited = false;
           return;
         }
       }
@@ -4499,18 +4491,21 @@ static void sub_28B0(uint16_t flags, unsigned char **src_ptr, const unsigned cha
               continue;
             }
             sub_2A4C(base);
+            cpu.key_wait_inited = false;
             return;
           }
           // Did user press this key??
           if (al == byte_2AA6) {
             // 0x2A4C
             sub_2A4C(base);
+            cpu.key_wait_inited = false;
             return;
           }
         }
       }
     }
   }
+  cpu.key_wait_inited = false;
 }
 
 #if 0
@@ -4672,7 +4667,7 @@ static void sub_2C00()
 
   cpu.bx = 0x2C0E; // function pointer.
   unsigned char *ptr = data_2C0E;
-  sub_28B0(0x8204, &ptr, data_2C0E);
+  sub_28B0(0x8204, ptr, data_2C0E);
   draw_pattern(&draw_rect);
 }
 
@@ -4700,7 +4695,7 @@ static void wait_event(void)
   flags = *cpu.pc++;
   flags += *cpu.pc++ << 8;
 
-  sub_28B0(flags, &cpu.pc, cpu.base_pc);
+  sub_28B0(flags, cpu.pc, cpu.base_pc);
 
   // 0x4984 (A good idea to break here, so you can trap keypresses).
   // the key pressed will be in AX (OR'd with 0x80).
@@ -4851,7 +4846,7 @@ static void sub_1E49()
   while (1) {
     cpu.bx = 0x1EB9; // function pointer.
     unsigned char *ptr = data_1EB9;
-    sub_28B0(0x00C0 | EVENT_FLAG_ALLOW_ANY_CASE, &ptr, data_1EB9);
+    sub_28B0(0x00C0 | EVENT_FLAG_ALLOW_ANY_CASE, ptr, data_1EB9);
 
     // Checking for keys.
     al = cpu.ax & 0xFF;
@@ -5656,7 +5651,7 @@ static void prompt_no_yes()
   sub_1C70(data_49AB);
   cpu.bx = 0x49CA;
   unsigned char *ptr = data_49CA;
-  sub_28B0(0, &ptr, data_49CA);
+  sub_28B0(0, ptr, data_49CA);
   uint8_t key = cpu.ax;
 
   draw_pattern(&draw_rect);
@@ -6321,12 +6316,7 @@ static void run_script(uint8_t script_index, uint16_t src_offset)
 void run_engine()
 {
   // Initialize timers.
-  timers.timer0 = 1;
-  timers.timer1 = 1;
-  timers.timer2 = 1;
-  timers.timer3 = 1;
-  timers.timer4 = 1;
-  timers.timer5 = 0;
+  initialize_timers();
 
   game_state.unknown[8] = 0xFF;
   memset(&cpu, 0, sizeof(struct virtual_cpu));
