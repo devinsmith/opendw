@@ -63,7 +63,7 @@ void vga_waitkey();
 void vga_end();
 void vga_addkey(int key);
 int vga_getkey2();
-void vga_poll_events();
+int vga_poll_events();
 void sys_delay(unsigned int ms);
 unsigned short sys_ticks();
 
