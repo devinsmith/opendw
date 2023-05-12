@@ -282,6 +282,9 @@ unsigned short sprite_indices[] = {
 unsigned char data_56C6[128]; // should be 16 (not 128)
 unsigned char data_56E5[128];
 
+// Sky patterns
+// 0x575C
+unsigned short data_575C[] = { 0x4040, 0x0404, 0, 0 };
 
 static struct resource *data_59E4[128];
 
@@ -5045,8 +5048,22 @@ static void sub_5523()
     return; // 0x5558
   }
   // 0x5529
-  printf("%s 0x5529 unimplemented,\n", __func__);
-  exit(1);
+  if ((game_state.unknown[0x23] & 0x2) != 0) {
+    // 0x5530
+    printf("%s 0x5530 unimplemented,\n", __func__);
+    exit(1);
+  }
+  // 0x5546
+  // mov byte [551E], 80
+  byte_551E = 0x80;
+  if (bl < 0x80) {
+    bl = game_state.unknown[0x22];
+    bl--;
+    cpu.bx = (cpu.bx & 0xFF00) | bl;
+    return;
+  }
+  // 0x5556
+  cpu.bx = cpu.bx & 0xFF00;
 }
 
 // 0x5559
@@ -5393,14 +5410,16 @@ static void sub_CE7(struct viewport_data *vp, uint16_t sprite_offset)
   sub_CF8(vp->data, vp);
 }
 
-static void sub_56FC()
+// 0x56FC
+// Draw sky inside viewport
+static void draw_viewport_sky()
 {
   uint8_t al, bl;
   int tmp_carry;
   struct resource *r;
   struct viewport_data vp;
 
-  bl = data_5A56[0x1C]; // 0x5A72 ?
+  bl = data_5A56[0x16]; // 0x5A6C
 
   // rcl 4 times
   cpu.cf = 0; // XXX, maybe not correct.
@@ -5436,10 +5455,24 @@ static void sub_56FC()
     // 5732
     sub_CE7(&vp, cpu.bx);
   } else {
+    int dx = 88;
+    cpu.bx = 0;
+    unsigned char *vp = ui_get_viewport_mem();
+    // 0x5741
+    do {
+      // 0x4F11 is viewport memory
+      if (dx < 0x28) {
+        cpu.bx |= 2;
+      }
+      cpu.ax = data_575C[cpu.bx];
 
-    // 0x5735
-    printf("%s 0x5735 unimplemented 0x%04X\n", __func__, cpu.bx);
-    exit(1);
+      for (int i = 0; i < 40; i++) {
+        *vp++ = (cpu.ax & 0xFF00) >> 8;
+        *vp++ = cpu.ax & 0xFF;
+      }
+      cpu.bx = cpu.bx ^ 1;
+      dx--;
+    } while (dx >= 0);
   }
 }
 
@@ -5538,7 +5571,7 @@ static void refresh_viewport()
   }
   // 0x523E
   cache_resources();
-  sub_56FC();
+  draw_viewport_sky();
 
   // Components of the ground (9 sprites).
   // These are drawn in the following order:
