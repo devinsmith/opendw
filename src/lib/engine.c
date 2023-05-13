@@ -4313,6 +4313,7 @@ static void sub_28B0(uint16_t flags, unsigned char *src_ptr, const unsigned char
       bl = (word_2AA7 & 0xFF00) >> 8;
       cpu.bx = (cpu.bx & 0xFF00) | bl;
       cpu.bx = cpu.bx & 0x3;
+
       al = draw_rect.w;
       al -= draw_rect.x;
       al -= escape_string_table[cpu.bx];
@@ -4324,12 +4325,12 @@ static void sub_28B0(uint16_t flags, unsigned char *src_ptr, const unsigned char
       draw_point.x = al;
       cpu.bx = cpu.bx << 1;
       bl = cpu.bx & 0xFF;
-      printf("%s: bl = 0x%02X\n", __func__, bl);
+      printf("%s: Escape string number = 0x%02X\n", __func__, bl);
       // mov bx, [bx + 0x2A6C]
       cpu.bx = escape_string_table[bl + 4];
       cpu.bx += escape_string_table[bl + 5] << 8;
 
-      printf("%s: cpu.bx = 0x%04X\n", __func__, cpu.bx);
+      printf("%s: Escape String offset = 0x%04X\n", __func__, cpu.bx);
 
       cpu.bx = extract_string(escape_string_table, (cpu.bx - 0x2A68), handle_byte_callback);
       ui_draw_string();
@@ -6358,7 +6359,7 @@ void run_engine()
   ui_set_background(0x0000); // Not correct.
 
   // load common "ESC" string table (compressed bits).
-  escape_string_table = com_extract(0x2A68, 0x39);
+  escape_string_table = com_extract(0x2A68, 58);
 
   // load unknown data from COM file.
   data_D760 = com_extract(0xD760, 0x700);
