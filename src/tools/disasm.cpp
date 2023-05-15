@@ -186,7 +186,7 @@ const op_code op_codes[] = {
   { "malloc(word_3AE2)", nullptr, 0 }, // op_84
   { "resource_release", nullptr, 0 }, // op_85
   { "word_3AE2 = load_resource(word_3AE2)", nullptr, 0 }, // op_86
-  { nullptr, nullptr, 0 },
+  { "write_resource(word_3AE2)", nullptr, 0 },
   { "wait_escape", nullptr, 0 }, // op_88
   { "wait_event", wait_event, 0 }, // op_89
   { "random_encounter?", nullptr, 0 }, // op_8A

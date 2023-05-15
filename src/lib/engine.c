@@ -548,6 +548,7 @@ static void op_83();
 static void op_84();
 static void op_85();
 static void load_word3AE2_resource();
+static void op_87();
 static void op_wait_escape();
 static void wait_event();
 static void op_8A();
@@ -710,7 +711,7 @@ struct op_call_table targets[] = {
   { op_84, "0x4907" },
   { op_85, "0x4920" },
   { load_word3AE2_resource, "0x493E" },
-  { NULL, "0x4955" },
+  { op_87, "0x4955" },
   { op_wait_escape, "0x496D" },
   { wait_event, "0x4977" },
   { op_8A, "0x498E" },
@@ -3758,6 +3759,17 @@ static void load_word3AE2_resource(void)
   cpu.ax = r->index;
   uint8_t ah = (cpu.ax & 0xFF00) >> 8;
   word_3AE2 = (ah & byte_3AE1) | (cpu.ax & 0x00FF);
+}
+
+// 0x4955
+// op_87
+static void op_87(void)
+{
+  int found = find_index_by_tag(word_3AE2);
+  if (found != -1) {
+    const struct resource *r = resource_get_by_index(found);
+    resource_write_to_disk(word_3AE2, r);
+  }
 }
 
 // 0x4C07

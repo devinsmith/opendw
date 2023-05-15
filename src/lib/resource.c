@@ -280,6 +280,47 @@ resource_load_cache_miss(enum resource_section sec)
   return res;
 }
 
+// 0x2F4D
+void resource_write_to_disk(enum resource_section sec, const struct resource *res)
+{
+  int i;
+  unsigned int offset = sizeof(data1_hdr);
+  FILE *fp;
+  size_t n;
+  uint16_t len;
+
+  buf_reset(header_rdr);
+  for (i = 0; i < sec; i++) {
+    uint16_t header_val = buf_get16le(header_rdr);
+    if (header_val < 0xFF00) {
+      offset += header_val;
+    }
+  }
+  len = buf_get16le(header_rdr);
+  printf("Section (0x%02x), Offset: 0x%04x Size: 0x%04x\n", sec, offset,
+         (unsigned int)len);
+
+  if (sec > 0x17) {
+    fprintf(stderr, "No support for compression when writing resources.\n");
+    exit(1);
+  }
+
+  fp = fopen("data1", "r+b");
+  if (fp == NULL) {
+    fprintf(stderr, "Failed to open data1 file.\n");
+    return;
+  }
+
+  fseek(fp, offset, SEEK_SET);
+  n = fwrite(res->bytes, 1, res->len, fp);
+  if (n != res->len) {
+    fprintf(stderr, "Failed to write section to data1 file.\n");
+    fclose(fp);
+    return;
+  }
+  fclose(fp);
+}
+
 /* The DOS COM executable format sets the origin by default at 0x100. So when
  * extracting from COM files we subtract this from the offset.
  *

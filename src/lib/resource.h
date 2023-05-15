@@ -61,6 +61,7 @@ void resource_set_flagged(int index);
 
 // 0x2EB0
 struct resource* resource_load(enum resource_section sec);
+void resource_write_to_disk(enum resource_section sec, const struct resource *res);
 
 int find_index_by_tag(int tag);
 unsigned char *com_extract(size_t off, size_t sz);
