@@ -2,7 +2,7 @@ Disassembling script0.bin (1148 bytes)
 
 0x0000: .byte
 0x0001: ui_header $("Interplay")
-0x0009: call 0x032a
+0x0009: call 0x032A
 0x000C: jc 0x0090
 
 # Saved game
@@ -205,11 +205,12 @@ Disassembling script0.bin (1148 bytes)
 # Because each player record is 512 bytes, that is why we
 # loop 7*2 (0xE) 14 times.
 
-0x032A: word_3AE2 = 0x07
+0x032A: word_3AE2 = 0x07    # Max number of players (also character data)
 0x032C: word_3AE2 = load_resource(word_3AE2)
 0x032D: gamestate[0x98] = word_3AE2
 0x032F: gamestate[0x43] = 0x01
 0x0332: .word
+
 0x0333: gamestate[0x96] = 0
         gamestate[0x97] = 0
 0x0335: gamestate[0x41] = 0
@@ -222,12 +223,13 @@ Disassembling script0.bin (1148 bytes)
         word_3AE2 = resource_idx(gamestate[0x98])->bytes[offset]
         word_3AE2 += resource_idx(gamestate[0x98])->bytes[offset + 1] << 8
 0x033C: store_data_resource 0x41
-0x033E: loop 0x033a
+0x033E: loop 0x033A
+
 0x0341: inc game_state[0x42]
 0x0343: inc game_state[0x97]
 0x0345: word_3AE2 = gamestate[0x42]
-0x0347: cmp word_3EA2, 0x0e
-0x0349: jnc 0x033a
+0x0347: cmp word_3EA2, 0x0E
+0x0349: jnc 0x033A
 
 
 # Cleanup
@@ -237,7 +239,7 @@ Disassembling script0.bin (1148 bytes)
 0x0352: resource_release
 0x0353: word_3AE2 = gamestate[0x5A]
 0x0355: test word_3AE2
-0x0356: jz 0x035a
+0x0356: jz 0x035A
 0x0359: resource_release
 
 
@@ -256,7 +258,7 @@ Disassembling script0.bin (1148 bytes)
         word_3AE2 = resource_idx(gamestate[0x98])->bytes[offset]
         word_3AE2 += resource_idx(gamestate[0x98])->bytes[offset + 1] << 8
 0x0366: gamestate[word_3AE4 + 0x00] = word_3AE2
-0x0368: loop 0x035a
+0x0368: loop 0x035A
 
 0x036B: gamestate[0x5b] = 0xFF
 0x036D: gamestate[0x57] = 0xFF
@@ -283,7 +285,7 @@ Disassembling script0.bin (1148 bytes)
 # Is this a saved game?
 0x0384: word_3AE2 = gamestate[0x02]
 0x0386: cmp word_3EA2, 0xff
-0x0388: jz 0x03c5
+0x0388: jz 0x03C5
 
 # Yes, it is a saved game.
 0x038B: gamestate[0x04] = word_3AE2
