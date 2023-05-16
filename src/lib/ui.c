@@ -227,9 +227,9 @@ static void process_quadrant(const struct viewport_data *d, unsigned char *data)
 // 0xDEB
 static void sub_DEB(const struct viewport_data *d, unsigned char *data)
 {
-  uint16_t ax, bx, old_ax, newx, cx;
-  uint16_t newy, dx;
-  uint8_t al, dl;
+  uint16_t ax, old_ax, newx, cx;
+  uint16_t dx = 0;
+  uint8_t dl;
   int sign;
   int word_104A;
   uint8_t byte_104C;
@@ -259,8 +259,6 @@ static void sub_DEB(const struct viewport_data *d, unsigned char *data)
   }
   // 0xE0F
   byte_104C = dl;
-  newy = d->ypos;
-  newy = newy << 1;
 
   offset = get_offset(d->ypos);
   offset += newx;
@@ -271,27 +269,26 @@ static void sub_DEB(const struct viewport_data *d, unsigned char *data)
   cx = word_104A;
   // 0xE35
   unsigned char *p = data + offset;
-  unsigned char *ds = d->data + 4;
+  unsigned char *si = d->data + 4;
 
   // 1048 = 13 ?
   for (int i = 0; i < d->numruns; i++) {
     for (int j = 0; j < cx; j++) {
-      al = *ds;
-      ax = (ax & 0xFF00) | al;
-      bx = ax;
+      unsigned char val = *si;
 
       dx = p[0];
       dx += p[1] << 8;
 
-      dx &= get_and_table_B452(bx);
-      dx |= get_or_table_B652(bx);
+      dx &= get_and_table_B452(val);
+      dx |= get_or_table_B652(val);
 
       *p = dx & 0xFF;
       p++;
       *p = (dx & 0xFF00) >> 8;
       printf("(0x%04X) ", dx);
-      ds++;
+      si++;
     }
+    printf("\n");
     // 0xE4C
     *p = (dx & 0xFF);
     if (byte_104C < 0x80) {
@@ -302,6 +299,7 @@ static void sub_DEB(const struct viewport_data *d, unsigned char *data)
     // offset += 1055
     offset += word_1055;
     p = data + offset;
+    si += (d->runlength - word_104A);
   }
 }
 

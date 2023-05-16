@@ -5655,7 +5655,8 @@ static void refresh_viewport()
 
         // 52D1
         //
-        r = data_59E4[cpu.di >> 1];
+        r = data_59E4[cpu.di >> 1]; // resource
+        printf("%s: Drawing component %d (tag: %d)\n", __func__, counter, r->tag);
         word_1051 = r;
         word_104F = 0;
         vp.xpos = data_558F[counter];
