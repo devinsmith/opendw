@@ -1,0 +1,195 @@
+Disassembling script11.bin (877 bytes)
+0x0000: jmp 0x0012
+0x0003: jmp 0x003f
+0x0006: jmp 0x0066
+0x0009: jmp 0x007b
+0x000C: jmp 0x00a2
+0x000F: jmp 0x0215
+0x0012: load_resource res: 0x0b, offset: 0x003f
+0x0016: gamestate[0x41] = 0xFF
+0x0018: var al = game_state[6]
+        for (game_state[6] < game_state[0x1F]; game_state[6]++) {
+          call 0x001E
+        }
+        game_state[6] = al
+0x001B: test game_state[0x41]
+0x001D: retf
+0x001E: test game_state[0x41]
+0x0020: jz 0x003e
+0x0023: word_3AE4 = gamestate[0xD9]
+0x0025: push_byte(word_3AE4 & 0xFF)
+0x0026: data_res = resource_get(pop_byte())
+0x0027: .word
+0x0028: word_3AE2 = gamestate[0xD7]
+0x002A: op_64
+0x002B: .byte
+0x002C: jnz 0x003e
+0x002F: gamestate[0x41] = 0
+0x0031: write_character_name
+0x0032: set_msg $(" gets the ")
+0x003A: op_7E 0x09
+0x003C: op_AE
+0x003D: write_number
+0x003E: ret
+0x003F: push (word|byte)
+0x0040: test word_3AE2
+0x0041: .word
+0x0042: js 0x0059
+0x0045: set loop = 0x06
+0x0047: gamestate[0x58] = 0
+        gamestate[0x59] = 0
+0x0049: var offset = gamestate[0x58]
+        offset += gamestate[0x59] << 8
+        offset += word_3AE4
+        word_3AE2 = resource_idx(gamestate[0x5A])->bytes[offset]
+        word_3AE2 += resource_idx(gamestate[0x5A])->bytes[offset + 1] << 8
+0x004B: gamestate[0x58] = word_3AE2
+0x004D: pop byte
+0x004E: shl byte [word_3AE4], 1
+0x004F: var offset = gamestate[0x58]
+        offset += gamestate[0x59] << 8
+        offset += word_3AE4
+        word_3AE2 = resource_idx(gamestate[0x5A])->bytes[offset]
+        word_3AE2 += resource_idx(gamestate[0x5A])->bytes[offset + 1] << 8
+0x0051: gamestate[0xd7] = word_3AE2
+0x0053: .byte
+0x0054: word_3AE4 = gamestate[0x5A]
+0x0056: gamestate[0xd9] = word_3AE4
+0x0058: retf
+0x0059: pop byte
+0x005A: shl byte [word_3AE4], 1
+0x005B: op_0D 0x0354
+0x005E: gamestate[0xd7] = word_3AE2
+0x0060: .byte
+0x0061: push_byte(running_script_idx)
+0x0062: pop byte
+0x0063: gamestate[0xd9] = word_3AE4
+0x0065: retf
+0x0066: load_resource res: 0x0b, offset: 0x003f
+0x006A: push_byte(word_3AE4 & 0xFF)
+0x006B: data_res = resource_get(pop_byte())
+0x006C: .word
+0x006D: word_3AE2 = gamestate[0xD7]
+0x006F: op_64
+0x0070: .byte
+0x0071: jz 0x0079
+0x0074: call 0x008e
+0x0077: wait_escape
+0x0078: retf
+0x0079: clc
+0x007A: retf
+0x007B: load_resource res: 0x0b, offset: 0x003f
+0x007F: push_byte(word_3AE4 & 0xFF)
+0x0080: data_res = resource_get(pop_byte())
+0x0081: .word
+0x0082: word_3AE2 = gamestate[0xD7]
+0x0084: op_64
+0x0085: .byte
+0x0086: jz 0x0079
+0x0089: wait_escape
+0x008A: call 0x008e
+0x008D: retf
+0x008E: draw_pattern
+0x008F: write_character_name
+0x0090: set_msg $(" can't carry any more.")
+0x00A0: stc
+0x00A1: ret
+0x00A2: op_73
+0x00A3: .word
+0x00A4: peek_and_pop
+0x00A5: gamestate[0x41] = word_3AE2
+0x00A7: peek_and_pop
+0x00A8: gamestate[0x93] = word_3AE2
+0x00AA: word_3AE4 = gamestate[0x42]
+0x00AC: gamestate[0x95] = word_3AE4
+0x00AE: word_3AE4 = 0
+0x00AF: var offset = gamestate[0x93]
+        offset += gamestate[0x94] << 8
+        offset += word_3AE4
+        word_3AE2 = resource_idx(gamestate[0x95])->bytes[offset]
+        word_3AE2 += resource_idx(gamestate[0x95])->bytes[offset + 1] << 8
+0x00B1: push (word|byte)
+0x00B2: word_3AE2 = gamestate[0x41]
+0x00B4: push (word|byte)
+0x00B5: .byte
+0x00B6: gamestate[0x4f] = 0
+0x00B8: set loop = 0x03
+0x00BA: var offset = gamestate[0x93]
+        offset += gamestate[0x94] << 8
+        offset += word_3AE4
+        word_3AE2 = resource_idx(gamestate[0x95])->bytes[offset]
+        word_3AE2 += resource_idx(gamestate[0x95])->bytes[offset + 1] << 8
+0x00BC: word_3ADF[0x00ce] = word_3AE2
+0x00BF: word_3ADF[0x01ed] = word_3AE2
+0x00C2: dec [mem]
+0x00C3: var offset = gamestate[0x93]
+        offset += gamestate[0x94] << 8
+        offset += word_3AE4
+        word_3AE2 = resource_idx(gamestate[0x95])->bytes[offset]
+        word_3AE2 += resource_idx(gamestate[0x95])->bytes[offset + 1] << 8
+0x00C5: gamestate[0x45] = word_3AE2
+0x00C7: cmp word_3EA2, 0xff
+0x00C9: jz 0x00d2
+0x00CC: inc byte [word_3AE4]
+0x00CD: op_50
+0x00CE: .word
+0x00CF: jz 0x01ee
+0x00D2: draw_rectangle 0x07, 0x18, 0x21, 0xa8
+0x00D7: .word
+0x00D8: word_3AE2 = word_3AE4
+0x00D9: inc word_3AE2
+0x00DA: op_2F 0x93
+0x00DC: gamestate[0x93] = word_3AE2
+0x00DE: word_3AE4 = 0
+0x00DF: var offset = gamestate[0x93]
+        offset += gamestate[0x94] << 8
+        offset += word_3AE4
+        word_3AE2 = resource_idx(gamestate[0x95])->bytes[offset]
+        word_3AE2 += resource_idx(gamestate[0x95])->bytes[offset + 1] << 8
+0x00E1: word_3AE2 &= 0x00ff
+0x00E4: test word_3AE2
+0x00E5: word_3AE2 = gamestate[0x93]
+0x00E7: inc word_3AE2
+0x00E8: jz 0x00f2
+0x00EB: dec word_3AE2
+0x00EC: word_3AE4 = gamestate[0x95]
+0x00EE: push_byte(word_3AE4 & 0xFF)
+0x00EF: data_res = resource_get(pop_byte())
+0x00F0: extract_string
+0x00F1: wait_escape
+0x00F2: gamestate[0x93] = word_3AE2
+0x00F4: .byte
+0x00F5: draw_and_set $("Who will get loot?\r\r")
+0x0105: call 0x01f4
+0x0108: jc 0x01ee
+0x010B: draw_and_set $("Which item...\r\r")
+0x0117: word_3AE4 = 0
+0x0118: push_byte(word_3AE4 & 0xFF)
+0x0119: word_3AE2 = word_3AE4
+0x011A: word_3AE2 = word_3AE2 >> 1
+0x011B: op_30 0x41
+0x011D: write_number
+0x011E: set_msg $(") ")
+0x0122: var offset = gamestate[0x93]
+        offset += gamestate[0x94] << 8
+        offset += word_3AE4
+        word_3AE2 = resource_idx(gamestate[0x95])->bytes[offset]
+        word_3AE2 += resource_idx(gamestate[0x95])->bytes[offset + 1] << 8
+0x0124: cmp word_3EA2, 0xfe
+0x0126: jnz 0x013b
+0x0129: set_msg $("Gold (")
+0x0130: inc byte [word_3AE4]
+0x0131: var offset = gamestate[0x93]
+        offset += gamestate[0x94] << 8
+        offset += word_3AE4
+        word_3AE2 = resource_idx(gamestate[0x95])->bytes[offset]
+        word_3AE2 += resource_idx(gamestate[0x95])->bytes[offset + 1] << 8
+0x0133: call 0x0318
+0x0136: op_82 0x37
+0x0138: jmp 0x0159
+0x013B: load_resource res: 0x0b, offset: 0x003f
+0x013F: push_byte(word_3AE4 & 0xFF)
+0x0140: data_res = resource_get(pop_byte())
+0x0141: .word
+0x0142: word_3AE2 = gamestate[0xD7]
+0x0144: op_30 0x000b
