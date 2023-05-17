@@ -5080,8 +5080,8 @@ static void sub_5523()
 }
 
 // 0x5559
-// Check boundaries
-static void sub_5559()
+// Check boundaries, modifies cpu.dx (dl)
+static void sub_5559(int x)
 {
   uint8_t dl;
 
@@ -5091,8 +5091,21 @@ static void sub_5559()
   }
 
   // 0x555F
-  printf("%s 0x555F unimplemented,\n", __func__);
-  exit(1);
+  if ((game_state.unknown[0x23] & 2) != 0) {
+    // 0x5566
+    printf("%s 0x5566 unimplemented,\n", __func__);
+    exit(1);
+  }
+  // 0x557C
+  byte_551E = 0x80;
+  if (dl > 0x80) {
+    dl = 0;
+    cpu.dx = 0xFF00;
+  } else {
+    dl = game_state.unknown[0x21];
+    dl--;
+    cpu.dx = (cpu.dx & 0xFF00) | dl;
+  }
 }
 
 // 0x54D8
@@ -5103,7 +5116,7 @@ static void sub_54D8(int x, int y)
   uint8_t al;
 
   sub_5523();
-  sub_5559();
+  sub_5559(x);
 
   // xor dh, dh
   cpu.dx = cpu.dx & 0xFF;
