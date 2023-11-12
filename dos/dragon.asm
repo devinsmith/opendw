@@ -480,6 +480,58 @@ setup_memory:
 ; 0x0A5A
 sub_A5A:
 
+; Inputs: AL
+; Outputs: CX
+;     BX set to 0.
+; 0x12A8
+get_indexed_memory:
+  xor ah, ah
+  shl ax, 1
+  mov si, ax
+  mov cx, word ptr [si+memory_alloc_ptrs]
+  xor bx, bx
+  ret
+
+
+; Inputs are unknown.
+; Outputs are unknown.
+; Operates on tag_lookup_item;
+; Searches memory_tag_list (0x80 words length) for contents of
+; [tag_lookup_item]
+; some kind of search.
+;   Sets carry flag if we couldn't find this tag.
+;   Clears carry flag if we found the tag..
+; At 0x12C0
+find_index_by_tag:
+  mov di, offset memory_tag_list
+  mov cx, 80h
+  nop
+  mov ax, word ptr [tag_lookup_item] ; global variable shared across several subroutines.
+
+  ; Essentially searching ES:DI for data in [tag_lookup_item]
+.loc_12CA:
+  jcxz .loc_12D0 ; exhausted CX, set carry, we didn't find it.
+  repne scasw  ; Compare AX with word at ES:DI, set flags, DI += 2;
+  je .loc_12D2 ; Found!
+
+.loc_12D0:
+  stc ; set carry, we did not find [tag_lookup_item] in ES:DI.
+  ret
+
+.loc_12D2:
+  ; Found the tag, make sure it's still allocated.
+  mov si, di
+  sub si, offset memory_tag_list+2
+  shr si, 1
+  mov bl, byte ptr [si+memory_alloc_list]
+  or bl, bl
+  jz .loc_12CA ; if bl == 0. (NOT ALLOCATED), search again.
+
+  mov ax, si
+  clc
+  ret
+
+
 ; MEMORY USAGE:
 ; Memory is tracked in the following ways:
 ;   Pointers are stored in the memory_alloc_ptrs list.
@@ -530,8 +582,276 @@ sub_26B8:
 ; 0x2EB0
 sub_2EB0:
 
+; at 0x2F49
+read_file:
+  mov al, 3Fh ; 0x3F = Read file.
+  jmp loc_2F4F
+
+unknown_2F4D: db 0B0h, 40h
+
+loc_2F4F:
+  mov byte ptr [file_read_mode], al
+  mov word ptr [save_buffer], bx ; save location of where to read file to.
+  mov word ptr [save_buffer+2], cx
+loc_2F5A:
+  mov bx, 300h
+  xor dx, dx
+  mov si, offset data1_header
+  mov cx, word ptr [tag_lookup_item] ; 1D?
+  jcxz .loc_2F75
+
+.loc_2F68:
+  lodsw ; Load word at address DS:(E)SI into AX. SI += 2
+  cmp ah, 0FFh
+  je .loc_2F73
+
+  add bx, ax
+  adc dx, 0000h
+
+.loc_2F73:
+  loop .loc_2F68
+
+.loc_2F75:
+  mov word ptr [file_offset], bx
+  mov word ptr [file_offset+2], dx
+  lodsw ; Load word at address DS:(E)SI into AX. SI += 2
+
+  mov word ptr [bytes_to_read], ax
+  or ax, ax
+  stc
+  je loc_2FB6
+
+  cmp ah, 0FFh
+  jne .loc_2F92
+
+  not ax
+  call sub_2FBC
+  jmp loc_2F5A
+
+.loc_2F92:
+  mov al, byte ptr [file_read_mode]
+  mov bx, word ptr [save_buffer]
+  mov cx, word ptr [save_buffer+2]
+  mov word ptr [dword_3134], bx
+  mov word ptr [dword_3134+2], cx
+  call read_write_DATA1_file
+
+  jc loc_2FB7
+  cmp byte ptr [file_read_mode], 40h ; is this a write?
+  jne loc_2FB6
+
+  call close_file
+  jc loc_2FB7
+
+loc_2FB6:
+  ret
+
+loc_2FB7:
+  call loc_2FF0
+  jmp loc_2F5A
+
+; Input AL (likely, al to be 0)
+sub_2FBC:
+  mov byte ptr [byte_393F], al
+  mov byte ptr [byte_3045], al
+  add al, 31h
+  mov byte ptr [byte_3144], al
+.loc_2FC7:
+  xor ax, ax
+  mov word ptr [file_offset], ax
+  mov word ptr [file_offset+2], ax
+
+  mov word ptr [bytes_to_read], 300h ; bytes to read?
+  mov word ptr [dword_3134], offset data1_header ; position to read into buffer
+  mov word ptr [dword_3134+2], cs ; segment
+  call open_data1 ; Opens DATA1
+  ; Did file open fail?
+  jc .loc_2FEB
+  mov al, 3Fh ; read DATA1
+  call read_write_DATA1_file
+  jnc loc_2FB6 ; JNC (no error) we are done.
+
+  ; Potential error handler
+.loc_2FEB:
+  call loc_2FF0
+  jmp .loc_2FC7
+
+loc_2FF0:
+  mov bl, byte ptr [ui_drawn_yet]
+
+byte_3045: db 0
+
+open_data1:
+  call close_file
+
+  ; DOS - GET DEFAULT DISK NUMBER
+  mov ah, 19h
+  int 21h
+  mov byte ptr [default_drive], al
+
+.loc_3054:
+  mov dl, al
+  mov byte ptr [byte_30B3], al
+
+  ; DOS - SELECT DISK
+  ; DL = new default drive number
+  ; Return: AL = number of logical drives
+  mov ah, 0Eh
+  int 21h
+  mov byte ptr [num_logical_drives], al ; DosBox returns 26 (0x1A) (A-Z)
+
+  ; DOS - 2+ - OPEN DISK FILE WITH HANDLE
+  ; DS:DX -> ASCIZ filename
+  ; AL = access mode (2 = read & write)
+  mov dx, offset DATA1_STRZ
+  mov ax, 3D02h
+  int 21h
+
+  ; Return:
+  ; CF clear if successful, set on error
+  ; AX = file handle
+  ; AX = error code (01h,02h,03h,04h,05h,0Ch,56h) (see #01680 at AH=59h)
+
+  jc .loc_3073
+  mov word ptr [file_handle], ax
+  mov byte ptr [is_file_open], 0FFh
+  ret
+
+  ; Error code handling if DATA1 couldn't be opened.
+.loc_3073:
+  mov al, byte ptr [byte_30B3]
+  inc al
+  cmp al, byte ptr [num_logical_drives]
+
+
+
+; 0x30B2
+default_drive: db 0
+; 0x30B3
+byte_30B3: db 0
+; 0x30B4
+num_logical_drives: db 0
+
+; Handles reading or writing files files.
+; Inputs:
+;    AL (0x3F read file / 0x40 write file)
+;    dword_3134 - File buffer. In read mode, this buffer is populated.
+;                 In write mode this buffer is written to the file.
+;    file_offset   - Seek/offset position from start of file. 32 bit.
+;    bytes_to_read -  Number of bytes to read.
+;
+; Originally at 0x30B5
+read_write_DATA1_file:
+  mov byte ptr [file_rw_op], al
+  cmp byte ptr [is_file_open], 0
+  jnz .loc_30D1
+
+
+  ; DOS - 2+ - OPEN DISK FILE WITH HANDLE
+  ; DS:DX -> ASCIZ filename
+  ; AL = access mode (2 = read & write)
+  mov dx, offset DATA1_STRZ
+  mov ax, 3D02h
+  int 21h
+
+  ; Return:
+  ; CF clear if successful, set on error
+  ; AX = file handle
+  ; AX = error code (01h,02h,03h,04h,05h,0Ch,56h) (see #01680 at AH=59h)
+
+  jc .loc_310B
+
+  mov word ptr [file_handle], ax
+  mov byte ptr [is_file_open], 0FFh
+.loc_30D1:
+
+  mov ax, 4200h
+  ; DOS - 2+ - MOVE FILE READ/WRITE POINTER (LSEEK)
+  ; al = method: offset from beginenning of file.
+  ; AH = 42h
+  ; AL = origin of move
+  ;   00h start of file
+  ;   01h current file position
+  ;   02h end of file
+  ; BX = file handle
+  ; CX:DX = (signed) offset from origin of new file position
+
+  ; Return:
+  ; CF clear if successful
+  ; DX:AX = new file position in bytes from start of file
+  ; CF set on error
+  ; AX = error code (01h,06h) (see #01680 at AH=59h/BX=0000h)
+  mov bx, word ptr [file_handle]
+  mov dx, word ptr [file_offset]
+  mov cx, word ptr [file_offset+2]
+  int 21h
+
+  jc .loc_3102 ; error
+
+  ; Read or write file contents into/from buffer at DS:DX
+  ; AH = 3F ?
+  ; CX = Number of bytes to read.
+  ; DS:DX Buffer to read into.
+  mov ah, byte ptr [file_rw_op]
+  mov bx, word ptr [file_handle]
+  mov cx, word ptr [bytes_to_read]
+  push ds
+  lds dx, dword ptr [dword_3134] ; 0xBC52
+  int 21h
+
+  pop ds
+  jc .loc_3102 ; Any error reading or writing?
+
+  cmp byte ptr [file_rw_op], 40h
+  clc
+  jne .loc_310B ; was this a write?
+
+.loc_3102:
+  pushf
+  push ax
+  call close_file
+  jb .loc_310C
+  pop ax
+  popf
+
+.loc_310B:
+  ret
+
+.loc_310C:
+  pop dx
+  popf
+  jnb .loc_3112
+  mov ax, dx
+
+.loc_3112:
+  stc
+  ret
+
+
+; 0x3114
+file_rw_op: db 0
+; 0x3115
+is_file_open: db 0
+; 0x3130
+save_buffer: dd 0
+dword_3134: dd 0
+; 0x3138
+file_offset: dd 0
+; 0x313C
+file_handle: dw 0
+; 0x3140
+DATA1_STRZ: db 'DATA1', 0
+byte_3144: db 0
+
 ; 0x3116
 close_file:
+
+; 0x312B
+tag_lookup_item: dw 0
+; 0x312D
+bytes_to_read: dw 0
+; 0x312F
+file_read_mode: db 0
 
 ; 0x3578
 sub_3578:
@@ -545,6 +865,7 @@ loc_37F0:
 game_state dw 80h DUP (0)
 
 byte_393C: db 0
+byte_393F: db 0
 
 ; 0x3AA0
 sub_3AA0:
