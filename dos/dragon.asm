@@ -367,7 +367,98 @@ init_vga16:
 ; No inputs, no outputs.
 ; 0x387
 sub_387:
-  mov bx, 1dh
+  mov bx, 1dh ; TITLE3
+  call sub_5A5 ; Clears screen?
+  push ax ; picture memory reference???
+  call sub_49E ; Picture should be fully drawn here.
+  call sub_5C3B ; PIT timers
+  mov ax, 0001h
+  call sub_5ECA
+  pop ax
+  call sub_1270 ; free's title seqence.
+  call waitkey ; reads key?
+  call waitkey_or_mouse ; plays music (actually title loop)
+
+  jmp loc_5C60
+
+; 0x3A7
+; not sure who calls this.
+; Is this the ending game screen?
+sub_3A7:
+  mov bx, 18h ; TITLE0
+  call sub_5A5 ; Clear screen?
+  push ax
+  call sub_49E
+  call sub_5C3B
+  mov ax, 1
+  call sub_5ECA
+  pop ax
+  call sub_1270
+
+sub_3BE:
+  mov bx, 19h
+  call sub_5A5
+  push ax
+  mov ax, word ptr [dword_4BB]
+  mov word ptr [word_4bf], ax
+
+; 0x48B
+waitkey_or_mouse:
+  call sub_2D0B
+  js .loc_497
+  call poll_mouse
+  cmp al, 80h ; did mouse button get clicked.
+  jnz waitkey_or_mouse
+
+.loc_497:
+  retn
+
+; 0x498
+waitkey:
+  call sub_2D0B
+  js waitkey
+  ret
+
+sub_49E:
+  push es
+
+dword_4BB: dd 0
+word_4BF: dw 0
+
+; Inputs BX, others?
+; Clears screen?
+sub_5A5:
+  mov al, 1
+
+  ; determines bx and cx (not sure yet what ax does)
+  call sub_2EB0
+
+  push ax ; saves ax for later after xor operation.
+  mov word ptr [dword_4BB], bx ; bx likely 0, cx likely 0x1887
+  mov word ptr [dword_4BB+2], cx ; setting picture data segment.
+
+  ; Indices into bx.
+  mov si, bx
+  mov di, bx
+
+  add di, 0A0h
+  mov es, cx
+  mov ds, cx
+  mov cx, 3E30h
+
+  ; Half of the title segment is XOR'd into itself. ?
+.loc_5C2:
+  lodsw   ; set AX = DS:SI, SI += 2
+  xor ax, [si+009Eh] ; ax ^ 
+  stosw   ; puts AX into ES:DI,  DI += 2;
+  loop .loc_5C2
+
+  push cs
+  push cs
+  pop ds
+  pop es
+  pop ax
+  ret
 
 ; should be at 0x5D0
 setup_interrupts:
@@ -461,7 +552,10 @@ critical_error_handler:
 check_config:
   cmp word ptr [graphics_mode], 0ffffh
   jz loc_638
-  mov bx, 80h
+
+  ; In DOS the command line arguments are stored in the PSP.
+  ; at 0x80 is the argument to the program.
+  mov bx, 80h ; PSP for command line arguments
   mov al, [bx]
   or al, al
   jnz loc_63D
@@ -479,6 +573,30 @@ setup_memory:
 
 ; 0x0A5A
 sub_A5A:
+
+; Input AL. free's title sequence.
+sub_1270:
+  cmp al, 0FFh
+  je .loc_128C
+  cmp al, 2
+  jb .loc_128C
+
+  ; do actual memory free.
+  xor ah, ah
+  mov di, ax
+  mov byte ptr [di+memory_alloc_list], ah
+  shl di, 1
+  push es
+  mov es, word ptr [di+memory_alloc_ptrs]
+
+  ; DOS - 2+ - FREE MEMORY
+  ; ES = segment address of area to be freed.
+  mov ah, 49h
+  int 21h
+  pop es
+.loc_128C:
+  ret
+
 
 ; Inputs: AL
 ; Outputs: CX
@@ -578,6 +696,188 @@ word_269D: dw 0
 
 ; 0x26B8
 sub_26B8:
+
+; Gets keycode ?
+; Returns keycode in AL.
+; Also sets sign flag ?
+; At 0x2D0B
+sub_2D0B:
+  mov bx, word ptr [unknown_2dd9]
+  or bx, bx
+  js .loc_2D31
+  ; 0x2D13
+  mov al, byte ptr [bx+unknown_2ddb]
+  or al, al
+  jz .loc_2D2B
+  inc bx
+  test bx, 0fh
+  jnz .loc_2D25
+  mov bx, 0ffffh
+
+.loc_2D25:
+  mov word ptr [unknown_2dd9], bx
+  jmp .loc_2D4B
+
+.loc_2D2B: ; AL was 0.
+  mov word ptr [unknown_2dd9], 0ffffh ; Save?
+
+.loc_2D31:
+
+  ; KEYBOARD - CHECK BUFFER, DO NOT CLEAR
+  ; Return: ZF clear if character in buffer
+  ; AH = scan code, AL = character
+  ; ZF set if no character in buffer
+  mov ah, 1
+  int 16h
+  jz .loc_2D6F
+
+  ; key is in buffer.
+  ; KEYBOARD - READ CHAR FROM BUFFER, WAIT IF EMPTY
+  ; Return: AH = BIOS scan code, AL = ASCII character
+  xor ah, ah
+  int 16h
+
+  ; check_keystroke might change al to something else.
+  ; For example the '1' key al goes in at 0x31 and comes out as 0xB1
+  ; Involved in remapping values for arrow keys.
+  call check_keystroke
+
+  jns .loc_2D72
+  ; Here we deal with numbers > 0x7F
+
+  ; As far as I can tell this is unreachable code.
+  ; The only way that AL ends up being 0x93 is if AL is 0x13 and sub_2E7B
+  ; ORs it with 0x80.
+  ; Possibly handles control-S ?
+  cmp al, 93h
+  jne .loc_2D4B
+
+  ; XXX: NEVER REACHED?
+  xor byte ptr [byte_107], 40h
+  jmp .loc_2D31
+
+.loc_2D4B:
+  mov bx, word ptr [unknown_2dd7]
+  or bx, bx
+  js .loc_2D6C
+  mov byte ptr [bx+unknown_2ddb], al
+  inc bx
+  test bx, 0fh
+  jnz .loc_2D63
+  mov bx, 0ffffh
+  jmp .loc_2D68
+
+.loc_2D63:
+  mov byte ptr [bx+unknown_2ddb], 0
+
+.loc_2D68:
+  mov word ptr [unknown_2dd7], bx
+
+.loc_2D6C:
+  or al, al
+  retn
+
+.loc_2D6F: ; No key was pressed.
+  xor al, al
+  retn
+
+; dealing with values of al between 0 and 0x7f
+.loc_2D72:
+  cmp al, 3Bh
+  jb .loc_2D6F
+  cmp ah, 44h
+  ja .loc_2D9E
+  sub ah, 3Bh
+  shl ah, 1
+  shl ah, 1
+  shl ah, 1
+  shl ah, 1
+  mov bx, word ptr [unknown_2dd7]
+  and bx, 0f0h
+  cmp bl, ah
+  jz .loc_2DC3
+  mov bl, ah
+  xor bh, bh
+  mov word ptr [unknown_2dd9], bx
+  jmp sub_2D0B
+
+.loc_2D9E:
+  cmp ah, 68h
+  jb .loc_2D6F
+  cmp ah, 71h
+  ja .loc_2D6F
+  sub ah, 68h
+  shl ah, 1
+  shl ah, 1
+  shl ah, 1
+  shl ah, 1
+  mov bx, word ptr [unknown_2dd7]
+  or bx, bx
+  js .loc_2DCC
+  and bx, 0f0h
+  cmp bl, ah
+  jnz .loc_2DCC
+
+.loc_2DC3:
+  mov word ptr [unknown_2dd7], 0ffffh
+  jmp sub_2D0B
+
+.loc_2DCC:
+  mov bl, ah
+  xor bh, bh
+  mov word ptr [unknown_2dd7], bx
+  jmp sub_2D0B
+
+; 0x2DD7
+unknown_2dd7: dw 0ffffh
+; 2DD9
+unknown_2dd9: dw 0ffffh
+unknown_2ddb: db 30 dup(0)
+
+; Check keystroke
+; Inputs are AH = BIOS scan code, AL = ASCII character
+; Returns AL (remapped keystroke)
+; CS:0x2E7B
+check_keystroke:
+  or al, al
+  jnz .loc_2E9E
+
+  ; al is 0.
+
+  ; map some BIOS scan codes to ascii characters
+  ; which get put into al.
+  mov al, 88h
+  cmp ah, 4bh ; LEFT key.
+  je .loc_2EA6
+
+  mov al, 95h
+  cmp ah, 4dh ; RIGHT key.
+  je .loc_2EA6
+
+  mov al, 8Ah
+  cmp ah, 50h ; DOWN key
+  je .loc_2EA6
+
+  mov al, 8Bh
+  cmp ah, 48h ; UP key.
+  je .loc_2EA6
+
+  xor al, al ; None of these keys.
+  retn
+
+.loc_2E9E:
+  ; AL is non-zero.
+  or al, 80h
+  cmp al, 0ffh
+  jne .loc_2EA6
+
+  ; default to 0x88 (which probably means unhandled)
+  mov al, 88h ; AL was 0xFF, but we return 0x88 (which is the code for
+               ;  left key)
+
+.loc_2EA6:
+  or al, al
+  retn
 
 ; 0x2EB0
 sub_2EB0:
@@ -861,6 +1161,58 @@ sub_37C8:
 
 loc_37F0:
 
+; 3824
+poll_mouse:
+  cmp byte ptr [g_mouse_configured], 0
+  jz loc_3846
+
+  ; MS - MOUSE - RETURN POSITION AND BUTTON STATUS
+  ; Return: BX = button status, CX = column, DX = row
+  mov ax, 3
+  int 33h
+
+  mov word ptr [mouse_last_xpos], cx ; 0-639
+  mov word ptr [mouse_last_ypos], dx ; 0-199
+
+  ; bx = 1 if left button pressed
+  ; bx = 2 if right button pressed
+  ; bx = 3 if both buttons pressed
+  ; since Dragon wars does not use the right mouse button
+  ; as far as I can tell, bx will usually be 0 or 1.
+  cmp bx, 1
+
+  ; if left mouse button pressed, CF will be 0
+  ; else, carry flag will be 1
+  cmc ; CF = ~CF  (or flip the above)
+
+  ; Push the carry into the most significant bit, stores the last
+  ; 8 clicks.
+  rcr byte ptr [byte_3854], 1
+
+sub_3840:
+  mov al, byte ptr [byte_3854]
+  and al, 0C0h ; only keep the last 2 clicks.
+
+  ret
+
+loc_3846:
+  xor ax, ax
+  mov word ptr [mouse_last_xpos], ax
+  mov word ptr [mouse_last_ypos], ax
+  mov byte ptr [byte_3854], al
+  and al, 0C0h
+  ret
+
+
+byte_3854: db 0
+
+; 0x3855
+g_mouse_configured: db 0
+; 0x3856
+mouse_last_xpos: dw 0
+; 0x3858
+mouse_last_ypos: dw 0
+
 ; 0x3860
 game_state dw 80h DUP (0)
 
@@ -934,6 +1286,195 @@ byte_4F0F: db 0
 byte_4F10: db 0
 ; 0x4F11
 ptr1: dw 0
+
+byte_5A70: db 0
+byte_5A71: db 0
+byte_5A72: db 0
+word_5A74: dw 0
+
+word_5A76: dw 0
+word_5A78: dw 0  ; Holds 5A9D
+word_5A7A: dw 0  ; Holds 5C1D
+
+
+word_5C35: dw 0
+; 0x5C37
+old_pit_isr: dd 0
+
+; 0x5C3B
+; PIT timers
+sub_5C3B:
+  push es
+
+  ; Get System timer (PIT) routine.
+  mov ax, 3508h
+  int 21h     ; DOS - 2+ - GET INTERRUPT VECTOR
+              ; AL = interrupt number
+              ; Return: ES:BX = value of interrupt vector
+  mov word ptr [old_pit_isr], bx
+  mov word ptr [old_pit_isr+2], es
+  pop es
+
+  mov dx, offset sub_5C7B ; Needs to be replaced with vector function.
+  mov ax, 2508h
+  int 21h    ; DOS - SET	INTERRUPT VECTOR
+             ; AL = interrupt number
+             ; DS:DX = new vector to be used for	specified interrupt
+
+  ; Why are the below bytes written to different i/o ports?
+  ; PIT timers.
+  ; SET pit timers for PC speaker playing.
+  mov  al, 0B6h
+  out 43h, al   ; Timer 8253-5 (AT:	8254.2).
+
+  ; Set to 274.1687 hz.
+  ; 1193182 / 0x1100 = 274.
+  mov ax, 1100h
+  out 40h, al   ; Timer 8253-5 (AT:	8254.2).
+  mov al, ah
+  out 40h, al   ; Timer 8253-5 (AT:	8254.2).
+  retn
+
+loc_5C60:
+  mov ax, 0FFFFh
+  out 40h, al
+  mov al, ah
+  out 40h, al
+
+  push ds
+  lds dx, dword ptr [old_pit_isr]
+
+  mov ax, 2508h
+  int 21h    ; DOS - SET INTERRUPT VECTOR
+             ; AL = interrupt number
+             ; DS:DX = new vector to be used for	specified interrupt
+
+  in al, 61h
+  and al, 0FCh
+  out 61h, al
+
+  ret
+
+; New timer routine, invoked 18.2 times every second.
+; 0x5C7B
+sub_5C7B:
+  sti
+  push ax
+  push bx
+  push dx
+  push ds
+  push si
+  push cs
+  pop ds
+
+  ; seems to be a volatile bool that controls
+  ; whether sub_5CB6 should be run.
+  cmp byte ptr [byte_5A71], 0
+  jnz .loc_5C97
+  mov byte ptr [byte_5A71], 1
+  call sub_5CB6
+  mov byte ptr [byte_5A71], 0
+
+.loc_5C97:
+  dec byte ptr [byte_5A70]
+  jnz .loc_5CAC
+  mov byte ptr [byte_5A70], 0Dh
+  pop si
+  pop ds
+  pop dx
+  pop bx
+  pop ax
+  jmp [old_pit_isr]
+
+.loc_5CAC:
+  mov al, 20h
+  out 20h, al
+  pop si
+  pop ds
+  pop dx
+  pop bx
+  pop ax
+  iret
+
+sub_5CB6:
+  mov bx, word ptr [word_5A74] ; Starts as 1 ?
+  or bx, bx
+  jz .loc_5D14 ; done playing music?
+  mov word ptr [word_5C35], 0
+  mov byte ptr [byte_5A72], 4
+  mov si, 5C1Dh
+  mov word ptr [word_5A7A], si
+  mov si, 5A9Dh
+  mov word ptr [word_5A78], si
+
+.loc_5CD7:
+  cmp word ptr [si], 0
+  je .loc_5CF4
+  call sub_5D1D
+  xor ax, ax
+  cmp word ptr [word_5C35], ax
+  jne .loc_5CF4
+  cmp [si+0Ah], ax
+  je .loc_5CF4
+
+
+.loc_5CF4:
+  add si, 30h
+  dec byte ptr [byte_5A72]
+  jnz .loc_5CD7
+
+  ; Music playing (frequency)
+  mov ax, [bx+08h]
+  out 42h, al ; low byte
+  mov al, ah
+  out 42h, al ; high byte
+
+  mov bx, [bx+0ah]
+  and bl, 03h
+.loc_5D14:
+  in al, 61h ; turn on note (get value from port 61h)
+  and al, 0fch ; get ready to set bits 0 and 1
+  or al, bl
+  out 61h, al ; set bits 0 and 1, (can turn on or off the music)
+  ret
+
+sub_5D1D:
+  push cx
+
+; Seems to initialize 4 records to 0,
+; Possibly player records.
+sub_5ECA:
+  mov word ptr [word_5A74], ax
+  mov si, ax
+  shl si, 1
+  shl si, 1
+  shl si, 1
+  mov byte ptr [byte_5A71], 1
+  mov byte ptr [byte_5A72], 4
+  mov di, 5A9Dh
+
+.loc_5EE2:
+  mov ax, [si+5F10h]
+  cmp ax, 0
+  jz .loc_5EFE
+  mov bx, 002Eh
+
+.loc_5EEE:
+  mov word ptr [bx+di], 0000h
+  sub bx, 2
+  jge .loc_5EEE
+  mov [di+2], ax
+  mov word ptr [di], 1
+
+.loc_5EFE:
+  add di, 30h
+  inc si
+  inc si
+  dec byte ptr [byte_5A72]
+  jnz .loc_5EE2
+  mov byte ptr [byte_5A71], 0
+  ret
+
 
 ; 0xBC52
 ; used by 2F2A
