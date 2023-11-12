@@ -200,32 +200,174 @@ loc_259:
   mov al, byte ptr [bx+si]
   and al, dh
   mov bx, di
-  and bx, 0fh ; and bx,byte +0xf
+  and bx, word ptr 0fh ; and bx,0xf
   mov ah, byte ptr [bx+si]
   and ah, dl
   or al, ah
   mov byte ptr [di-47AEh], al
   dec di
-  jnz loc_259
+  jns loc_259
   mov dx, 0C03h
   mov di, 0FFh
 
+loc_280:
+  mov bx, di
+  shr bx, 1
+  shr bx, 1
+  shr bx, 1
+  shr bx, 1
+  mov al, [bx+si]
+  and al, dh
+  mov bx, di
+  and bx, word ptr 0fh ; and bx,0xf
+  mov ah, [bx+si]
+  and ah, dl
+  or al, ah
+  mov [di-46AEh], al
+  dec di
+  jns loc_280
+  retn
 
 init_cga_composite:
+  mov ax, 4
+  int 10h
 
+  mov si, offset cga_init_comp_chunk
+  jmp loc_253
+
+cga_init_comp_chunk: db 0, 0AAh, 22h, 99h, 88h, 66h, 0DDh, 0EEh, 0BBh
+                     db 0AAh, 11h, 55h, 0CCh, 0AAh, 0DDh, 0FFh
+
+
+; Tandy initialization
+; 0x2BC
 init_tandy16:
-
-init_ega16:
-
-init_vga16:
+  mov ax, 9
+  int 10h
+  push ds
+  mov ax, 40h
+  mov ds, ax
+  mov di, 13h
+  mov cx, [di]
+  shl cx, 1
+  shl cx, 1
+  shl cx, 1
+  shl cx, 1
+  shl cx, 1
+  shl cx, 1
+  sub cx, 400h
+  call sub_2FC
+  mov bx, [di]
+  add bx, ax
+  inc bx
+  cmp bx, cx
+  jna loc_2F8
+  cmp ax, cx
+  jnc loc_2F8
+  sub bx, cx
+  mov cs:[unknown_2FA], bx
+  sub cx, ax
+  dec cx
+  mov [di], cx
+loc_2F8:
+  pop ds
+  ret
 
 unknown_2FA dw 0
 
+
+; Tandy cleanup routine?
+sub_2FC:
+  xor si, si
+  mov di, 3
+  mov ax, cs
+  dec ax
+loc_304:
+  mov ds, ax
+  cmp byte ptr [si], 5ah
+  je loc_310
+  add ax, [di]
+  inc ax
+  jmp loc_304
+loc_310:
+  ret
+
+; TODO
 ; 0x311
 sub_311:
+  ; check for tandy graphics.
+  cmp byte ptr [graphics_mode], 4
+  jne loc_323
 
+  ; Tandy cleanup?
+  push ds
+  call sub_2FC
+  mov ax, cs:[unknown_2FA]
+  add [di], ax
+  pop ds
+loc_323:
+  ret
+
+init_ega16:
+  mov ax, 0dh
+  int 10h
+  push ds
+  mov ds, word ptr [ptr1]
+  mov di, 1FEh
+loc_331:
+  xor bx, bx
+  mov dx, bx
+  mov ax, di
+  shr ax, 1
+  call sub_36D
+  mov [di+3680h], bx
+  mov [di+3880h], dx
+  call sub_36B
+  mov [di+3280h], bx
+  mov [di+3480h], dx
+  call sub_36B
+  mov [di+2E80h], bx
+  mov [di+3080h], dx
+  call sub_36B
+  mov [di+2a80h], bx
+  mov [di+2c80h], dx
+  dec di
+  dec di
+  jns loc_331
+  pop ds
+  ret
+
+sub_36B:
+  xor ax, ax
+
+sub_36D:
+  call sub_370
+
+sub_370:
+  shl al, 1
+  rcl bl, 1
+  shl al, 1
+  rcl bh, 1
+  shl al, 1
+  rcl dl, 1
+  shl al, 1
+  rcl dh, 1
+  ret
+
+
+init_vga16:
+  ; VIDEO - SET VIDEO MODE
+  ; AL = mode (mode 13)
+  mov ax, 13h
+  int 10h
+  ret
+
+
+; title sequence
+; No inputs, no outputs.
 ; 0x387
 sub_387:
+  mov bx, 1dh
 
 ; should be at 0x5D0
 setup_interrupts:
@@ -469,6 +611,8 @@ timer_unknown5: db 0
 ; 0x4F0F
 byte_4F0F: db 0
 byte_4F10: db 0
+; 0x4F11
+ptr1: dw 0
 
 ; 0xBC52
 ; used by 2F2A
