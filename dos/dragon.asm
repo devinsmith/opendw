@@ -401,6 +401,90 @@ sub_3BE:
   push ax
   mov ax, word ptr [dword_4BB]
   mov word ptr [word_4bf], ax
+  mov ax, word ptr [word_4BD]
+  mov word ptr [word_4C1], ax
+  mov word ptr [tag_lookup_item], 0ffffh
+  mov bx, 7d00h
+  mov al, 1
+  call sub_12E6
+  push ax
+  mov word ptr [dword_4BB], bx
+  mov word ptr [dword_4BB+2], cx
+  call waitkey_or_mouse
+  xor bx, bx
+.loc_3ED:
+  push bx
+  call sub_435
+  pop bx
+  push bx
+  call sub_443
+  call sub_49E
+  mov word ptr [word_4C4A], 12h
+  xor ax, ax
+.loc_401:
+  cmp word ptr [timer_unknown4], ax
+  jnz .loc_401
+  pop bx
+  inc bx
+  cmp bx, byte ptr +4
+  jc .loc_3ED
+  pop ax
+  call sub_1270
+  pop ax
+  call sub_1270
+  mov bx, 1Ah
+.loc_419:
+  push bx
+  call sub_5A5
+  push ax
+  call waitkey_or_mouse
+  call sub_49E
+  pop ax
+  call sub_1270
+  pop bx
+  inc bx
+  cmp bx, byte ptr 1dh
+  jc .loc_419
+  call waitkey_or_mouse
+  jmp loc_5C60
+
+sub_435:
+  push es
+  les di, dword ptr [dword_4BB]
+  xor ax, ax
+  mov cx, 3e80h
+  rep stosw
+  pop es
+  ret
+
+sub_443:
+  push es
+  push ds
+  shl bx, 1
+  mov ax, bx
+  shl bx, 1
+  add bx, ax
+  mov bp, [bx+477h]
+  mov dx, [bx+475h]
+  mov si, [bx+473h]
+  mov es, word ptr [word_4BD]
+  mov ds, word ptr [word_4C1]
+.loc_461:
+  mov di, si
+  push si
+  mov cx, dx
+  rep movsb
+  pop si
+  add si, 0a0h
+  dec bp
+  jnz .loc_461
+  pop ds
+  pop es
+  ret
+
+unknown_473: db 73h, 0Eh, 34h, 0, 67h, 0, 4Eh, 32h, 22h
+             db 0, 36h, 0, 76h, 4Bh, 0Ch, 0, 13h, 0
+             db 60h, 63h, 0A0h, 0, 22h, 0
 
 ; 0x48B
 waitkey_or_mouse:
@@ -423,7 +507,9 @@ sub_49E:
   push es
 
 dword_4BB: dd 0
+word_4BD: dw 0
 word_4BF: dw 0
+word_4C1: dw 0
 
 ; Inputs BX, others?
 ; Clears screen?
@@ -649,6 +735,154 @@ find_index_by_tag:
   clc
   ret
 
+; Inputs al, bx
+sub_12E6:
+  mov byte ptr [mem_alloc_list_marker], al
+  mov word ptr [last_allocated_byte_size], bx
+  mov ax, bx ; AX now controls number of bytes to allocate.
+  call determine_paragraphs
+  mov word ptr [mem_paragraphs_to_alloc], ax
+  mov ax, word ptr [tag_lookup_item]
+  or ax, ax
+  js .loc_1301
+  call find_index_by_tag
+  jnc .loc_1316
+
+.loc_1301:
+  call game_mem_alloc
+  jnc .loc_1325
+  call sub_138E ; memory failure?
+
+.loc_1316:
+  nop
+.loc_1325:
+  ret
+
+
+; 0x1326 (a value of 0 means this location is free, a non value of 0 means
+;         this location is probably not free)
+mem_alloc_list_marker: db 0
+
+; 0x1327
+last_allocated_byte_size: dw 0
+; 0x1329
+mem_paragraphs_to_alloc: dw 0
+
+fatal_error: db 'Fatal error : Out of memory.$'
+
+; Allocates memory from a memory block list.
+; BX = Number of 16 byte paragraphs desired.
+; Returns:
+;   Index into table (AX)
+;   Allocated memory (CX)
+; at 0x1348
+game_mem_alloc:
+  mov di, offset memory_alloc_list
+  mov cx, 80h ; size of memory allocation list.
+  nop
+
+  ; Search for a free location.
+  ; We can do 128 allocations, but no more.
+  ; A value of 0 means that we can allocate, a value of non zero
+  ; means the memory is already allocated.
+  xor ax, ax
+  repne scasb   ; essentially searching ES:DI for AX (0), EDI++
+  jnz .loc_138C ; not found. jump to error.
+
+  ; found a free spot, prepare to allocate.
+  ; di is the index into the memory_alloc_list.
+  sub di, offset memory_alloc_list + 1
+  push di
+  mov bx, word ptr [mem_paragraphs_to_alloc]
+
+  ; DOS - 2+ - ALLOCATE MEMORY
+  ; BX = number of 16-byte paragraphs desired.
+
+  ; Returns:
+  ; CF - clear if successful.
+  ;    AX = segment of allocated block;
+  ; CF - set on error
+  ;    AX = error code
+  ;    BX = size of largest available block.
+  mov ah, 48h
+  int 21h
+
+  pop di ; Index into memory allocation list.
+  jc .loc_138C ; error
+
+  ; Mark the memory_allocation list as used with a non-zero value.
+  mov bl, byte ptr [mem_alloc_list_marker]
+  mov byte ptr [di+memory_alloc_list], bl
+
+  ; Save the memory allocated in a list.
+  shl di, 1
+  mov word ptr [di+memory_alloc_ptrs], ax
+
+  mov ax, word ptr [last_allocated_byte_size]
+  mov word ptr [di+bytes_allocated_list], ax
+  mov ax, word ptr [tag_lookup_item]
+  mov word ptr [di+memory_tag_list], ax
+
+  mov ax, di
+  shr ax, 1
+  push ax
+  call get_indexed_memory
+  ; Memory will be in CX register.
+  pop ax
+  clc
+  ret
+.loc_138C:
+  ; Error occurred during allocation process.
+  stc
+  ret
+
+sub_138E:
+  mov cx, 80h
+  nop
+  mov al, 2
+  mov si, word ptr [word_13B5]
+.loc_1398:
+  inc si
+  cmp si, 80h
+  jb .loc_13A1
+  xor si, si
+.loc_13A1:
+  cmp byte ptr [si+memory_alloc_list], al
+  jz .loc_13AB
+  loop .loc_1398
+  stc
+  ret
+
+.loc_13AB:
+  mov ax, si
+  mov word ptr [word_13B5], ax
+  call sub_1270
+  clc
+  ret
+
+word_13B5: dw 0
+
+
+; Given ax, determine the number of paragraphs (16 byte units)
+; to allocate. If we don't end on a 16 byte boundary, increment.
+; Inputs: AX (# of bytes)
+; Outputs: AX (# of paragraphs)
+; Clobbers BX.
+; Originally at CS:13B7
+determine_paragraphs:
+  ; AX is passed in
+  ; AX >> 4
+  ; if (AX & 0x000f) AX++
+  mov bx, ax
+  shr ax, 1
+  shr ax, 1
+  shr ax, 1
+  shr ax, 1
+  test bx, 000fh
+  jz .locret_13c8
+  inc ax
+.locret_13c8:
+  retn
 
 ; MEMORY USAGE:
 ; Memory is tracked in the following ways:
@@ -1280,6 +1514,10 @@ timer_unknown4: dw 1
 
 ; 0x4C3C
 timer_unknown5: db 0
+
+; 0x4C4A
+word_4C4A: dw 0
+
 
 ; 0x4F0F
 byte_4F0F: db 0
