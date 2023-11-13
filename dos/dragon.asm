@@ -12,6 +12,9 @@ _TEXT SEGMENT
       ASSUME CS:_TEXT,DS:_TEXT,ES:_TEXT,SS:_TEXT
       ORG 100H
 
+VGA_BASE_ADDRESS EQU 0A000h
+CGA_BASE_ADDRESS EQU 0B800h
+
 start:
   jmp short begin
 
@@ -401,7 +404,7 @@ sub_3BE:
   push ax
   mov ax, word ptr [dword_4BB]
   mov word ptr [word_4bf], ax
-  mov ax, word ptr [word_4BD]
+  mov ax, word ptr [dword_4BB + 2]
   mov word ptr [word_4C1], ax
   mov word ptr [tag_lookup_item], 0ffffh
   mov bx, 7d00h
@@ -467,7 +470,7 @@ sub_443:
   mov bp, [bx+477h]
   mov dx, [bx+475h]
   mov si, [bx+473h]
-  mov es, word ptr [word_4BD]
+  mov es, word ptr [dword_4BB + 2]
   mov ds, word ptr [word_4C1]
 .loc_461:
   mov di, si
@@ -505,11 +508,150 @@ waitkey:
 
 sub_49E:
   push es
+  push ds
+  mov bx, word ptr [graphics_mode]
+  lds si, dword ptr [dword_4BB]
+  call word ptr cs:[bx+drawing_handlers]
+  pop ds
+  pop es
+  jmp waitkey
+
+; 0x4B1
+drawing_handlers: dw draw_cga_picture   ; 0x0000 (CGA RGB monitor)
+                  dw draw_cga_picture   ; 0x0002 (CGA composite monitor)
+                  dw draw_tandy_picture ; 0x0004 (Tandy 16 color)
+                  dw draw_ega_picture   ; 0x0006 (EGA 16 color)
+                  dw draw_vga_picture   ; 0x0008 (VGA/MCGA 16 color)
+
 
 dword_4BB: dd 0
-word_4BD: dw 0
 word_4BF: dw 0
 word_4C1: dw 0
+
+; draws a picture stored at ds:si using CGA RGB.
+; 0x4C3
+draw_cga_picture:
+  mov ax, 0b800h
+  mov es, ax
+  xor di, di
+  mov bx, di
+  mov cx, 0c8h
+.loc_4CF:
+  push cx
+  push di
+  mov di, cs:[di-55FEh]
+  mov cx, 50h
+.loc_4D9:
+  lodsw
+  mov bl, al
+  mov al, cs:[bx-47AEh]
+  mov bl, ah
+  or al, cs:[bx-46AEh]
+  stosb
+  loop .loc_4D9
+  pop di
+  pop cx
+  inc di
+  inc di
+  loop .loc_4CF
+  ret
+
+; 0x4F2
+draw_tandy_picture:
+  mov ax, 0b800h
+  mov es, ax
+  xor bx, bx
+  mov dx, 0c8h
+.loc_4FC:
+  mov di, cs:[bx-52deh]
+  mov cx, 50h
+  rep movsw
+  inc bx
+  inc bx
+  dec dx
+  jnz .loc_4FC
+  ret
+
+; 0x50C
+draw_ega_picture:
+  xor di, di
+  mov dx, 3c4h
+  mov al, 2
+  out dx, al
+  mov cx, 0c8h
+.loc_517:
+  push cx
+  mov bp, 28h
+  xor ah, ah
+.loc_51D:
+  mov es, word ptr cs:[ptr1]
+  lodsb
+  mov bx, ax
+  shl bx, 1
+  mov cx, es:[bx+2A80h]
+  mov dx, es:[bx+2C80h]
+  lodsb
+  mov bx, ax
+  shl bx, 1
+  or cx, es:[bx+2E80h]
+  or dx, es:[bx+3080h]
+  lodsb
+  mov bx, ax
+  shl bx, 1
+  or cx, es:[bx+3280h]
+  or dx, es:[bx+3480h]
+  lodsb
+  mov bx, ax
+  shl bx, 1
+  or cx, es:[bx+3680h]
+  or dx, es:[bx+3880h]
+  mov bx, dx
+  mov dx, 0a000h
+  mov es, dx
+  mov dx, 3c5h
+  mov al, 8
+  out dx, al
+  mov es:[di], cl
+  shr al, 1
+  out dx, al
+  mov es:[di], ch
+  shr al, 1
+  out dx, al
+  mov es:[di], bl
+  shr al, 1
+  out dx, al
+  mov es:[di], bh
+  inc di
+  dec bp
+  jnz .loc_51D
+  pop cx
+  loop .loc_517
+  mov al, 0fh
+  out dx, al
+  ret
+
+; draws a picture stored at ds:si in VGA/MCGA 16 color.
+; 0x58B
+draw_vga_picture:
+  mov ax, VGA_BASE_ADDRESS
+  mov es, ax
+  xor di, di
+  mov cx, 7D00h; 32k (word at a time)
+
+  ; Lookup pixel key data from 0x45AE to get actual pictures.
+  ; BB56 ?
+  ; Pixel table is ??
+.loc_595:
+  lodsb  ; si++
+  ; al populated from ds:si
+  xor bx, bx
+  mov bl, al
+  shl bx, 1   ; bx = bx << 1
+  mov ax, word ptr cs:[bx-45AEh]
+  stosw ; Store ax at es:di,  di += 2
+  loop .loc_595
+  retn
+
 
 ; Inputs BX, others?
 ; Clears screen?
@@ -570,14 +712,14 @@ setup_interrupts:
   ; 1C - TIME - SYSTEM TIMER TICK
   ; http://www.ctyme.com/intr/rb-2443.htm
   mov ax, 251ch
-  mov dx, word ptr [timer_proc_handler] ; should be 0x4b10
+  mov dx, offset timer_proc_handler ; should be 0x4b10
   int 21h
 
   ; DOS - 2+ - SET INTERRUPT VECTOR
   ; 24 - CRITICAL ERROR HANDLER
   ; http://www.ctyme.com/intr/int-24.htm
   mov ax, 2524h
-  mov dx, word ptr [critical_error_handler] ; should be 0x616
+  mov dx, offset critical_error_handler ; should be 0x616
   int 21h
 
   pop es
