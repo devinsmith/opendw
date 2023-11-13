@@ -589,39 +589,39 @@ draw_ega_picture:
   lodsb
   mov bx, ax
   shl bx, 1
-  mov cx, es:[bx+2A80h]
-  mov dx, es:[bx+2C80h]
+  mov cx, word ptr es:[bx+2A80h]
+  mov dx, word ptr es:[bx+2C80h]
   lodsb
   mov bx, ax
   shl bx, 1
-  or cx, es:[bx+2E80h]
-  or dx, es:[bx+3080h]
+  or cx, word ptr es:[bx+2E80h]
+  or dx, word ptr es:[bx+3080h]
   lodsb
   mov bx, ax
   shl bx, 1
-  or cx, es:[bx+3280h]
-  or dx, es:[bx+3480h]
+  or cx, word ptr es:[bx+3280h]
+  or dx, word ptr es:[bx+3480h]
   lodsb
   mov bx, ax
   shl bx, 1
-  or cx, es:[bx+3680h]
-  or dx, es:[bx+3880h]
+  or cx, word ptr es:[bx+3680h]
+  or dx, word ptr es:[bx+3880h]
   mov bx, dx
   mov dx, 0a000h
   mov es, dx
   mov dx, 3c5h
   mov al, 8
   out dx, al
-  mov es:[di], cl
+  mov byte ptr es:[di], cl
   shr al, 1
   out dx, al
-  mov es:[di], ch
+  mov byte ptr es:[di], ch
   shr al, 1
   out dx, al
-  mov es:[di], bl
+  mov byte ptr es:[di], bl
   shr al, 1
   out dx, al
-  mov es:[di], bh
+  mov byte ptr es:[di], bh
   inc di
   dec bp
   jnz .loc_51D
@@ -1231,9 +1231,448 @@ sub_A16:
 
 ; 0x0A25
 setup_memory:
+  mov ax, 0DE60h ; # of bytes to allocate.
+  call determine_paragraphs
+  ; AX now holds # of paragraphs representing 0xDE60
+
+  ; DOS - 2+ - Adjust memory block size (setblock)
+  ; ES = segment address of block to change
+  ; BX = new size in paragraphs.
+  mov bx, ax
+  mov ah, 4Ah
+  int 21h
+  ; AX now holds adjusted block size.
+
+  mov bx, 02A8h
+  cmp word ptr [graphics_mode], 6 ; EGA 16 color?
+  jne .loc_A3E
+  mov bx, 03A8h ; Guess EGA needs more memory?
+
+.loc_A3E:
+  ; DOS - 2+ - ALLOCATE MEMORY
+  ; BX = number of 16-byte paragraphs desired.
+  mov ah, 48h
+  int 21h
+  mov word ptr [ptr1], ax
+
+  ; allocate memory
+  mov bx, 2A8h
+  mov ah, 48h
+  int 21h
+  mov word ptr [ptr2], ax
+
+  mov bx, 370h
+  mov ah, 48h
+  int 21h
+  mov word ptr [ptr3], ax
+
+  retn
+
 
 ; 0x0A5A
+; Cleanup memory.
+; es clobbered, saved and restored.
 sub_A5A:
+  push es
+
+  mov es, word ptr [ptr3]
+  mov ah, 49h ; DOS - 2+ - FREE MEMORY
+  int 21h ; ES = segment address of area to be freed
+
+  mov es, word ptr [ptr1]
+           ; DOS - 2+ - FREE MEMORY
+  int 21h ; ES = segment address of area to be freed
+
+  mov es, word ptr [ptr2]
+           ; DOS - 2+ - FREE MEMORY
+  int 21h ; ES = segment address of area to be freed
+
+  ; Loop through memory alloc list and free pointers.
+  mov si, 2
+  mov di, 4
+.loc_A75:
+  xor al, al   ; al = 0
+  cmp byte ptr [si+memory_alloc_list], al
+  jz .loc_A89
+  mov byte ptr [si+memory_alloc_list], al
+  mov es, word ptr [di+memory_alloc_ptrs]
+  mov ah, 49h ; DOS - 2+ - FREE MEMORY
+  int 21h ; ES = segment address of area to be freed
+.loc_A89:
+  inc di
+  inc di
+  inc si
+  cmp si, 80h
+  jb .loc_A75
+  pop es
+  retn
+
+; Zeros from 0xA94-0xCA0 (524 bytes)
+zeros_A94: db 524 dup (0)
+
+; Unknown, populating memory with some bytes
+; Draws GUI i think
+sub_CA0:
+  push ds
+  mov ds, word ptr [ptr1] ; 0'd pointer.
+  xor di, di
+  mov cx, 0088h ; number of vertical lines
+  mov ax, 0F00Fh
+
+  ; loads ds:di (0-0x2a80) with values (0x88 * 0x50) 10880 bytes
+  ; validates that nothing is higher than 0xF0 and 0x0F
+.loc_CAD:
+  and [di], al
+  and [di+4Fh], ah
+  add di, 0050h
+  loop .loc_CAD
+
+  pop ds
+  mov byte ptr [zero_104E], cl ; this would be 0 due to above loop.
+  mov bx, 000Ch ; signifies number of viewport things.
+
+.loc_CBF:
+  push bx
+  mov ax, word ptr [bx+viewport_dimensions] ; what is this?
+  mov word ptr [dword_104F], ax
+  mov word ptr [dword_104F + 2], cs
+  xor ah, ah
+  mov al, byte ptr [bx+viewport_dimensions + 2] ; argument? "xpos"
+  mov word ptr [arg1_36C0], ax
+  mov al, byte ptr [bx+viewport_dimensions + 3] ; "ypos"
+  mov word ptr [arg2_36C4], ax ; argment 2 ?
+
+  ; 98, 7b
+  ; 0, 7b
+  ; 98, 0
+  ; 0, 0
+
+  call sub_CF8
+
+; 0xCDE
+  pop bx
+  sub bx, 4
+  jns .loc_CBF
+
+  ; the actual drawing is done here
+  jmp draw_viewport
+
+; 0xCE7
+  push ds
+  lds di, dword ptr [dword_104F]
+  mov ax, [bx+di]
+  pop ds
+  test ax, ax
+  jnz .loc_CF4
+  ret
+
+.loc_CF4:
+  add word ptr [dword_104F], ax
+
+; Unknown function, unknown arguments or responses.
+; Reads from dword_104F
+; dl is used to test for various things.
+sub_CF8:
+  push ds
+  push es
+  les si, dword ptr [dword_104F] ; si = [dword_104F] (contents of)
+  lods byte ptr es:[si] ;es lodsb ; load byte at es:si into al (inc si by 1)
+  mov byte ptr [word_1048], al ; basically always 4 ?
+  lods byte ptr es:[si] ;es lodsb ; load byte at es:si into al (inc si by 1)
+  mov byte ptr [counter_104D], al ; counter?
+  mov dx, 4080h
+  lods byte ptr es:[si] ; es lodsb ; load byte at es:si into al (inc si by 1)
+  cbw ; ax = sign extend al   ax = offset?
+
+  ; make sure that ax is positive ?
+  test byte ptr [zero_104E], dl ; is greater than 0x80 ?
+  je .loc_D16
+  neg ax
+.loc_D16:
+  add word ptr [arg1_36C0], ax
+  test byte ptr [word_1048], dl ; is greater than 0x80 ?
+  je .loc_D2A
+  test byte ptr [zero_104E], dl
+  je .loc_D2A
+  dec word ptr [arg1_36C0]
+.loc_D2A:
+  and byte ptr [word_1048], 7Fh ; cap color by making sure it's lower than 0x7F
+  lods byte ptr es:[si] ; es lodsb ; offset #2
+  cbw
+  test byte ptr [zero_104E], dh ; is grater than 0x40
+  je .loc_D3A
+  neg ax
+.loc_D3A:
+  add word ptr [arg2_36C4], ax
+  mov bx, word ptr [arg1_36C0]
+  and bx, word ptr 1 ;  and bx, strict word 0x1
+  shl bx, 1
+  test byte ptr [arg1_36C0+1], dl
+  je .loc_D52
+  or bx, word ptr 4 ;or bx, strict word 0x4
+
+.loc_D52:
+  test byte ptr [zero_104E], dl
+  je .loc_D5C
+  or bx, word ptr 8  ;or bx, strict word 0x8
+.loc_D5C:
+  mov ax, word ptr [word_1053] ; 0x50 ? what is this?
+  test byte ptr [zero_104E], dh
+  je .loc_D67
+  neg ax
+.loc_D67:
+  mov word ptr [word_1055], ax ; resave what we did at 0xD5C
+
+  push es
+  mov es, word ptr [ptr1]
+  pop ds
+  ; populates the actual pointer.
+  call word ptr cs:[bx+function_ptr_tbl]
+  pop es
+  pop ds
+sub_D77:
+  ret
+
+function_ptr_tbl: dw sub_D88
+  dw sub_DEB
+  dw sub_E6D
+  dw sub_EC5
+  dw sub_F3D
+  dw sub_FB2
+  dw sub_D77
+  dw sub_D77
+
+; 0x98, 0x7B => 0x4C, 0xF6
+sub_D88:
+  sar word ptr cs:[arg1_36C0], 1 ; divide by 2 (shift right 1)
+  mov ax, word ptr cs:[word_1048] ; 0x04
+  mov word ptr cs:[word_104A], ax
+  add ax, word ptr cs:[arg1_36C0] ; ax = ax + 4 (likely 4)
+  sub ax, word ptr cs:[word_1053] ; ax = ax - 0x50
+  jbe .loc_DA8
+  sub word ptr cs:[word_104A], ax
+  jna .loc_DEA
+.loc_DA8:
+  mov bx, word ptr cs:[arg2_36C4]
+  shl bx, 1 ; bx = bx * 2;
+  mov dx, word ptr cs:[arg1_36C0]
+  add dx, word ptr cs:[bx-4FBEh] ; 0xB042 - 0xB141 pixel table? (0xb138)
+  xor bh, bh
+.loc_DBB:
+  mov cx, word ptr cs:[word_104A] ; counter
+
+  ; save si to bp, so we can skip ahead.
+  mov bp, si ; set source and destination pointers
+  mov di, dx
+
+  ; memcpy from ? to ptr1
+.loc_DC4:
+  lodsb ; Load byte at address DS:SI into AL   si++
+  mov bl, al
+  mov al, es:[di]
+
+  ; We now AND with some table (see 0xB252-0xB351)
+  ; Most of the time this value will be 0'd out.
+  ; But there are some magic values that work.
+  ; Values ending with 0x06 (0x16, 0x26, 0x36, etc) are AND'd with 0x0F.
+  ; Values in 0x60-0x65 are AND'd with 0xF0
+  ; Value 0x66 is a magic value that AND's with 0xFF
+  ; Values 0x67-0x6F are AND'd with 0xF0
+  and al, byte ptr cs:[bx - 4DAEh] ; 0xB252 - 0xB351
+
+  or al, byte ptr cs:[bx - 4CAEh] ; 0xB352-0xB451
+  stosb   ; al -> es:di di++
+  loop .loc_DC4
+  mov si, bp ; restore position.
+  add si, word ptr cs:[word_1048] ; number bytes to skip
+  add dx, word ptr cs:[word_1055] ; skipping by 0x50 ?
+  dec byte ptr cs:[counter_104D]
+  jnz .loc_DBB
+.loc_DEA:
+  ret
+
+; Somewhat similar to D88, see notes there.
+sub_DEB:
+  sar word ptr cs:[arg1_36C0], 1 ; divide by 2 (shift right 1)
+  xor dl, dl
+  mov ax, word ptr cs:[word_1048]
+  mov word ptr cs:[word_104A], ax
+  add ax, word ptr cs:[arg1_36C0]
+  sub ax, word ptr cs:[word_1053] ; ax = ax - 0x50
+  jc .loc_E0F
+  sub word ptr cs:[word_104A],ax
+  jna .loc_E6C
+  dec dl
+.loc_E0F:
+  mov byte ptr cs:[byte_104C],dl
+  mov bx, word ptr cs:[arg2_36C4]
+  shl bx, 1
+  mov di, word ptr cs:[arg1_36C0]
+  add di, word ptr cs:[bx-4FBEh] ; 0xB042 - 0xB141 pixel table? (0xb138)
+  xor ah, ah
+.loc_E27:
+  mov cx, word ptr cs:[word_104A]
+  push di
+  mov bp, si
+  jmp short .loc_E35
+
+  ; loop
+.loc_E31:
+  mov es:[di], dx
+  inc di
+
+.loc_E35:
+  lodsb
+  mov bx, ax
+  shl bx, 1
+  mov dx, es:[di]
+  and dx, cs:[bx-4BAEh]
+  or dx, cs:[bx-49AEh]
+  loop .loc_E31
+
+  mov es:[di], dl
+  test byte ptr cs:[byte_104C], 80h
+  jnz .loc_E58
+  inc di
+  mov es:[di], dh
+.loc_E58:
+  mov si, bp
+  pop di
+  add si, word ptr cs:[word_1048]
+  add di, word ptr cs:[word_1055]
+  dec byte ptr cs:[counter_104D]
+  jnz .loc_E27
+
+.loc_E6C:
+  ret
+
+sub_E6D:
+
+sub_EC5:
+  nop
+
+sub_F3D:
+  nop
+
+sub_FB2:
+  nop
+
+
+word_1048: dw 0
+word_104A: dw 0
+byte_104C: db 0
+counter_104D: db 0
+zero_104E: db 0
+
+dword_104F: dd 0 ; gets set with 67E8 ; function pointer?
+                 ; gets set with CS (0x1DD)  (ptr to code segment?)
+word_1053: dw 0
+word_1055: dw 0
+
+; 0x1060
+; The draw something sub.
+; Seems to draw specific data (in ptr1) ?
+; May be only for viewport data?
+draw_viewport:
+  mov al, 00ah
+  call sub_2752 ; What does input 0x0a mean?
+  jnc .loc_1068 ; jump if cf = 0, if sub_2752 didn't do anything
+  ret
+
+.loc_1068:
+  ; unknown what sub_1F54 does at this time.
+  mov al, 0ah
+  call sub_1F54
+
+  ; XXX Document values of SI
+  ; SI is always 0
+  xor di, di
+loc_106F:
+  mov si, [di-4FBEh] ; B042 ; table of 80s (0)
+
+  ; Initial offset index.
+  mov ax, word ptr [initial_offset]
+  add ax, 8
+  shl ax, 1 ; ax *= 2 (since it's the index into a word table)
+  mov di, ax ; di = ax
+
+  ; 
+  mov bp, word ptr [vp_height] ; 0x88 - height
+  sub bp, word ptr [initial_offset] ; subtraction
+  mov dx, word ptr [vp_width] ; 0x50 - width
+  mov bx, word ptr [graphics_mode]
+  push es
+  push ds
+  mov ds, word ptr [ptr1]
+  ; draw ds:si -> es:di 
+  call word ptr [bx+draw_handlers2]
+  pop ds
+  pop es
+  ret
+
+; 0x109B
+draw_handlers2:
+  dw sub_10A5 ; 0x0000 (CGA RGB drawing routine)
+  ;dw sub_2A2 ; 0x0002 (CGA composite monitor)
+  ;dw sub_2BC ; 0x0004 (Tandy 16 color)
+  ;dw sub_324 ; 0x0006 (EGA 16 color)
+  dw sub_1175 ; 0x0008 (VGA/MCGA 16 color)
+
+; drawing routine for CGA
+; inputs: dx = count
+sub_10A5:
+  mov ax, CGA_BASE_ADDRESS
+  mov es, ax
+  xor bh, bh
+  shr dx, 1
+.loc_10AE:
+  push di    ; save di
+  mov di, cs:[di-55feh]
+  add di, 4
+
+; 0x10D2
+initial_offset: dw 0
+; 0x10D4
+vp_height: dw 88h
+; 0x10D6
+vp_width: dw 50h
+
+
+; Drawing routine! (this is a function ptr) used for MCGA 256 color.
+; DX is passed in as count.
+; SI passed in as source buffer for pixel lookups.
+; di passed as destination pixel start.
+
+; ds = source picture.?
+; dx = 0x50 0x50  = 80
+; bx = 0x08 0x00 = 8
+; cx = 0x00 0x00 
+; di = 0x10 0x10
+; bp = 0x88 0x88
+; si = 0x00 0x00
+sub_1175:
+  mov ax, VGA_BASE_ADDRESS
+  mov es, ax
+.loc_117A:
+  push di
+  mov di, cs:[di-514eh] ; 0xAEB2-
+  add di, 10h   ; inset - di = 0xa10  line 8, 10  (8, 10)
+  mov cx, dx
+.loc_1185:
+  lodsb ; load byte from DS:SI into al (bump si by 1)
+  mov bl, al ; save
+  xor bh, bh
+  shl bx, 1; bx = bx * 2;
+  mov ax, cs:[bx-45AEh];   // bba6  ; pixel data
+  stosw ; store ax into es:di   (di += 2)
+  loop .loc_1185
+  pop di
+  inc di
+  inc di
+  dec bp
+  jne .loc_117A
+  ret
+
 
 ; Input AL. free's title sequence.
 sub_1270:
@@ -1496,6 +1935,31 @@ memory_tag_list: dw 80h dup (0)
 init_offsets:
   mov dx, 50h
 
+loc_1F53:
+  ret
+
+; input is al
+; unknown what this does at this time.
+sub_1F54:
+  cmp byte ptr [byte_2476], 0
+  je loc_1F53
+
+  xor ah, ah
+  shl ax, 1
+  shl ax, 1
+  mov bx, ax
+  mov ax, word ptr [word_2472]
+
+sub_1F8F:
+  cmp byte ptr [byte_2476], 0
+  jz loc_1F53
+
+word_2472: dw 0
+word_2474: dw 0FFFFh
+byte_2476: db 0
+byte_2477: db 0
+byte_2478: db 0
+
 ; 0x268E
 ui_drawn_yet: db 0
 word_2697: dw 0
@@ -1505,6 +1969,75 @@ word_269D: dw 0
 
 ; 0x26B8
 sub_26B8:
+
+; counter WTF?
+; 0x2720
+; NO Inputs, no outputs
+counters_increment:
+  ; word_269D += 8;
+  mov al, byte ptr [word_269D]
+  add al, 08h
+  mov byte ptr [word_269D], al
+
+  ; word_2699 -= 8;
+  mov al, byte ptr [word_2699]
+  sub al, 08h
+  mov byte ptr [word_2699], al
+
+  ; word_269B++;
+  inc byte ptr [word_269B]
+  ; word_2697--;
+  dec byte ptr [word_2697]
+  ret
+
+; 0x2739
+; NO Inputs, no outputs
+counters_decrement:
+  mov al, byte ptr [word_2699]
+  add al, 08h
+  mov byte ptr [word_2699], al
+  mov al, byte ptr [word_269D]
+  sub al, 08h
+  mov byte ptr [word_269D], al
+  dec byte ptr [word_269B]
+  inc byte ptr [word_2697]
+  ret
+
+
+; Inputs: AL
+sub_2752:
+  cmp byte ptr [ui_drawn_yet], 0
+  je loc_2792
+
+; Inputs: AL
+sub_2759:
+  xor ah, ah
+  shl ax, 1
+  shl ax, 1
+  mov si, ax
+  call counters_increment
+  mov al, [si+2794h]
+  cmp al, byte ptr [word_269B]
+  ; XXX 2018-09-03
+  jnc .loc_278F
+  mov al, [si+2795h]
+  cmp al, byte ptr [word_269D]
+  jnc .loc_278F
+  mov al, byte ptr [word_2697]
+  cmp al, [si+2796h]
+  jnc .loc_278F
+  mov al, byte ptr [word_2699]
+  cmp al, [si+2797h]
+  jnc .loc_278F
+  call counters_decrement
+  stc ; error condition?
+  ret
+.loc_278F:
+  call counters_decrement
+
+loc_2792:
+  clc ; carry flag = 0
+  ret
 
 ; Gets keycode ?
 ; Returns keycode in AL.
@@ -1948,6 +2481,9 @@ dword_3134: dd 0
 file_offset: dd 0
 ; 0x313C
 file_handle: dw 0
+; 0x313E
+ptr3: dw 0
+
 ; 0x3140
 DATA1_STRZ: db 'DATA1', 0
 byte_3144: db 0
@@ -1964,6 +2500,12 @@ file_read_mode: db 0
 
 ; 0x3578
 sub_3578:
+
+; 36C0
+arg1_36C0: dw 0
+word_36C2: dw 0
+; 36C4
+arg2_36C4: dw 0
 
 ; 0x37C8
 sub_37C8:
@@ -2099,6 +2641,8 @@ byte_4F0F: db 0
 byte_4F10: db 0
 ; 0x4F11
 ptr1: dw 0
+; 0x4F13
+ptr2: dw 0
 
 byte_5A70: db 0
 byte_5A71: db 0
@@ -2287,6 +2831,77 @@ sub_5ECA:
   jnz .loc_5EE2
   mov byte ptr [byte_5A71], 0
   ret
+
+; 0x6748 ; another set of function pointers?
+; First line is a pointer to the data
+; followed by X and Y bytes.
+viewport_dimensions:
+  dw data_6758
+  db 0, 0
+  dw data_6784
+  db 98h, 0
+  dw data_67B0
+  db 0, 7Bh
+  dw data_67E8
+  db 98h, 7Bh
+
+; 1st data point will be anded with 0x80 and 0x7F
+; second data point is a counter
+; Viewport pixel data starts on 5th
+data_6758: db 004h, 00Ah, 000h, 000h
+           db 0AAh, 0AAh, 0AAh, 006h ; 0x00 (0x675C-0x675F)
+           db 0AAh, 0AAh, 0AAh, 006h ; 0x01 (0x6760-0x6763)
+           db 0AAh, 0AEh, 0E2h, 006h ; 0x02 (0x6764-0x6767)
+           db 000h, 000h, 000h, 066h ; 0x03 (0x6768-0x676B)
+           db 022h, 022h, 020h, 066h ; 0x04 (0x676C-0x676F)
+           db 00Eh, 0AAh, 0A0h, 066h ; 0x05 (0x6770-0x6773)
+           db 00Eh, 0AEh, 006h, 066h ; 0x06 (0x6774-0x6777)
+           db 00Eh, 0E0h, 066h, 066h ; 0x07 (0x6778-0x677B)
+           db 00Ah, 006h, 066h, 066h ; 0x08 (0x677C-0x677F)
+           db 006h, 066h, 066h, 066h ; 0x09 (0x6780-0x6783)
+
+data_6784: db 004h, 00Ah, 000h, 000h
+           db 060h, 0AAh, 0AEh, 0EAh ; 0x00 (0x6788-0x678B)
+           db 060h, 0AEh, 0EEh, 0AEh ; 0x01 (0x678C-0x678F)
+           db 060h, 02Eh, 0EEh, 0E2h ; 0x02 (0x6790-0x6793)
+           db 066h, 000h, 000h, 000h ; 0x03 (0x6794-0x6797)
+           db 066h, 002h, 022h, 022h ; 0x04 (0x6798-0x679B)
+           db 066h, 002h, 0EEh, 0E0h ; 0x05 (0x679C-0x679F)
+           db 066h, 060h, 02Eh, 0E0h ; 0x06 (0x67A0-0x67A3)
+           db 066h, 066h, 062h, 0E0h ; 0x07 (0x67A4-0x67A7)
+           db 066h, 066h, 066h, 0A0h ; 0x08 (0x67A8-0x67AB)
+           db 066h, 066h, 066h, 060h ; 0x09 (0x67AC-0x67AF)
+
+data_67B0: db 004h, 00Dh, 000h, 000h
+           db 000h, 006h, 066h, 066h ; 0x00 (0x67B4-0x67B7)
+           db 0AEh, 0E0h, 006h, 066h ; 0x01 (0x67B8-0x67BB)
+           db 0AAh, 0EAh, 0E0h, 066h ; 0x02 (0x67BC-0x67BF)
+           db 0AEh, 0AEh, 02Eh, 006h ; 0x03 (0x67C0-0x67C3)
+           db 0AEh, 0E2h, 02Ah, 006h ; 0x04 (0x67C4-0x67C7)
+           db 022h, 022h, 02Ah, 006h ; 0x05 (0x67C8-0x67CB)
+           db 022h, 022h, 02Ah, 006h ; 0x06 (0x67CC-0x67CF)
+           db 022h, 022h, 02Ah, 006h ; 0x07 (0x67D0-0x67D3)
+           db 022h, 022h, 02Ah, 006h ; 0x08 (0x67D4-0x67D7)
+           db 022h, 022h, 02Ah, 006h ; 0x09 (0x67D8-0x67DB)
+           db 022h, 022h, 02Ah, 006h ; 0x0A (0x67DC-0x67DF)
+           db 022h, 022h, 020h, 006h ; 0x0B (0x67E0-0x67E3)
+           db 022h, 022h, 000h, 096h ; 0x0C (0x67E4-0x67E7)
+
+; ?
+data_67E8: db 004h, 00Dh, 000h, 000h
+           db 066h, 066h, 060h, 000h ; 0x00 (0x67EC-0x67EF)
+           db 066h, 060h, 00Eh, 0EAh ; 0x01 (0x67F0-0x67F3)
+           db 066h, 00Eh, 0AEh, 0AAh ; 0x02 (0x67F4-0x67F7)
+           db 060h, 0E2h, 0EAh, 0EAh ; 0x03 (0x67F8-0x67FB)
+           db 060h, 0A2h, 02Eh, 0EAh ; 0x04 (0x67FC-0x67FF)
+           db 060h, 0A2h, 022h, 022h ; 0x05 (0x6800-0x6803)
+           db 060h, 0A2h, 022h, 022h ; 0x06 (0x6804-0x6807)
+           db 060h, 0A2h, 022h, 02Ah ; 0x07 (0x6808-0x680B)
+           db 060h, 0A2h, 022h, 02Ah ; 0x08 (0x680C-0x680F)
+           db 060h, 0A2h, 022h, 02Ah ; 0x09 (0x6810-0x6813)
+           db 060h, 0A2h, 022h, 02Ah ; 0x0A (0x6814-0x6817)
+           db 000h, 002h, 022h, 02Ah ; 0x0B (0x6818-0x681B)
+           db 091h, 000h, 002h, 02Ah ; 0x0C (0x681C-0x681F)
 
 
 ; 0xBC52
