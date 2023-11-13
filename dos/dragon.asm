@@ -108,6 +108,7 @@ begin:
   call sub_A5A
   call sub_311
 
+loc_1BC:
   call restore_interrupts
   call close_file
 
@@ -795,6 +796,438 @@ loc_638:
 
 ; start of configuration ?
 loc_63D:
+  mov ax, 3
+  int 10h ; Set Video mode (al = mode)
+  ; https://en.wikipedia.org/wiki/Box-drawing_character
+  mov al, 0c9h ; character for little left corner angle.
+  call sub_9F0
+  ; Draw 0xCD 0x16 times...
+  mov cx, 0016h
+  call sub_A0E
+  call sub_A16
+
+menu_header_str db 10h, " Dragon Wars Configure Menu V1.1", 11h, 0
+
+  ; This code starts at 0x673
+
+  ; Draw 0xCD 0x15 times...
+  mov cx, 0015h
+  call sub_A0E
+  mov al, 0BBh ; character for little right corner angle.
+  call sub_9F0
+
+  mov dh, 1
+  mov al, 0BAh
+
+.local1:
+  xor dl, dl
+  call set_cursor_to_dh_dl
+  call sub_9F0
+  mov dl, 4Eh
+  call set_cursor_to_dh_dl
+  call sub_9F0
+  inc dh
+  cmp dh, 18h
+  jb .local1
+
+  xor dl, dl
+  call set_cursor_to_dh_dl
+
+; 0x69E
+  mov al, 0C8h
+  call sub_9F0
+
+  ; Draw 0xCD 0x16 times...
+  mov cx, 0016h
+  call sub_A0E
+  call sub_A16
+
+; raw data text
+menu_footer_str db 10h, " Copyright 1989, 1990 Interplay ", 11h, 0
+
+; 0x6CF
+  mov cx, 0015h
+  call sub_A0E
+  mov al, 0BCh
+  call sub_9F0
+  xor di, di
+.loc_6DC:
+  mov dx, [di+cursor_pos_array]
+  call set_cursor_to_dh_dl
+
+  ;DOS - PRINT String terminated by "$"
+  ; in address DS:DX
+  mov dx, word ptr [di+cga_rgb_option_text]
+  mov ah, 9
+  int 21h;
+
+  inc di;
+  inc di;
+  cmp di, 0016h ; should be # items in cursor_pos_array * 2
+  jb .loc_6DC
+
+.loc_6F2:
+  call sub_8A6
+
+; Read key loop, sub_2D0B will return key code in AL.
+.loc_6F5:
+  call sub_2D0B
+
+  ; Keys: 1 (0xB1), 2 (0xB2)
+  ; 'b' 0xE2
+
+  jns .loc_6F5
+  ; down arrow is 0x8A
+  cmp al, 8Dh ; Enter key
+  jne .loc_6FF
+  retn
+
+.loc_6FF:
+  cmp al, 9Bh
+  jne .loc_70A
+
+  ; Escape (0x9B) was pressed.
+  ; ax is address of empty string.
+  mov ax, offset empty_string
+  push ax
+  jmp loc_1BC
+
+  ; Checking for key presses '1' and '2'
+.loc_70A:
+  xor bx, bx
+  cmp al, 0B2h
+  je .loc_716
+  not bx
+  cmp al, 0B1h
+  jne .loc_71C
+
+.loc_716:
+  mov [mouse_configured], bx ; set [test2] to 0xFFFF (mouse on)
+                             ; or 0x0000 (mouse off)
+  jmp .loc_6F2
+
+  ; Checking letters (a-e)
+.loc_71C:
+  and ax, 0DFh
+  cmp al, 0C1h
+  jb .loc_730
+  cmp al, 0C6h
+  jnb .loc_730
+  sub al, 0C1h
+  shl al, 1
+
+.loc_72B:
+  mov [graphics_mode], ax
+  jmp .loc_6F2
+
+.loc_730:
+  cmp al, 0d3h  ; 'Check for 's' key'
+  jne .loc_6F5
+  call sub_8F3
+
+.loc_737:
+  call waitkey_or_mouse
+  jmp loc_63D
+
+; Cursor positions (starting at 0x73D, every 2 bytes)
+cursor_pos_array dw 061Ch, 071Ch, 081Ch, 091Ch, 0A1Ch, 1020h, 1120h
+                 dw 0312h, 1408h, 1517h, 0D0Fh
+
+; menu text pointers (starting at 0x753, every 2 bytes)
+menu_text_ptrs dw cga_rgb_option_text
+               dw cga_comp_option_text
+               dw tandy_option_text
+               dw ega_option_text
+               dw vga_option_text
+               dw mouse_on_text
+               dw mouse_off_text
+               dw select_screen_text
+               dw start_or_save_text
+               dw escape_game_text
+               dw mouse_instr_text
+
+; menu options.
+; 0x753 (why is there a bunch of garbage before this string?)
+cga_rgb_option_text db  "A. CGA RGB monitor$"
+cga_comp_option_text db "B. CGA composite monitor$"
+tandy_option_text   db  "C. Tandy 16 color$"
+ega_option_text     db  "D. EGA 16 color$"
+vga_option_text     db  "E. VGA/MCGA 16 color$"
+mouse_on_text       db  "1. Mouse On$"
+mouse_off_text      db  "2. Mouse Off$"
+select_screen_text  db  "Select a screen format by typing its letter.$"
+start_or_save_text  db  "Press ", 11h, 0C4h, 0D9h, ' to begin the game or press "S" to save configuration$'
+escape_game_text    db  "or press ESC to return to MS-DOS.$"
+mouse_instr_text    db  "Press 1 or 2 for enabling/disabling mouse support.$"
+
+; 0x8A6
+; possibly responsible to for the selection item
+; What does this do?
+sub_8A6:
+  xor di, di
+
+.loc_8A8:
+  mov dx, [di+cursor_pos_array]
+  sub dl, 2   ; move 2 cels in front of text.
+  call set_cursor_to_dh_dl
+
+  mov si, di
+  mov bx, 0102h
+  cmp di, 000Ah
+  jb .loc_8CC
+  mov ax, [mouse_configured]
+  cmp si, 000Ah
+  jnz .loc_8C6
+  not ax
+
+.loc_8C6:
+  or ax, ax
+  jz .loc_8D2
+  jnz .loc_8DE
+
+.loc_8CC:
+  cmp si, [graphics_mode]
+  jnz .loc_8DE
+
+.loc_8D2:
+  ; print the cursor
+  mov al, 11h
+  call sub_9F0
+  mov al, 10h
+  call sub_9F0
+  jmp short .loc_8E6
+
+.loc_8DE:
+  ; erase cursor
+  mov al, 20h
+  call sub_9F0
+  call sub_9F0
+
+.loc_8E6:
+  inc di
+  inc di
+  cmp di, 0eh
+  jb .loc_8A8
+  mov dx, 1538h
+  jmp set_cursor_to_dh_dl
+
+sub_8F3:
+  ; Draws some type of box
+  call sub_958
+  call sub_A16
+
+; raw data text
+saving_state_str db "Saving game state.", 0
+
+; 0x90C
+  call sub_9AB
+
+  pushf
+  push ax
+  call sub_958
+  pop ax
+  popf
+
+  ; was there a write error?
+  jnc loc_942
+
+  or ax, ax
+  jz loc_92D
+  call sub_A16
+drive_error_str db "Drive error.", 0
+  ret
+
+loc_92D:
+  call sub_A16
+write_protected_str db "Write protected.", 0
+  ret
+
+loc_942:
+  call sub_A16
+game_state_saved_str db "Game state saved.", 0
+; 0x957
+  ret
+
+; Draws a box
+; at 0x958
+sub_958:
+  mov dx, 0E1Bh
+  call set_cursor_to_dh_dl
+  mov al, 0C9h
+  call sub_9F0
+  mov cx, 18h
+
+.loc_966:
+  call sub_A0E
+  mov al, 0BBh
+  call sub_9F0
+.lov_96E:
+  mov dh, 00Fh
+  mov al, 0BAh
+.loc_972:
+  mov dl, 1Bh
+  call set_cursor_to_dh_dl
+  mov al, 0BAh
+  call sub_9F0
+  mov cx, 18h
+  mov al, 20h
+  call sub_A10
+  mov al, 0BAh
+  call sub_9F0
+.loc_989:
+  inc dh
+.loc_98B:
+  cmp dh, 012h
+  jb .loc_972
+  mov dl, 01Bh
+  call set_cursor_to_dh_dl
+  mov al, 0C8h
+.loc_997:
+  call sub_9F0
+.loc_99A:
+  mov cx, 018h
+  call sub_A0E
+.loc_9A0:
+  mov al, 0BCh
+  call sub_9F0
+  mov dx, 1120h
+  jmp set_cursor_to_dh_dl
+
+;unknown_chunk db 90h
+
+sub_9AB:
+  ; Open dragon.com
+  mov dx, offset dragon_com_str
+
+  ; DOS 2+ - OPEN - OPEN EXISTING FILE
+  ; AH = 0x3D
+  ; AL = access mode  (02 = read/write)
+  ; DS:DX = path to file to open (ASCIZ)
+  mov ax, 3D02h
+  int 21h
+
+  jc .loc_9D4 ; any error ?
+
+  mov [dragon_com_file_handle], ax
+
+  ; DOS 2+ - WRITE - WRITE TO FILE OR DEVICE
+  ; AH = 40h
+  ; BX = file handle
+  ; CX = number of bytes to write
+  ; DS:DX -> data to write
+  mov ah, 40h
+  mov bx, [dragon_com_file_handle]
+  mov cx, 0006h
+  mov dx, offset start
+  int 21h
+
+  ; save flag of writes.
+  pushf
+  push ax
+
+  ; DOS 2+ - CLOSE - CLOSE FILE
+  ; AH = 3Eh
+  ; BX = file handle
+  mov ah, 3Eh
+  mov bx, [dragon_com_file_handle]
+  int 21h
+
+  jc .loc_9D5 ; any error ?
+
+  pop ax
+  popf
+
+.loc_9D4:
+  ret
+
+.loc_9D5:
+  pop dx
+  pop dx
+  ret
+
+; at 0x9D8
+dragon_com_file_handle dw 0
+; at 0x9DA
+dragon_com_str db 'DRAGON.COM', 0
+
+; 0x9E5
+; Sets the video hardware cursor to whatever values are in DH, DL
+set_cursor_to_dh_dl:
+  push bx
+  push ax
+
+  ; VIDEO - SET Cursor position.
+  ; DH,DL = row, column (0, 0 = upper left)
+  ; BH = page number
+  xor bh, bh ; bh = 0
+  mov ah, 2
+  int 10h
+
+  pop ax
+  pop bx
+  retn
+
+; Should be at 0x9F0 (kinda like a putchar)
+sub_9F0:
+  push ax
+  push bx
+  push cx
+  push dx
+
+  ; VIDEO - Write attributes/characters at cursor position (ah = 9)
+  ; AL = character (passed in)
+  ; BH = display page (0)
+  ; BL = Attributes of character (alpha modes) or color (graphics modes)
+  ; CX = number of times to write character (here 1)
+  mov bx, 7
+  mov ah, 9
+  mov cx, 1
+  int 10h
+
+  ; VIDEO - Read Cursor Position (ah = 3)
+  ; BH = page number (here 0)
+  ; Returns DH, DL = row, column,  CH = cursor start line, CL = cursor end line
+  mov ah, 3
+  xor bh, bh
+  int 10h
+
+  ; move cursor forward
+  inc dx
+
+  ; VIDEO - Set cursor position (ah = 2)
+  ; BH = page number (here 0)
+  ; DH, DL = row, column (0, 0 = upper left)
+  mov ah, 2
+  int 10h
+
+  pop dx
+  pop cx
+  pop bx
+  pop ax
+  retn
+
+; Should be at 0xA0E
+; Just sets al to 0xCD ?
+sub_A0E:
+  mov al, 0CDh
+
+sub_A10:
+  call sub_9F0
+  loop sub_A10
+  retn
+
+sub_A16:
+  pop bx
+.loc_A17:
+  mov al, [bx]
+  inc bx
+  or al, al
+  jz .loc_A23
+  call sub_9F0
+  jmp .loc_A17
+.loc_A23:
+  jmp bx
+
 
 ; 0x0A25
 setup_memory:
@@ -1443,7 +1876,7 @@ read_write_DATA1_file:
 
   mov ax, 4200h
   ; DOS - 2+ - MOVE FILE READ/WRITE POINTER (LSEEK)
-  ; al = method: offset from beginenning of file.
+  ; al = method: offset from begining of file.
   ; AH = 42h
   ; AL = origin of move
   ;   00h start of file
