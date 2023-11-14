@@ -1547,6 +1547,40 @@ sub_DEB:
   ret
 
 sub_E6D:
+  mov ax, word ptr cs:[arg1_36C0]
+  neg ax
+  sar al, 1
+  mov bx, word ptr cs:[word_1048]
+  sub bx, ax
+  mov word ptr cs:[word_104A], bx
+  jna .loc_EC4
+
+  xor ah, ah
+  add si, ax
+  mov bx, word ptr cs:[arg2_36C4]
+  shl bx, 1
+  mov dx, word ptr cs:[bx-4fbeh]
+  xor ah, ah
+.loc_E95:
+  mov cx, word ptr cs:[word_104A]
+  mov di, dx
+  mov bp, si
+.loc_E9E:
+  lodsb
+  mov bx, ax
+  mov al, es:[di]
+  and al, cs:[bx-4daeh]
+  or al, cs:[bx-4caeh]
+  stosb
+  loop .loc_E95
+  mov si, bp
+  add si, word ptr cs:[word_1048]
+  add dx, word ptr cs:[word_1055]
+  dec byte ptr cs:[counter_104D]
+  jnz .loc_E9E
+.loc_EC4:
+  ret
+
 
 sub_EC5:
   nop
