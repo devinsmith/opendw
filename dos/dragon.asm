@@ -1581,12 +1581,96 @@ sub_E6D:
 .loc_EC4:
   ret
 
-
 sub_EC5:
-  nop
+  mov ax, word ptr cs:[arg1_36C0]
+  neg ax
+  sar ax, 1
+  mov bx, word ptr cs:[word_1048]
+  sub bx, ax
+  mov word ptr cs:[word_104A], bx
+  jna .loc_F3C
+
+  xor ah, ah
+  add si, ax
+
+  mov bx, word ptr cs:[arg2_36C4]
+  shl bx,1
+  mov di, cs:[bx-4fbeh]
+  dec di
+  xor ah,ah
+.loc_EEE:
+  mov cx, word ptr cs:[word_104A]
+  push di
+  mov bp,si
+  lodsb
+  mov bx,ax
+  shl bx,1
+  mov dx, es:[di]
+  and dx, cs:[bx-4baeh]
+  or dx, cs:[bx-49aeh]
+  inc di
+  mov es:[di], dh
+  loop .loc_F10
+  jmp short .loc_F28
+.loc_F10:
+  lodsb
+  mov bx,ax
+  shl bx,1
+  mov dx, es:[di]
+  and dx, cs:[bx-4baeh]
+  or dx, cs:[bx-49aeh]
+  mov es:[di], dx
+  inc di
+  loop .loc_F10
+.loc_F28:
+  mov si,bp
+  pop di
+  add si, word ptr cs:[word_1048]
+  add di, word ptr cs:[word_1055]
+  dec byte ptr cs:[counter_104D]
+  jnz .loc_EEE
+.loc_F3C:
+  ret
 
 sub_F3D:
-  nop
+  sar word ptr cs:[arg1_36C0], 1
+  mov ax, word ptr cs:[word_1048]
+  mov word ptr cs:[word_104a], ax
+  add ax, word ptr cs:[arg1_36C0]
+  sub ax, word ptr cs:[word_1053]
+  jna .loc_F64
+  mov bx, word ptr cs:[word_1048]
+  sub bx,ax
+  mov word ptr cs:[word_104a], bx
+  jna .loc_FB1
+.loc_F64:
+  mov bx, word ptr cs:[arg2_36C4]
+  shl bx,1
+  mov dx, word ptr cs:[arg1_36c0]
+  add dx, cs:[bx-4fbeh]
+  add si, word ptr cs:[word_1048]
+  dec si
+  xor bh,bh
+.loc_F7D:
+  mov bp,si
+  mov di,dx
+  mov cx, word ptr cs:[word_104a]
+.loc_F86:
+  mov bl,[si]
+  dec si
+  mov bl, cs:[bx-4eaeh]
+  mov al, es:[di]
+  and al, cs:[bx-4daeh]
+  or al, cs:[bx-4caeh]
+  stosb
+  loop .loc_F86
+  mov si,bp
+  add si, word ptr cs:[word_1048]
+  add dx, word ptr cs:[word_1055]
+  dec byte ptr cs:[counter_104d]
+  jnz .loc_F7D
+.loc_FB1:
+  ret
 
 sub_FB2:
   nop
