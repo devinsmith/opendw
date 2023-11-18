@@ -857,7 +857,7 @@ menu_footer_str db 10h, " Copyright 1989, 1990 Interplay ", 11h, 0
 
   ;DOS - PRINT String terminated by "$"
   ; in address DS:DX
-  mov dx, word ptr [di+cga_rgb_option_text]
+  mov dx, word ptr [di+menu_text_ptrs]
   mov ah, 9
   int 21h;
 
@@ -1572,12 +1572,12 @@ sub_E6D:
   and al, cs:[bx-4daeh]
   or al, cs:[bx-4caeh]
   stosb
-  loop .loc_E95
+  loop .loc_E9E
   mov si, bp
   add si, word ptr cs:[word_1048]
   add dx, word ptr cs:[word_1055]
   dec byte ptr cs:[counter_104D]
-  jnz .loc_E9E
+  jnz .loc_E95
 .loc_EC4:
   ret
 
@@ -1673,8 +1673,58 @@ sub_F3D:
   ret
 
 sub_FB2:
-  nop
-
+  sar word ptr cs:[arg1_36C0], 1
+  xor dl, dl
+  mov ax, word ptr cs:[word_1048]
+  mov word ptr cs:[word_104a], ax
+  add ax, word ptr cs:[arg1_36C0]
+  sub ax, word ptr cs:[word_1053]
+  jc .loc_FDD
+  mov bx, word ptr cs:[word_1048]
+  sub bx, ax
+  mov word ptr cs:[word_104A], bx
+  jna .loc_1047
+  dec dl
+.loc_FDD:
+  mov byte ptr cs:[byte_104c], dl
+  mov bx, word ptr cs:[arg2_36C4]
+  shl bx, 1
+  mov dx, word ptr cs:[arg1_36C0]
+  add dx, cs:[bx-4fbeh]
+  add si, word ptr cs:[word_1048]
+  dec si
+  xor bh,bh
+.loc_FFB:
+  mov cx, word ptr cs:[word_104A]
+  mov di, dx
+  mov bp, si
+  jmp short .loc_100A
+.loc_1006:
+  mov es:[di], ax
+  inc di
+.loc_100A:
+  mov bl,[si]
+  dec si
+  xor bh,bh
+  mov bl, cs:[bx-4eaeh]
+  shl bx,1
+  mov ax, es:[di]
+  and ax, cs:[bx-4baeh]
+  or ax, cs:[bx-49aeh]
+  loop .loc_1006
+  mov es:[di], al
+  test byte ptr cs:[byte_104c], 80h
+  jnz .loc_1034
+  inc di
+  mov es:[di], ah
+.loc_1034:
+  mov si,bp
+  add si, word ptr cs:[word_1048]
+  add dx, word ptr cs:[word_1055]
+  dec byte ptr cs:[counter_104d]
+  jnz .loc_FFB
+.loc_1047:
+  ret
 
 word_1048: dw 0
 word_104A: dw 0
@@ -1686,6 +1736,11 @@ dword_104F: dd 0 ; gets set with 67E8 ; function pointer?
                  ; gets set with CS (0x1DD)  (ptr to code segment?)
 word_1053: dw 0
 word_1055: dw 0
+word_1057: dw 0 ; Unknown 1057/1058
+word_1059: dw 0 ; Unknown 1059/105A
+word_105B: dw 0 ; 105B/105C
+word_105D: dw 0 ; 105D/105E
+byte_105F: db 0 ; 105F
 
 ; 0x1060
 ; The draw something sub.
@@ -1731,9 +1786,9 @@ loc_106F:
 ; 0x109B
 draw_handlers2:
   dw sub_10A5 ; 0x0000 (CGA RGB drawing routine)
-  ;dw sub_2A2 ; 0x0002 (CGA composite monitor)
-  ;dw sub_2BC ; 0x0004 (Tandy 16 color)
-  ;dw sub_324 ; 0x0006 (EGA 16 color)
+  dw sub_10A5 ; 0x0002 (CGA composite monitor)
+  dw sub_10D8 ; 0x0004 (Tandy 16 color)
+  dw sub_10F3 ; 0x0006 (EGA 16 color)
   dw sub_1175 ; 0x0008 (VGA/MCGA 16 color)
 
 ; drawing routine for CGA
@@ -1747,6 +1802,21 @@ sub_10A5:
   push di    ; save di
   mov di, cs:[di-55feh]
   add di, 4
+  mov cx,dx
+.loc_10B9:
+  lodsw
+  mov bl,al
+  mov al, cs:[bx-47aeh]
+  mov bl,ah
+  or al, cs:[bx-46aeh]
+  stosb
+  loop .loc_10B9
+  pop di
+  inc di
+  inc di
+  dec bp
+  jnz .loc_10AE
+  ret
 
 ; 0x10D2
 initial_offset: dw 0
@@ -1755,6 +1825,14 @@ vp_height: dw 88h
 ; 0x10D6
 vp_width: dw 50h
 
+; Tandy drawing
+sub_10D8:
+  mov ax, CGA_BASE_ADDRESS
+  mov es, ax
+
+; ega
+sub_10F3:
+  mov ax, 0a000h
 
 ; Drawing routine! (this is a function ptr) used for MCGA 256 color.
 ; DX is passed in as count.
