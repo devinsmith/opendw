@@ -1778,7 +1778,7 @@ loc_106F:
   push ds
   mov ds, word ptr [ptr1]
   ; draw ds:si -> es:di 
-  call word ptr [bx+draw_handlers2]
+  call word ptr cs:[bx+draw_handlers2]
   pop ds
   pop es
   ret
@@ -1829,10 +1829,85 @@ vp_width: dw 50h
 sub_10D8:
   mov ax, CGA_BASE_ADDRESS
   mov es, ax
+  mov bx, di
+  shr dx, 1
+.loc_10E1:
+  mov di, cs:[bx-52deh]
+  add di, 8
+  mov cx, dx
+  rep movsw
+  inc bx
+  inc bx
+  dec bp
+  jnz .loc_10E1
+  ret
 
 ; ega
 sub_10F3:
   mov ax, 0a000h
+  mov es, ax
+  mov di, cs:[di-546eh]
+  inc di
+  inc di
+  mov cx, bp
+  shr dx, 1
+  shr dx, 1
+  mov bp, dx
+  mov dx, 3C4h
+  mov ax, 102h
+  out dx, ax
+  inc dx
+.loc_110F:
+  push cx
+  push di
+  push bp
+  xor ah, ah
+.loc_1114:
+  lodsb
+  mov bx, ax
+  shl bx, 1
+  mov cx, [bx+2a80h]
+  mov dx, [bx+2c80h]
+  lodsb
+  mov bx, ax
+  shl bx, 1
+  or cx, [bx+2e80h]
+  or dx, [bx+3080h]
+  lodsb
+  mov bx, ax
+  shl bx, 1
+  or cx, [bx+3280h]
+  or dx, [bx+3480h]
+  lodsb
+  mov bx, ax
+  shl bx, 1
+  or cx, [bx+3680h]
+  or dx, [bx+3880h]
+  mov bx, dx
+  mov dx, 3c5h
+  mov al, 8
+  out dx, al
+  mov es:[di], cl
+  shr al, 1
+  out dx, al
+  mov es:[di], ch
+  shr al, 1
+  out dx, al
+  mov es:[di], bl
+  shr al, 1
+  out dx, al
+  mov es:[di], bh
+  inc di
+  dec bp
+  jnz .loc_1114
+  pop bp
+  pop di
+  pop cx
+  add di, 28h
+  loop .loc_110f
+  mov al, 0fh
+  out dx, al
+  ret
 
 ; Drawing routine! (this is a function ptr) used for MCGA 256 color.
 ; DX is passed in as count.
@@ -1869,6 +1944,28 @@ sub_1175:
   jne .loc_117A
   ret
 
+word_119B: dw 0
+word_119D: dw 0
+byte_119F: db 0
+
+sub_11A0:
+  mov word ptr [word_11C4], 0
+  mov ax, word ptr [word_11C2]
+  mul word ptr [word_11C0]
+  mov word ptr [word_11C6], ax
+  mov word ptr [word_11C8], dx
+  mov ax, word ptr [word_11C4]
+  mul word ptr [word_11C0]
+  add word ptr [word_11C8], ax
+  ret
+
+word_11C0: dw 0
+word_11C2: dw 0
+word_11C4: dw 0
+word_11C6: dw 0
+word_11C8: dw 0
+
+; 11CE
 
 ; Input AL. free's title sequence.
 sub_1270:
