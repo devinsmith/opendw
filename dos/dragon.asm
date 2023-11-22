@@ -104,6 +104,7 @@ begin:
 
   ; 1B2
   mov dx, offset empty_string
+loc_1B5:
   push dx
   call sub_A5A
   call sub_311
@@ -1950,6 +1951,7 @@ byte_119F: db 0
 
 sub_11A0:
   mov word ptr [word_11C4], 0
+sub_11A6:
   mov ax, word ptr [word_11C2]
   mul word ptr [word_11C0]
   mov word ptr [word_11C6], ax
@@ -1965,7 +1967,79 @@ word_11C4: dw 0
 word_11C6: dw 0
 word_11C8: dw 0
 
+word_11CA: dw 0
+word_11CC: dw 0
+
 ; 11CE
+sub_11CE:
+  mov word ptr [word_11CA], 0
+  mov word ptr [word_11CC], 0
+  mov cx, 20h
+.loc_11DD:
+  shl word ptr [word_11C6], 1
+  rcl word ptr [word_11C8], 1
+  rcl word ptr [word_11CA], 1
+  rcl word ptr [word_11CC], 1
+  mov ax, word ptr [word_11CA]
+  sub ax, word ptr [word_11C0]
+  mov bx, word ptr [word_11CC]
+  sbb bx, 0
+  jc .loc_1208
+  mov word ptr [word_11CA], ax
+  mov word ptr [word_11CC], bx
+  inc word ptr [word_11C6]
+.loc_1208:
+  loop .loc_11DD
+  ret
+
+;120B
+sub_120B:
+  mov word ptr [word_11C2], 0
+  mov word ptr [word_11C4], 0
+  mov word ptr [word_11C0], 0ah
+  mov bx, 0ffffh
+.loc_1220:
+  inc bx
+  mov al, [bx+3926h]
+  and al, 7fh
+  cmp al, 20h
+  jz .loc_1220
+.loc_122B:
+  mov al, [bx+3926h]
+  inc bx
+  and ax, 7fh
+  xor al, 30h
+  cmp al, 0ah
+  ja .loc_125D
+
+  push ax
+  push bx
+  call sub_11A6
+  pop bx
+  pop ax
+  add ax, word ptr [word_11C6]
+  mov word ptr [word_11C2], ax
+  mov ax, word ptr [word_11C8]
+  adc ax, 0
+  mov word ptr [word_11C4], ax
+  jnc .loc_122B
+  mov cx, 4
+  mov di, 3897h
+  mov al, 0ffh
+  rep stosb
+  ret
+
+.loc_125D:
+  mov cx, 4
+  mov si, 11c2h
+  mov di, 3897h
+  rep movsb
+  ret
+
+word_1269: dw 0
+word_126B: dw 0
+word_126D: dw 0
+byte_126F: db 0
 
 ; Input AL. free's title sequence.
 sub_1270:
@@ -1990,6 +2064,28 @@ sub_1270:
 .loc_128C:
   ret
 
+; sets memory alloc list item to '2'.
+; al = index of memory to mark.
+sub_128D:
+  mov bl, 2 ; marking the memory alloc list with this.
+  jmp short loc_1297
+
+  mov bl, 1
+  jmp short loc_1297
+  mov bl, 0FFh
+
+loc_1297:
+  cmp al, 0FFh
+  jz .loc_12A7
+  cmp al, 2
+  jb .loc_12A7
+  xor ah, ah
+  mov si, ax
+  mov byte ptr [si + memory_alloc_list], bl
+
+.loc_12A7:
+  ret
+
 
 ; Inputs: AL
 ; Outputs: CX
@@ -2003,6 +2099,15 @@ get_indexed_memory:
   xor bx, bx
   ret
 
+; 0x12B5
+; Get bytes extracted.
+; Outputs: BX - bytes of resource
+sub_12B5:
+  xor ah, ah
+  shl ax, 1
+  mov si, ax
+  mov bx, word ptr [si+bytes_allocated_list]
+  ret
 
 ; Inputs are unknown.
 ; Outputs are unknown.
@@ -2059,9 +2164,21 @@ sub_12E6:
   call game_mem_alloc
   jnc .loc_1325
   call sub_138E ; memory failure?
+  jnc .loc_1301
+
+  call game_mem_alloc
+  jnc .loc_1325
+  mov dx, 132bh
+  jmp loc_1B5
 
 .loc_1316:
-  nop
+  mov al, byte ptr [mem_alloc_list_marker]
+  mov byte ptr [si + memory_alloc_list], al
+  mov ax, si
+  push ax
+  call get_indexed_memory
+  pop ax
+  stc
 .loc_1325:
   ret
 
@@ -2219,8 +2336,10 @@ memory_alloc_list: db 128 dup (0)
 
 ; at 0x1649 - 0x1749
 ; Controls lookups by some sort of tag?
-memory_tag_list: dw 80h dup (0)
+memory_tag_list: dw 82h dup (0)
 
+sub_1750:
+  mov bx, 17D9h
 
 ; sets up table to be sums of 0x50, 0x88 times.
 ; 0x00, 0x00, 0x50, 0x00, 0xA0, 0x00, 0xF0, 0x00, 0x40, 0x01 ...
@@ -2857,7 +2976,7 @@ mouse_last_xpos: dw 0
 ; 0x3858
 mouse_last_ypos: dw 0
 
-; 0x3860
+; 0x3860 - 0x38E0
 game_state dw 80h DUP (0)
 
 byte_393C: db 0
