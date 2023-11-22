@@ -2336,16 +2336,54 @@ memory_alloc_list: db 128 dup (0)
 
 ; at 0x1649 - 0x1749
 ; Controls lookups by some sort of tag?
-memory_tag_list: dw 82h dup (0)
+memory_tag_list: dw 80h dup (0)
 
+word_174A: dw 0
+word_174B: dw 0
+word_174D: dw 0
+byte_174F: db 0
+
+; Mini map
 sub_1750:
   mov bx, 17D9h
+  mov cx, cs
+  call sub_25E0
+  mov al, byte ptr [game_state]
+  mov byte ptr [byte_1960], al
+  mov al, byte ptr [game_state + 1]
+  mov byte ptr [byte_1961], al
+
+  call sub_17E2
+  call sub_59A6
+  call sub_17F7
+
+  mov bx, 1777h
+  mov cx, cs
+  call sub_28B0
+  jmp bx
+
+; 0x1777
 
 ; sets up table to be sums of 0x50, 0x88 times.
 ; 0x00, 0x00, 0x50, 0x00, 0xA0, 0x00, 0xF0, 0x00, 0x40, 0x01 ...
 ; 0x17DD
 init_offsets:
   mov dx, 50h
+  jmp loc_17E5
+sub_17E2:
+  mov dx, 90h
+loc_17E5:
+  xor ax, ax
+
+sub_17F7:
+
+byte_1960: db 0
+byte_1961: db 0
+byte_1962: db 0
+byte_1963: db 0
+byte_1964: db 0
+byte_1965: db 0
+byte_1966: db 0
 
 loc_1F53:
   ret
@@ -2371,6 +2409,12 @@ word_2474: dw 0FFFFh
 byte_2476: db 0
 byte_2477: db 0
 byte_2478: db 0
+
+; 0x25E0
+; inputs cx:bx (script)
+sub_25E0:
+  push ds
+
 
 ; 0x268E
 ui_drawn_yet: db 0
@@ -2450,6 +2494,8 @@ sub_2759:
 loc_2792:
   clc ; carry flag = 0
   ret
+
+sub_28B0:
 
 ; Gets keycode ?
 ; Returns keycode in AL.
@@ -3055,6 +3101,10 @@ byte_4F10: db 0
 ptr1: dw 0
 ; 0x4F13
 ptr2: dw 0
+
+sub_59A6:
+  ; Implemented in engine.c
+
 
 byte_5A70: db 0
 byte_5A71: db 0
