@@ -2345,7 +2345,7 @@ byte_174F: db 0
 
 ; Mini map
 sub_1750:
-  mov bx, 17D9h
+  mov bx, offset data_17D9
   mov cx, cs
   call sub_25E0
   mov al, byte ptr [game_state]
@@ -2355,27 +2355,270 @@ sub_1750:
 
   call sub_17E2
   call sub_59A6
+loc_176A:
   call sub_17F7
 
-  mov bx, 1777h
+  mov bx, offset mini_map_inputs
   mov cx, cs
   call sub_28B0
   jmp bx
 
 ; 0x1777
+mini_map_inputs: db 80h, 80h ; flags (0x8080) - Disable mouse
+  db 09Bh, 09Bh, 017h  ; ESC -> 0x179B
+  db 088h, 0A7h, 017h  ; Left -> 0x17A7
+  db 0CAh, 0A7h, 017h  ; 'J' -> 0x17A7
+  db 095h, 0B3h, 017h  ; Right -> 0x17B3
+  db 0CCh, 0B3h, 017h  ; 'L' -> 0x17B3
+  db 08Ah, 0C0h, 017h  ; Down -> 0x17C0
+  db 0DAh, 0C0h, 017h  ; 'Z' -> 0x17C0
+  db 0CBh, 0C0h, 017h  ; 'K' -> 0x17C0
+  db 08Bh, 0CCh, 017h  ; Up -> 0x17CC
+  db 0C1h, 0CCh, 017h  ; 'A' -> 0x17CC
+  db 0C9h, 0CCh, 017h  ; 'I' -> 0x17CC
+  db 0FFh ;
+
+; 179B
+mini_map_escape:
+  call init_offsets
+  call sub_37C8
+  call sub_587E
+  jmp sub_26B8
+
+; 17A7
+mini_map_left:
+  mov al, byte ptr [byte_1961]
+  dec al
+  js loc_176A
+loc_17AE:
+  mov byte ptr [byte_1961], al
+  jmp short loc_176A
+
+; 17B3
+mini_map_right:
+  mov al, byte ptr [byte_1961]
+  inc al
+  cmp al, byte ptr [game_state + 33]
+  jc loc_17AE
+  jmp short loc_176A
+
+; 17C0
+mini_map_down:
+  mov al, byte ptr [byte_1960]
+  dec al
+  js loc_176A
+loc_17C7:
+  mov byte ptr [byte_1960], al
+  jmp short loc_176A
+
+; 17CC
+mini_map_up:
+  mov al, byte ptr [byte_1960]
+  inc al
+  cmp al, byte ptr [game_state + 34]
+  jc loc_17C7
+  jmp short loc_176A
+
+data_17D9: db 01h, 00h, 27h, 0C0h
 
 ; sets up table to be sums of 0x50, 0x88 times.
 ; 0x00, 0x00, 0x50, 0x00, 0xA0, 0x00, 0xF0, 0x00, 0x40, 0x01 ...
 ; 0x17DD
 init_offsets:
   mov dx, 50h
-  jmp loc_17E5
+  jmp short loc_17E5
 sub_17E2:
   mov dx, 90h
 loc_17E5:
   xor ax, ax
+  mov word ptr [word_1053], dx
+  mov di, offset table_of_80
+  mov cx, 0088h
+.loc_17F1:
+  ; Fill ES:DI with AX.  DI += 2
+  stosw
+  add ax, dx
+  loop .loc_17F1 ; loops until cx = 0
+  ret
 
+; 0x17F7
+; Draw the mini map
 sub_17F7:
+  mov byte ptr [byte_1964], 0
+  mov byte ptr [zero_104E], 0
+  jmp short loc_1806
+.loc_1803:
+  call sub_184B
+
+loc_1806:
+  xor al, al
+.loc_1808:
+  mov byte ptr [byte_1962], al
+
+  call sub_1861
+  mov al, byte ptr [byte_1962]
+  inc al
+  cmp al, 9
+  jc .loc_1808
+  call sub_1967
+
+  ; Get state of key press buffer
+  mov ah, 1
+  int 16h
+  jz .loc_1837
+
+  ; got a key
+  mov cx, 4
+  mov di, offset data_1843
+  test al,al
+
+  jz .loc_1831
+  mov di, offset data_1847
+  and al, 0dfh
+  mov ah,al
+.loc_1831:
+  mov al,ah
+  repne scasb
+
+  jz .loc_1842
+.loc_1837:
+  ; No key, or key pressing done.
+  inc byte ptr [byte_1964]
+  mov al, byte ptr [byte_1964]
+  cmp al, 8
+  jc .loc_1803
+.loc_1842:
+  ret
+
+data_1843: db 04bh, 04dh, 050h, 048h  ; Arrow keys
+data_1847: db 04ch, 04ah, 04bh, 049h
+
+; Viewport move memory
+; 0x184B
+sub_184B:
+  push es
+  push ds
+  mov si, 0d80h
+  xor di,di
+  mov cx, 06c0h
+  mov ax, word ptr [ptr1]
+  mov es,ax
+  mov ds,ax
+  rep movsw ; mov word ds:si to es:di (si, di += 2), repeat 0x06C0 times.
+  pop ds
+  pop es
+  ret
+
+sub_1861:
+  call sub_194A
+  xor al, al
+
+  cmp bl, byte ptr [game_state]
+  jnz .loc_1874
+  cmp dl, byte ptr [game_state + 1]
+  jnz .loc_1874
+  not al
+.loc_1874:
+  mov byte ptr [byte_1966],al
+  call sub_54D8
+
+  test byte ptr [word_11C6+1], 8   ; 11C7 (should it be a byte instead of word)
+  jz .loc_18E4
+  mov bl, byte ptr [word_11C6 + 1]
+  shr bl, 1
+  shr bl, 1
+  shr bl, 1
+  shr bl, 1
+  and bx, word ptr 3
+
+  mov al, byte ptr [bx + data_56E5 + 4] ; ?
+  xor di,di
+  call sub_19C7
+  mov bl, byte ptr [word_11C6]
+  shr bl, 1
+  shr bl, 1
+  shr bl, 1
+  shr bl, 1
+  and bx, word ptr 0fh
+
+  jz .loc_18B6
+  mov al, byte ptr [bx + data_56C6]
+  mov di, 6
+  call sub_19C7
+.loc_18B6:
+  mov bl, byte ptr [word_11C6]
+  and bx, word ptr 0fh
+  jz .loc_18CA
+  mov al, byte ptr [bx + data_56C6]
+  mov di, 0ch
+  call sub_19C7
+.loc_18CA:
+  test byte ptr [byte_1966], 80h
+  jnz .loc_1945
+
+  mov bl, byte ptr [word_11C6 + 1]
+  and bx, word ptr 7
+  jz .loc_1948
+  mov al, byte ptr [bx + data_56e5 + 7]
+  xor di,di
+  jmp sub_19C7
+
+.loc_18E4:
+  mov bx,695ch
+  call sub_1A13
+  mov al, byte ptr [word_11C6]
+  mov byte ptr [byte_1949], al
+  call sub_194A
+  inc bl
+  call sub_54D8
+  test byte ptr [word_11C6 + 1],8
+  jz .loc_191B
+
+  mov bl, byte ptr [byte_1949]
+  shr bl, 1
+  shr bl, 1
+  shr bl, 1
+  shr bl, 1
+  and bx, word ptr 0fh
+  jz .loc_191B
+
+  mov al, byte ptr [bx + data_56C6]
+  mov di, 6
+  call sub_19C7
+.loc_191B:
+  call sub_194A
+  dec dl
+  call sub_54D8
+  test byte ptr [word_11C6 + 1],8
+  jz .loc_193E
+  mov bl, byte ptr [byte_1949]
+  and bx, word ptr 0fh
+  jz .loc_193E
+  mov al, byte ptr [bx + data_56C6]
+  mov di, 0ch
+  call sub_19C7
+.loc_193E:
+  test byte ptr [byte_1966], 80h
+  jz .loc_1948
+
+.loc_1945:
+  jmp sub_1A10
+.loc_1948:
+  ret
+
+
+byte_1949: db 0
+
+sub_194A:
+  mov bl, 3
+  sub bl, byte ptr [byte_1964]
+  add bl, byte ptr [byte_1960]
+
+  mov dl, byte ptr [byte_1961]
+  sub dl, 4
+  add dl, byte ptr [byte_1962]
+  ret
+
 
 byte_1960: db 0
 byte_1961: db 0
@@ -2384,6 +2627,14 @@ byte_1963: db 0
 byte_1964: db 0
 byte_1965: db 0
 byte_1966: db 0
+
+sub_1967:
+
+sub_19C7:
+
+sub_1A10:
+
+sub_1A13:
 
 loc_1F53:
   ret
@@ -3102,6 +3353,14 @@ ptr1: dw 0
 ; 0x4F13
 ptr2: dw 0
 
+sub_54D8:
+
+data_56C6: db 0
+data_56E5: db 0
+
+sub_587E:
+
+
 sub_59A6:
   ; Implemented in engine.c
 
@@ -3364,6 +3623,10 @@ data_67E8: db 004h, 00Dh, 000h, 000h
            db 060h, 0A2h, 022h, 02Ah ; 0x0A (0x6814-0x6817)
            db 000h, 002h, 022h, 02Ah ; 0x0B (0x6818-0x681B)
            db 091h, 000h, 002h, 02Ah ; 0x0C (0x681C-0x681F)
+
+; 0xB042 - 0xB151 (0x88 * 2)
+; stores offsets to destination pointers.
+table_of_80: dw 88h dup(0)
 
 
 ; 0xBC52
