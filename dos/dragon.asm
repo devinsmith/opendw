@@ -2628,7 +2628,25 @@ byte_1964: db 0
 byte_1965: db 0
 byte_1966: db 0
 
+; minimap?
 sub_1967:
+  mov byte ptr [vp_width], 90h
+  mov bx, word ptr [byte_1964]
+  shl bx, 1
+  mov ax, word ptr [bx+data_1997]
+  mov byte ptr [initial_offset], al
+  mov ax, [bx+19A7h]
+  mov byte ptr [vp_height], al
+  mov di, [bx+19B7h]
+  call loc_106F ; 1984
+  mov byte ptr [initial_offset], 0
+  mov byte ptr [vp_height], 88h
+  mov byte ptr [vp_width], 50h
+  ret
+
+; 1997 (viewport offsets)
+data_1997:
+  dw 0, 10h, 28h, 40h, 58h, 70h, 88h, 0a0h
 
 sub_19C7:
 
