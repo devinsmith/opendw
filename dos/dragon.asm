@@ -1359,6 +1359,7 @@ sub_CA0:
   jmp draw_viewport
 
 ; 0xCE7
+loc_CE7:
   push ds
   lds di, dword ptr [dword_104F]
   mov ax, [bx+di]
@@ -2635,24 +2636,83 @@ sub_1967:
   shl bx, 1
   mov ax, word ptr [bx+data_1997]
   mov byte ptr [initial_offset], al
-  mov ax, [bx+19A7h]
+  mov ax, word ptr [bx+data_19A7]
   mov byte ptr [vp_height], al
-  mov di, [bx+19B7h]
+  mov di, word ptr [bx+data_19B7]
   call loc_106F ; 1984
   mov byte ptr [initial_offset], 0
   mov byte ptr [vp_height], 88h
   mov byte ptr [vp_width], 50h
+loc_1996:
   ret
 
 ; 1997 (viewport offsets)
 data_1997:
-  dw 0, 10h, 28h, 40h, 58h, 70h, 88h, 0a0h
+  dw 00h, 10h, 28h, 40h, 58h, 70h, 88h, 0a0h
+; 19A7 (viewport heights)
+data_19A7:
+  dw 10h, 28h, 40h, 58h, 70h, 88h, 0a0h, 0a8h
+; 19B7 (another set of offsets)
+data_19B7:
+  dw 30h, 20h, 20h, 20h, 20h, 20h, 20h, 20h
 
+; Plot resource onto minimap
 sub_19C7:
+  cmp al, 07fh
+  jnc loc_1996
+  xor bx, bx
+  mov word ptr [dword_104F], bx
+  shl al, 1
+  mov bl, al
+  mov ax, [bx+59E4h] ; resource cache
+  mov word ptr [dword_104F + 2], ax
+  mov ax, word ptr [byte_1962]
+
+  shl ax, 1
+  shl ax, 1
+  shl ax, 1
+  shl ax, 1
+  shl ax, 1
+
+  add ax, word ptr [di+data_19FE]
+  mov word ptr [arg1_36C0], ax
+  mov ax, word ptr [di+data_19FE+2]
+  mov word ptr [arg2_36C4], ax
+  mov bx, word ptr [di+data_19FE+4]
+
+  jmp loc_CE7
+
+data_19FE:
+  dw 0000h, 0018h, 0000h
+  dw 0FFF8h, 0010h, 0000h
+  dw 0FFF8h, 0010h, 0002h
 
 sub_1A10:
+  mov bx, 6820h
 
 sub_1A13:
+  mov word ptr [dword_104F], bx
+  mov ax, cs
+  mov word ptr [dword_104F + 2], ax
+  mov ax, word ptr [byte_1962]
+
+  shl ax, 1
+  shl ax, 1
+  shl ax, 1
+  shl ax, 1
+  shl ax, 1
+
+  mov word ptr [arg1_36C0], ax
+  mov word ptr [arg2_36C4], 18h
+  jmp sub_CF8
+  ; 1A35
+
+; 0x1A35
+unknown_data_1A35:
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+; 0x1A40 (write character name (op_7d))
+sub_1A40:
 
 loc_1F53:
   ret
@@ -3381,6 +3441,11 @@ sub_587E:
 
 sub_59A6:
   ; Implemented in engine.c
+
+; 0x59E4
+; resource cache
+data_59E4:
+  dw 0
 
 
 byte_5A70: db 0
