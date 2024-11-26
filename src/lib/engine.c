@@ -162,6 +162,9 @@ const struct resource *word_3ADF = NULL;
 uint16_t word_42D6 = 0;
 uint16_t word_4454 = 0;
 
+uint8_t byte_4751 = 0;
+uint8_t byte_4753 = 0;
+
 // 0x4A5B
 unsigned short data_4A5B[] = { 0x005A };
 
@@ -531,6 +534,7 @@ static void op_6C();
 static void op_6D();
 static void op_6F();
 static void op_71();
+static void op_72();
 static void op_73();
 static void op_74();
 static void op_75();
@@ -690,7 +694,7 @@ struct op_call_table targets[] = {
   { op_6F, "0x4607" },
   { NULL, "0x4632" },
   { op_71, "0x465B" },
-  { NULL, "0x46B6" },
+  { op_72, "0x46B6" },
   { op_73, "0x47B7" },
   { op_74, "0x47C0" },
   { op_75, "0x47D1" },
@@ -3181,7 +3185,7 @@ static void sub_1A10()
   printf("%s\n", __func__);
   struct viewport_data vp;
 
-  cpu.bx = 0x6820;
+  cpu.bx = 0x6820; // ui_get_data_6820
   word_104F = cpu.bx;
   // word_1051 = cs
   cpu.ax = byte_1962;
@@ -3464,6 +3468,84 @@ static void op_71(void)
   si = pop_word();
   cpu.base_pc = base_pc;
   cpu.pc = base_pc + si;
+}
+
+// 0x46B6
+static void op_72(void)
+{
+  // push si
+  // push cs
+  // pop es (es = cs)
+
+  uint8_t al;
+  uint8_t dl;
+  uint8_t bl;
+
+  word_3AE6 &= 0xFE;
+
+  al = game_state.unknown[2];
+  if (al != game_state.unknown[0x57]) {
+    // 0x469D
+    return;
+  }
+
+  dl = game_state.unknown[1];
+  bl = game_state.unknown[0];
+  sub_54D8(dl, bl);
+
+  al = word_11C8;
+  byte_4753 = al;
+  cpu.di = data_5A04[0]; // mov di, [5A04]
+  bl = game_state.unknown[0x56];
+  cpu.bx = bl;
+  cpu.bx = cpu.bx << 1;
+
+  // 0x46E4
+  // Maybe not correct
+  struct resource *r = resource_get_by_index(bl);
+
+  cpu.si = r->bytes[cpu.di + 2];
+  cpu.si += r->bytes[cpu.di + 3] << 8;
+
+  // 0x46EC
+  byte_4751 = 3;
+  uint16_t saved_si = cpu.si;
+
+  al = r->bytes[cpu.si++];
+  if (al == 0xFE) {
+    // 4732
+    printf("%s: 0x4732 unimplemented\n", __func__);
+    exit(1);
+  }
+  if (al > 0xFE) {
+    // 4732
+    printf("%s: 0x474B unimplemented\n", __func__);
+    exit(1);
+  }
+  // 0x46FB
+  if (al == 0xFD) {
+    // 0x4726
+    printf("%s: 0x4726 unimplemented (1)\n", __func__);
+    exit(1);
+  }
+  if (al == 0x80) {
+    // 0x4703
+    printf("%s: 0x4703 unimplemented\n", __func__);
+    exit(1);
+  }
+  // 0x4720
+  if (al == game_state.unknown[0x85]) {
+    // 0x4726
+    printf("%s: 0x4726 unimplemented (2)\n", __func__);
+    exit(1);
+  }
+  // 0x4743
+  // pop si
+  // pop es
+  cpu.si = saved_si + byte_4751;
+
+  printf("%s: 0x46EC unimplemented\n", __func__);
+  exit(1);
 }
 
 // 0x47B7
