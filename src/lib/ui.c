@@ -571,27 +571,44 @@ void draw_ui_piece(const struct pic_data *pic)
   vga_update();
 }
 
-/* 0x36C8 */
-void ui_draw_solid_color(uint8_t color_idx, uint16_t inset,
-    uint16_t count, uint16_t line_num)
+// 0x1C49
+/* Draws two horizontal lines across the frame buffer in the specified color,
+ * from x1 -> x2 on line y, and y+1 */
+void ui_draw_double_horizontal_line(
+  uint8_t color_idx,
+  uint16_t x1, uint16_t x2,
+  uint16_t y)
 {
-  // early exit.
-  if (count <= inset) {
+  // Does this order matter? It seems more natural to draw lines from top
+  // to bottom, but this matches how the game did it.
+  ui_draw_horizontal_line(color_idx, x1, x2, y + 1);
+  ui_draw_horizontal_line(color_idx, x1, x2, y);
+}
+
+/* 0x36C8 */
+/* Draws a horizontal line across the frame buffer in the specified color,
+ * from x1 -> x2 on line y */
+void ui_draw_horizontal_line(
+    uint8_t color_idx,
+    uint16_t x1, uint16_t x2,
+    uint16_t y)
+{
+  // We only support drawing left to right.
+  if (x2 <= x1) {
     return;
   }
-  count -= inset;
-  count = count << 1;
+
+  uint16_t len = x2 - x1;
+  len = len << 1;
 
   // bx = color
-  uint8_t color = color_data[color_idx];
-  color = color & 0x0F;
+  uint8_t color = color_data[color_idx] & 0x0F;
 
-  uint16_t fb_off = get_line_offset(line_num);
-  inset = inset << 2;
-  fb_off += inset;
+  uint16_t fb_off = get_line_offset(y);
+  fb_off += (x1 << 2);
+
   uint8_t *framebuffer = vga_memory();
-
-  for (uint16_t i = 0; i < count; i++) {
+  for (uint16_t i = 0; i < len; i++) {
     framebuffer[fb_off++] = color;
     framebuffer[fb_off++] = color;
   }

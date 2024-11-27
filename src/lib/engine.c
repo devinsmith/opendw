@@ -4141,7 +4141,7 @@ static void draw_player_status(uint8_t val)
     word_36C2 = 0x4E; // ending point
 
     while (1) {
-      ui_draw_solid_color(fill_color, word_36C0, word_36C2, g_linenum);
+      ui_draw_horizontal_line(fill_color, word_36C0, word_36C2, g_linenum);
       g_linenum++;
 
       if ((g_linenum & 0x0F) == 0) {
@@ -4225,9 +4225,9 @@ static void draw_player_status(uint8_t val)
     word_36C0 = 0x36;
     word_36C2 = 0x4E;
     // 0x1B87
-    ui_draw_solid_color(fill_color, word_36C0, word_36C2, g_linenum);
+    ui_draw_horizontal_line(fill_color, word_36C0, word_36C2, g_linenum);
     g_linenum -= 3;
-    ui_draw_solid_color(fill_color, word_36C0, word_36C2, g_linenum);
+    ui_draw_horizontal_line(fill_color, word_36C0, word_36C2, g_linenum);
     reset_ui_background();
     return;
   }
@@ -6532,10 +6532,13 @@ static void sub_11A0(int set_11C4)
 }
 
 // Input is 11C0, 11C6, 11C8
+// Output is 11CA, 11CC
 static void sub_11CE()
 {
   int old_carry = 0;
   int carry = 0;
+
+  printf("%s (input): 0x%04X 0x%04X 0x%04X\n", __func__, word_11C0, word_11C6, word_11C8);
 
   word_11CA = 0;
   word_11CC = 0;
@@ -6589,15 +6592,6 @@ static void sub_11CE()
   }
 }
 
-// 0x1C49
-static void sub_1C49(uint16_t fill_color)
-{
-  // Does this order matter? It seems more natural to draw lines from top
-  // to bottom, but this matches how the game did it.
-  ui_draw_solid_color(fill_color, word_36C0, word_36C2, g_linenum + 1);
-  ui_draw_solid_color(fill_color, word_36C0, word_36C2, g_linenum);
-}
-
 static void sub_1BF8(uint8_t color, uint8_t y_adjust)
 {
   uint16_t fill_color;
@@ -6608,28 +6602,32 @@ static void sub_1BF8(uint8_t color, uint8_t y_adjust)
   if (sub_1C57(cpu.bx) != 0) {
     cpu.bx += 2; // now check max?
     push_word(cpu.bx);
-    word_11C2 = 0x17;
+    word_11C2 = 0x17; // max percentage?
     sub_11A0(0);
     cpu.bx = pop_word();
     if (sub_1C57(cpu.bx) != 0) {
+      // Calculate percentage of 0x17 that ratio is.
       sub_11CE();
       cpu.ax = word_11C6;
       cpu.ax++;
     }
   }
+
+  // Draw color portion of status bar.
+  word_36C0 = 0x36;
   cpu.ax += 0x36;
   word_36C2 = cpu.ax;
-  word_36C0 = 0x36;
-  sub_1C49(fill_color);
+  ui_draw_double_horizontal_line(fill_color, word_36C0, word_36C2, g_linenum);
   cpu.ax = word_36C2;
   if (cpu.ax == 0x4E) {
     return;
   }
 
   // 1C3A
+  // Draw remaining black part of status bar.
   word_36C0 = cpu.ax;
   word_36C2 = 0x4E;
   fill_color = byte_1BE5; // color.
-  sub_1C49(fill_color);
+  ui_draw_double_horizontal_line(fill_color, word_36C0, word_36C2, g_linenum);
 }
 
