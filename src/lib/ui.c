@@ -88,6 +88,13 @@ static struct rect_dimension rect_dimensions[] = {
 };
 
 // 0x3797
+// Indexes into the palette, in 16/256 color mode, the following
+// are the colors:
+// 00 = Black
+// FF = White
+// CC = Red
+// AA = Green
+// 99 = Blue
 static unsigned char color_data[] = {
   0x00, 0xFF, 0xCC, 0xAA, 0x99
 };

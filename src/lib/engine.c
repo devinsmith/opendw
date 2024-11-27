@@ -386,7 +386,7 @@ static void sub_176A();
 static void sub_19C7(uint8_t val, uint16_t di);
 static void sub_1A10();
 static void sub_1A72();
-static void sub_1ABD(uint8_t val);
+static void draw_player_status(uint8_t val);
 static void sub_1BF8(uint8_t color, uint8_t y_adjust);
 static void sub_1C70(unsigned char *src_ptr);
 static void sub_280E();
@@ -3652,7 +3652,7 @@ static void op_7D(void)
 }
 
 // 0x1BE6
-static void sub_1BE6(int counter)
+static void append_spaces(int counter)
 {
   counter -= draw_point.x;
   if (counter <= 0)
@@ -3678,7 +3678,7 @@ static void advance_cursor(void)
   al += draw_rect.x;
   cpu.ax = (cpu.ax & 0xFF00) | al;
 
-  sub_1BE6(al);
+  append_spaces(al);
 }
 
 // 0x1DCA
@@ -4084,7 +4084,7 @@ static void sub_1A72()
         val = 0x01;
       }
       al = val;
-      sub_1ABD(al);
+      draw_player_status(al);
       set_game_state(__func__, 0x18 + counter, 0xFF);
     }
     counter--;
@@ -4099,7 +4099,7 @@ static void sub_1A72()
 
 // 0x1ABD
 // input will be 0x01 or 0x10
-static void sub_1ABD(uint8_t val)
+static void draw_player_status(uint8_t val)
 {
   uint8_t al, ah, bl;
   uint16_t fill_color; // 3713
@@ -4113,7 +4113,7 @@ static void sub_1ABD(uint8_t val)
 
   ui_set_background(cpu.ax);
 
-  bl = game_state.unknown[0x6];
+  bl = game_state.unknown[0x6]; // current character
   al = bl;
   al = al << 4;
   al += 0x20;
@@ -4130,6 +4130,8 @@ static void sub_1ABD(uint8_t val)
 
   al = game_state.unknown[6];
   if (al >= game_state.unknown[31]) {
+    // Since this character is not in the game, we just draw a blank 15 line square.
+
     // 1AF6
     fill_color = byte_1BE5; // color ?
     al = draw_point.y;
@@ -4150,6 +4152,8 @@ static void sub_1ABD(uint8_t val)
     return;
   }
 
+  // We now have a player.
+
   // 1B22
   al = 0xC;
   cpu.ax = (cpu.ax & 0xFF00) | al;
@@ -4169,17 +4173,21 @@ static void sub_1ABD(uint8_t val)
   al = al >> 1;
   al = al + 0x1B + carry; // adc al, 0x1B
   cpu.ax = (cpu.ax & 0xFF00) | al;
-  sub_1BE6(al);
+
+  // Center name, with spaces before and after.
+  append_spaces(al);
   write_character_name();
   al = 0x27;
   cpu.ax = (cpu.ax & 0xFF00) | al;
-  sub_1BE6(al);
+  append_spaces(al);
+
   di = c960 + (player_base_offset - 0xC960);
   al = di[0x4C];
 
   si = 3;
 
   // 1B4A
+  // look for statuses "dead, stunned, poisoned, or chained"
   int found = 0;
   while (si >= 0) {
     uint8_t si_val = get_1BC1_table(si);
@@ -4190,23 +4198,27 @@ static void sub_1ABD(uint8_t val)
     si--;
   }
 
+  // character is in normal status.
   if (found == 0) {
-    // 1B53 (not found)
-    uint8_t dl = 2; // health
-    cpu.bx = 0x14;
+    // 1B53 (abnormal status not found)
+    uint8_t dl = 2; // health (red)
+    cpu.bx = 0x14; // Player record offset
     al = 8;
     cpu.ax = (cpu.ax & 0xFF00) | al;
     sub_1BF8(dl, al);
+
     // 0x1B5D
-    dl = 3; // stun
-    cpu.bx = 0x18;
+    dl = 3; // stun (green)
+    cpu.bx = 0x18; // Player record offset
     al = 0x0B;
     cpu.ax = (cpu.ax & 0xFF00) | al;
     sub_1BF8(dl, al);
-    dl = 4; // magic
-    cpu.bx = 0x1C;
+
+    dl = 4; // magic power (blue)
+    cpu.bx = 0x1C; // Player record offset
     al = 0x0E;
     sub_1BF8(dl, al);
+
     al = byte_1BE5;
     fill_color = al;
     g_linenum--;
@@ -4219,12 +4231,14 @@ static void sub_1ABD(uint8_t val)
     reset_ui_background();
     return;
   }
+
+  // Not in normal status, so indicate that.
   // 1B95
   draw_point.y += 8;
   draw_point.x = 0x1B;
 
   al = data_1BC5[si];
-  sub_1BE6(al);
+  append_spaces(al);
 
   unsigned char data_1BAA[] = { 0x54, 0x82, 0x00 }; // "is "
   sub_1C70(data_1BAA);
@@ -4232,11 +4246,9 @@ static void sub_1ABD(uint8_t val)
 
   extract_string(str_table_status[si], 0, handle_byte_callback);
   al = 0x27;
-  sub_1BE6(0x27);
+  append_spaces(0x27);
   reset_ui_background();
 }
-
-
 
 // 0x2CF5
 // Get timer ticks?
@@ -6033,7 +6045,7 @@ static void op_96()
 
   ui_draw_string();
   al = draw_rect.w;
-  sub_1BE6(al);
+  append_spaces(al);
 }
 
 // 0x42FB
@@ -6490,12 +6502,13 @@ void run_engine()
   free(data_D760);
 }
 
-static int sub_1C57()
+// Extracts player record value and stores it in word_11C0.
+static int sub_1C57(uint16_t offset)
 {
   unsigned char *c960 = get_player_data_base();
 
-  cpu.ax = c960[player_base_offset - 0xC960 + cpu.bx];
-  cpu.ax += (c960[player_base_offset - 0xC960 + 1 + cpu.bx]) << 8;
+  cpu.ax = c960[player_base_offset - 0xC960 + offset];
+  cpu.ax += (c960[player_base_offset - 0xC960 + 1 + offset]) << 8;
 
   word_11C0 = cpu.ax;
   return cpu.ax;
@@ -6576,11 +6589,12 @@ static void sub_11CE()
   }
 }
 
+// 0x1C49
 static void sub_1C49(uint16_t fill_color)
 {
-  g_linenum++;
-  ui_draw_solid_color(fill_color, word_36C0, word_36C2, g_linenum);
-  g_linenum--;
+  // Does this order matter? It seems more natural to draw lines from top
+  // to bottom, but this matches how the game did it.
+  ui_draw_solid_color(fill_color, word_36C0, word_36C2, g_linenum + 1);
   ui_draw_solid_color(fill_color, word_36C0, word_36C2, g_linenum);
 }
 
@@ -6591,13 +6605,13 @@ static void sub_1BF8(uint8_t color, uint8_t y_adjust)
   fill_color = color;
   cpu.ax = draw_point.y + y_adjust;
   g_linenum = cpu.ax; // line number
-  if (sub_1C57() != 0) {
-    cpu.bx += 2;
+  if (sub_1C57(cpu.bx) != 0) {
+    cpu.bx += 2; // now check max?
     push_word(cpu.bx);
     word_11C2 = 0x17;
     sub_11A0(0);
     cpu.bx = pop_word();
-    if (sub_1C57() != 0) {
+    if (sub_1C57(cpu.bx) != 0) {
       sub_11CE();
       cpu.ax = word_11C6;
       cpu.ax++;
