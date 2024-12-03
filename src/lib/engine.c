@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #include "compress.h"
 #include "engine.h"
@@ -387,7 +388,7 @@ static void sub_19C7(uint8_t val, uint16_t di);
 static void sub_1A10();
 static void sub_1A72();
 static void draw_player_status(uint8_t val);
-static void sub_1BF8(uint8_t color, uint8_t y_adjust);
+static void draw_player_stat(uint8_t color, uint8_t y_adjust, uint16_t player_record_offset);
 static void sub_1C70(unsigned char *src_ptr);
 static void sub_280E();
 static void sub_28B0(uint16_t flags, unsigned char *src_ptr, const unsigned char *base);
@@ -4202,22 +4203,19 @@ static void draw_player_status(uint8_t val)
   if (found == 0) {
     // 1B53 (abnormal status not found)
     uint8_t dl = 2; // health (red)
-    cpu.bx = 0x14; // Player record offset
     al = 8;
     cpu.ax = (cpu.ax & 0xFF00) | al;
-    sub_1BF8(dl, al);
+    draw_player_stat(dl, al, 0x14);
 
     // 0x1B5D
     dl = 3; // stun (green)
-    cpu.bx = 0x18; // Player record offset
     al = 0x0B;
     cpu.ax = (cpu.ax & 0xFF00) | al;
-    sub_1BF8(dl, al);
+    draw_player_stat(dl, al, 0x18);
 
     dl = 4; // magic power (blue)
-    cpu.bx = 0x1C; // Player record offset
     al = 0x0E;
-    sub_1BF8(dl, al);
+    draw_player_stat(dl, al, 0x1C);
 
     al = byte_1BE5;
     fill_color = al;
@@ -6503,17 +6501,22 @@ void run_engine()
 }
 
 // Extracts player record value and stores it in word_11C0.
-static int sub_1C57(uint16_t offset)
+// 0x1C57
+static uint16_t get_player_record(uint16_t offset)
 {
   unsigned char *c960 = get_player_data_base();
 
-  cpu.ax = c960[player_base_offset - 0xC960 + offset];
-  cpu.ax += (c960[player_base_offset - 0xC960 + 1 + offset]) << 8;
+  uint16_t val = c960[player_base_offset - 0xC960 + offset];
+  val += (c960[player_base_offset - 0xC960 + 1 + offset]) << 8;
 
-  word_11C0 = cpu.ax;
-  return cpu.ax;
+  word_11C0 = val;
+
+  return val;
 }
 
+// Inputs: 11C0, 11C2, 11C4
+// Side effects:
+// sets 11C4, 11C6, and 11C8
 static void sub_11A0(int set_11C4)
 {
   uint32_t result;
@@ -6592,25 +6595,26 @@ static void sub_11CE()
   }
 }
 
-static void sub_1BF8(uint8_t color, uint8_t y_adjust)
+// 0x1BF8
+static void draw_player_stat(uint8_t color, uint8_t y_adjust, uint16_t player_record_offset)
 {
   uint16_t fill_color;
 
   fill_color = color;
   cpu.ax = draw_point.y + y_adjust;
   g_linenum = cpu.ax; // line number
-  if (sub_1C57(cpu.bx) != 0) {
-    cpu.bx += 2; // now check max?
-    push_word(cpu.bx);
-    word_11C2 = 0x17; // max percentage?
-    sub_11A0(0);
-    cpu.bx = pop_word();
-    if (sub_1C57(cpu.bx) != 0) {
-      // Calculate percentage of 0x17 that ratio is.
-      sub_11CE();
-      cpu.ax = word_11C6;
-      cpu.ax++;
-    }
+
+  uint16_t cur_val = get_player_record(player_record_offset);
+  uint16_t max_val = get_player_record(player_record_offset + 2);
+
+  cpu.ax = cur_val;
+
+  // Calculate ratio
+  if (cur_val != 0 && max_val != 0) {
+    assert(cur_val <= max_val);
+
+    cpu.ax = (cur_val * 23) / max_val;
+    cpu.ax++;
   }
 
   // Draw color portion of status bar.
