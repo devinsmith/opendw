@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 3.7.2)
+# The minimum version is the version supported by the oldest Debian release
+# Ubuntu 20.04LTS uses 3.16.3
+cmake_minimum_required(VERSION 3.13.4)
 
 project(opendw)
 set(TARGET_NAME sdldragon)
